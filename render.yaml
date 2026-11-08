@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: retail-pricing-os
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/prices/current
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_PATH
+        value: ./data/pricing-os.db
+      - key: PAYPAL_MODE
+        value: sandbox
+      - key: PAYPAL_API_BASE
+        value: https://api-m.sandbox.paypal.com
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: AGENT_API_KEYS
+        sync: false
+      - key: MERCHANT_BASIC_AUTH
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

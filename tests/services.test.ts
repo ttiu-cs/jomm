@@ -91,3 +91,16 @@ describe("store clock + pricing services", () => {
     expect(getContext(db, P, T).confidence).toBe("low");
   });
 });
+
+describe("end-of-day reporting", () => {
+  it("reports wasted units after close", () => {
+    const d = freshDb();
+    setPayPalApi(null);
+    runToClose(d, P, T);
+    const ctx = getContext(d, P, T);
+    const sold = ctx.stock.soldSimulated + ctx.stock.soldReal + ctx.stock.soldMock;
+    expect(ctx.stock.wasted).toBe(100 - sold);
+    expect(ctx.stock.available).toBe(0);
+    expect(ctx.storeOpen).toBe(false);
+  });
+});

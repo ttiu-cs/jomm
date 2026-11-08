@@ -117,7 +117,10 @@ export function getContext(db: DB, productId: string, now = new Date()): Product
     .prepare("SELECT COALESCE(SUM(count),0) AS n, COUNT(DISTINCT price_cents) AS d FROM exposure_events WHERE product_id=? AND kind='VIEW'")
     .get(productId) as { n: number; d: number };
 
-  const stock = stockLevels(db, productId, batch && batch.status === "ACTIVE" ? batch.id : null, now);
+  const rawStock = stockLevels(db, productId, batch ? batch.id : null, now);
+  const isActive = !!batch && batch.status === "ACTIVE";
+  // A closed batch keeps its sold/wasted history for reporting but has nothing sellable.
+  const stock = isActive ? rawStock : { ...rawStock, available: 0, reserved: 0 };
   const minutesSinceLastChange = pub && pub.sim_day === sim.sim_day && pub.actor !== "seed" ? (sim.current_hour - pub.sim_hour) * 60 : null;
 
   return {

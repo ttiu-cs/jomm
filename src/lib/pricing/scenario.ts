@@ -21,7 +21,7 @@ export const DEFAULT_COSTS: CostInputs = {
 };
 
 export const DEFAULT_POLICY: PricingPolicy = {
-  floorCents: 450,
+  floorCents: 400,
   ceilingCents: 950,
   maxStepCents: 100,
   cooldownMinutes: 60,

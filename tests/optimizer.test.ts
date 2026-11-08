@@ -100,7 +100,7 @@ describe("pricing optimizer", () => {
   });
 
   it("moves an out-of-policy price back inside bounds even during cooldown", () => {
-    const d = recommendPrice(input({ hour: 12, currentPriceCents: 400, minutesSinceLastChange: 5 }, DEFAULT_POLICY));
+    const d = recommendPrice(input({ hour: 12, currentPriceCents: 350, minutesSinceLastChange: 5 }, DEFAULT_POLICY));
     expect(d.reasonCodes).toContain("POLICY_BOUND_ADJUST");
     expect(d.recommendedPriceCents).toBeGreaterThanOrEqual(DEFAULT_POLICY.floorCents);
   });
