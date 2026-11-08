@@ -173,6 +173,56 @@ function project(
   };
 }
 
+export interface WalkAwayResult {
+  available: boolean;
+  stock: number;
+  hour: number;
+  hoursRemaining: number;
+  publishedCents: number;
+  /** Expected rest-of-day contribution lost by giving up one unit now (opportunity cost). */
+  marginalValueCents: number;
+  /** Lowest price the seller should accept for one unit right now (never below policy floor, never above the published price). */
+  walkAwayCents: number;
+  floorCents: number;
+  expectedDemandAtPublished: number;
+  regime: "SCARCE" | "BALANCED" | "SURPLUS";
+}
+
+/**
+ * Seller reservation price for a one-unit negotiated sale right now.
+ *
+ * If the seller refuses, the buyer still buys at the published price with probability q
+ * (cannibalization assumption); otherwise the unit stays in stock. Accept p iff
+ *   net(p) + V(s-1) >= q·[net(pub) + V(s-1)] + (1-q)·V(s)
+ *   <=> net(p) >= q·net(pub) + (1-q)·Δ,   Δ = V(s) - V(s-1) (opportunity cost of one unit)
+ * Both branches continue at the published price this hour and the optimal policy afterwards.
+ * Clamped to [max(policy floor, published·(1 - max negotiated discount)), published].
+ * The result is identical for every buyer at a given time and stock level (no personalization).
+ */
+export function walkAwayPrice(input: OptimizerInput, opts: { refusedBuyerBuyProb?: number; maxDiscountBps?: number } = {}): WalkAwayResult {
+  const { state, policy, costs, model, ctx } = input;
+  const { floorCents, ceilingCents } = effectiveBounds(policy, costs);
+  const stock = Math.max(0, Math.floor(state.availableStock));
+  const cur = state.currentPriceCents;
+  const hoursRemaining = Math.max(0, state.closeHour - state.hour);
+  let demand = 0;
+  for (let h = state.hour; h < state.closeHour; h++) demand += expectedVisits(model, ctx, h) * conversion(model, cur, h);
+  const ratio = stock > 0 ? demand / stock : 0;
+  const regime = ratio > 1.15 ? "SCARCE" : ratio < 0.85 ? "SURPLUS" : "BALANCED";
+  const base = { stock, hour: state.hour, hoursRemaining, publishedCents: cur, floorCents, expectedDemandAtPublished: demand, regime } as const;
+  if (stock === 0 || hoursRemaining === 0) return { ...base, available: false, marginalValueCents: 0, walkAwayCents: cur };
+
+  const dp = solveDp(input, priceGrid(floorCents, ceilingCents, policy.priceGridCents), state.hour, stock);
+  const marginal = qValue(input, dp, cur, stock) - qValue(input, dp, cur, stock - 1);
+  const q = Math.min(1, Math.max(0, opts.refusedBuyerBuyProb ?? 0.5));
+  const requiredNet = q * unitNetCents(costs, cur) + (1 - q) * marginal;
+  // Solve p - fulfillment - (bps·p + fixed) = requiredNet for p.
+  const breakEven = (requiredNet + costs.fulfillmentPerOrderCents + costs.paymentFeeFixedCents) / (1 - costs.paymentFeeBps / 10000);
+  const discountFloor = Math.ceil(cur * (1 - (opts.maxDiscountBps ?? 3500) / 10000));
+  const walkAway = Math.min(cur, Math.max(floorCents, discountFloor, Math.ceil(breakEven)));
+  return { ...base, available: true, marginalValueCents: marginal, walkAwayCents: walkAway };
+}
+
 function nearestOnGrid(grid: number[], p: number): number {
   let best = grid[0];
   for (const g of grid) if (Math.abs(g - p) < Math.abs(best - p)) best = g;

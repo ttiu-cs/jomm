@@ -1,15 +1,21 @@
 # 3-minute demo script
 
-**Setup (before recording).** `npm run seed`, start the app, open `/merchant` on desktop and `/shop` on a phone (or a narrow browser window) side by side. With Sandbox credentials, run one full checkout beforehand to warm up the PayPal popup and Sandbox login. Keep a Sandbox personal account logged in. Have a backup recording of the PayPal step in case the network fails. Never present a MOCK payment as PayPal.
+**One-line story:** A buyer AI asks for a discount. The seller AI answers with math, and PayPal takes the payment.
 
-| Time | Screen | Do | Say |
-|---|---|---|---|
-| 0:00–0:20 | Home | Show the thesis | "Every buyer agent knows how to find the best price. Retail Pricing OS lets every seller agent set one. This is not a markdown tool." |
-| 0:20–0:45 | Command Center | Point to the SKU, 100 units, $3.20 sunk cost vs incremental fees, policy $4.00–$9.50, 11 selling hours | "Production cost is sunk once the salad is made, so the optimizer maximizes contribution from here on, with waste as a cost." |
-| 0:45–1:20 | Time machine | Advance 1 hour ×3 → recommendation **Raise $7 → $8** (LUNCH_PEAK, LOW_STOCK…) → Approve & publish → advance → raise again → advance past lunch → **Lower** (POST_PEAK_LULL, EXPIRY_RISK) | "Prices go up and down: lunch shoppers are less price-sensitive, and afterwards waste risk dominates. Each move shows evidence: expected contribution if we follow vs if we hold." |
-| 1:20–1:40 | Merchant agent | Type "Keep price ≥ $4.50; optimize for today's demand." → Draft policy → shows floor $4.00 → $4.50 → Confirm & recompute | "The agent only drafts structured policy. I confirm it. The optimizer, not the LLM, sets the price." |
-| 1:40–2:20 | Storefront + PayPal | On the phone: price matches the dashboard → Lock price (5-min quote) → PayPal → Sandbox approve → **Paid ✓** | "The price the shopper accepted is locked. Even if I republish now, this quote won't change. The server captures and verifies amount, currency and reference with PayPal." |
-| 2:20–2:45 | Command Center | Payment activity shows `PAYPAL SANDBOX · VERIFIED` with capture ID; stock −1; Recompute | "The verified sale reduced stock exactly once, and the next decision starts from that state. That's a state update, not retraining." |
-| 2:45–3:00 | Pricing Lab + Agent API | Show fixed vs adaptive + sensitivity row going negative; flash `/agent` | "Same seeded shoppers for both strategies, labeled synthetic. When the model is wrong it can lose, which is why guardrails exist. Seller agents get scoped APIs. Next: bakery, deli, flowers, POS and shelf labels." |
+**Setup.** Start the app and open `/` (the Demo page) full screen. With PayPal Sandbox keys, do one checkout beforehand so the Sandbox login is warm. Keep a backup recording of the PayPal step. Never present a MOCK payment as PayPal.
 
-**Contingencies.** If PayPal is unreachable, switch to the pre-recorded capture and say so. If the time machine lands on HOLD because of the cooldown, advance one more hour. Reset with "Reset demo" (seed 42 is deterministic, so rehearsals repeat exactly).
+| Time | Do | Say |
+|---|---|---|
+| 0:00–0:20 | Show the headline | "Buyer agents are learning to haggle. Seller agents need to know their lowest price, and why. That's Retail Pricing OS." |
+| 0:20–0:50 | Click **Before lunch** (11:00, 40 left, $7.00). Budget $5, first offer $4 → **Start negotiation** | "The buyer agent offers $4. The seller expects about 85 lunch buyers for 40 salads, so every salad sells at full price. It holds at $7 and the buyer walks away." Point at the private view: lowest price = $7.00. |
+| 0:50–1:30 | Click **Near closing** (18:00, 30 left). Same budget → **Start negotiation** | "Same salad, same listed price, same buyer. Now only about 12 sales are expected before closing, and leftovers go in the bin. The seller's lowest price drops to $4.55. It counters $6.25, then $5.50, and settles at $5.00." |
+| 1:30–2:10 | **Pay** with PayPal Sandbox | "The agreed $5 is locked on the server for 5 minutes. A person approves in PayPal; the buyer agent can't pay alone. The server verifies the capture amount with PayPal." |
+| 2:10–2:30 | Point at the private view: stock 30 → 29 | "The verified sale updates stock, and the seller's next answer uses it." |
+| 2:30–3:00 | Optional: flash `/merchant` and `/lab` | "Behind this: hourly pricing, merchant guardrails (floor, max discount, approval) and a simulator. The lowest price comes from an optimizer, not an LLM. Any agent can plug in through the API." |
+
+**Key facts to say correctly**
+- The buyer never sees the seller's lowest price. Every buyer gets the same answer at the same moment (no personal pricing).
+- The lowest price = opportunity cost of one salad (stock, time left, forecast demand, waste cost), adjusted for buyers who would have paid full price anyway, capped by the merchant's max discount (35%).
+- Demand numbers are a synthetic forecast; payments are PayPal Sandbox (test money).
+
+**If something breaks.** Click the scenario card again to reset. If PayPal is unreachable, switch to the backup recording and say so.

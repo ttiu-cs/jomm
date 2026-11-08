@@ -30,6 +30,8 @@ export function seedDemo(db: DB, opts: SeedOptions = {}, now = new Date()) {
   const tx = db.transaction(() => {
     for (const t of [
       "audit_events",
+      "negotiation_messages",
+      "negotiations",
       "webhook_events",
       "inventory_movements",
       "payment_attempts",
@@ -282,4 +284,40 @@ export function setScenario(db: DB, productId: string, s: { weather?: Weather; e
   );
   audit(db, "merchant:demo", "sim.scenario", "sim_state", productId, s, now);
   emit("scenario", productId, s);
+}
+
+export const DEMO_SCENARIOS = {
+  lunch: { hour: 11, stock: 40, label: "11:00 · 40 left · lunch rush ahead" },
+  closing: { hour: 18, stock: 30, label: "18:00 · 30 left · closes at 20:00" },
+} as const;
+
+/**
+ * Demo shortcut: reset the day, then jump the store clock to `hour` with `stock` units on hand
+ * (recorded as a MERCHANT adjustment). The published price stays at the base price so the same
+ * offer can be compared across scenarios.
+ */
+export function jumpToScenario(db: DB, productId: string, s: { hour: number; stock: number }, now = new Date()) {
+  const cur = getContext(db, productId, now).sim;
+  if (!Number.isInteger(s.hour) || s.hour < OPEN_HOUR || s.hour >= CLOSE_HOUR) throw new DomainError("INVALID_HOUR", `Hour must be ${OPEN_HOUR}–${CLOSE_HOUR - 1}.`, 422);
+  if (!Number.isInteger(s.stock) || s.stock < 1 || s.stock > OPENING_STOCK) throw new DomainError("INVALID_STOCK", `Stock must be 1–${OPENING_STOCK}.`, 422);
+  seedDemo(db, { seed: cur.seed, weather: cur.weather, event: cur.event, demandShift: cur.demand_multiplier }, now);
+  const ctx = getContext(db, productId, now);
+  db.transaction(() => {
+    db.prepare("UPDATE sim_state SET current_hour=?, updated_at=? WHERE product_id=?").run(s.hour, now.toISOString(), productId);
+    db.prepare("UPDATE published_prices SET sim_hour=? WHERE product_id=?").run(s.hour, productId);
+    const delta = s.stock - ctx.stock.onHand;
+    if (delta !== 0)
+      db.prepare("INSERT INTO inventory_movements (product_id, batch_id, type, qty_delta, source, sim_day, sim_hour, created_at) VALUES (?,?,?,?,?,?,?,?)").run(
+        productId,
+        ctx.batch!.id,
+        "ADJUSTMENT",
+        delta,
+        "MERCHANT",
+        ctx.sim.sim_day,
+        s.hour,
+        now.toISOString(),
+      );
+    audit(db, "merchant:demo", "sim.jump", "sim_state", productId, s, now);
+  })();
+  emit("reset", productId);
 }

@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { SCHEMA_SQL } from "./schema";
 
@@ -13,13 +14,24 @@ export function openDb(file: string): DB {
   db.pragma("journal_mode = WAL");
   db.pragma("busy_timeout = 5000");
   db.exec(SCHEMA_SQL);
+  // Lightweight migrations for databases created by earlier versions.
+  const cols = (db.prepare("PRAGMA table_info(price_quotes)").all() as { name: string }[]).map((c) => c.name);
+  if (!cols.includes("origin")) db.exec("ALTER TABLE price_quotes ADD COLUMN origin TEXT NOT NULL DEFAULT 'PUBLISHED'");
   return db;
+}
+
+/**
+ * Default location is outside the project folder: the Next.js dev server reloads the page whenever
+ * files inside the project change, and SQLite writes on every request.
+ */
+export function defaultDbPath(): string {
+  return process.env.DATABASE_PATH || path.join(os.homedir(), ".retail-pricing-os", "pricing-os.db");
 }
 
 /** Process-wide singleton (survives Next.js dev hot reloads). */
 export function getDb(): DB {
   if (!g.__pricingDb) {
-    g.__pricingDb = openDb(process.env.DATABASE_PATH || path.join(process.cwd(), "data", "pricing-os.db"));
+    g.__pricingDb = openDb(defaultDbPath());
   }
   return g.__pricingDb;
 }

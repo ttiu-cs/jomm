@@ -32,6 +32,7 @@ export interface QuoteRow {
   status: string;
   sim_day: number;
   sim_hour: number;
+  origin: string;
 }
 
 export interface OrderRow {
@@ -72,7 +73,13 @@ export function orderView(db: DB, id: string) {
 }
 
 /** Lock the current published price into an expiring quote and reserve stock atomically. */
-export function createQuote(db: DB, productId: string, qty: number, now = new Date()): QuoteRow {
+export function createQuote(
+  db: DB,
+  productId: string,
+  qty: number,
+  now = new Date(),
+  override?: { unitPriceCents: number; origin: "NEGOTIATION" },
+): QuoteRow {
   if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new DomainError("INVALID_QTY", `Quantity must be 1–${MAX_QTY}.`, 422);
   expireStaleQuotes(db, now);
   const id = newId("q");
@@ -81,11 +88,12 @@ export function createQuote(db: DB, productId: string, qty: number, now = new Da
     if (!ctx.storeOpen || !ctx.published) throw new DomainError("STORE_CLOSED", "Store is closed; no quotes can be issued.", 409);
     if (ctx.stock.available < qty) throw new DomainError("INSUFFICIENT_STOCK", `Only ${ctx.stock.available} available.`, 409);
     const expires = new Date(now.getTime() + QUOTE_TTL_SECONDS * 1000);
-    const unit = ctx.published.priceCents;
+    // Price authority: the published price, or a server-side negotiated agreement (never client input).
+    const unit = override ? override.unitPriceCents : ctx.published.priceCents;
     db.prepare(
-      `INSERT INTO price_quotes (id, product_id, price_version, unit_price_cents, qty, total_cents, currency, created_at, expires_at, status, sim_day, sim_hour)
-       VALUES (?,?,?,?,?,?,?,?,?,'ACTIVE',?,?)`,
-    ).run(id, productId, ctx.published.version, unit, qty, unit * qty, ctx.product.currency, now.toISOString(), expires.toISOString(), ctx.sim.sim_day, ctx.sim.current_hour);
+      `INSERT INTO price_quotes (id, product_id, price_version, unit_price_cents, qty, total_cents, currency, created_at, expires_at, status, sim_day, sim_hour, origin)
+       VALUES (?,?,?,?,?,?,?,?,?,'ACTIVE',?,?,?)`,
+    ).run(id, productId, ctx.published.version, unit, qty, unit * qty, ctx.product.currency, now.toISOString(), expires.toISOString(), ctx.sim.sim_day, ctx.sim.current_hour, override?.origin ?? "PUBLISHED");
     db.prepare("INSERT INTO exposure_events (product_id, sim_day, sim_hour, source, kind, count, price_cents, created_at) VALUES (?,?,?,?,?,?,?,?)").run(
       productId,
       ctx.sim.sim_day,

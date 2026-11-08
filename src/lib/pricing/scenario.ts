@@ -33,6 +33,7 @@ export const DEFAULT_POLICY: PricingPolicy = {
   agentPublishAllowed: false,
   lowConfidenceRequiresApproval: true,
   priceGridCents: 25,
+  maxNegotiationDiscountBps: 3500,
 };
 
 export const DEFAULT_DEMAND_MODEL: DemandModel = {
@@ -52,3 +53,6 @@ export const DEFAULT_CONTEXT: DemandContext = {
   demandMultiplier: 1,
   calibration: 1,
 };
+
+/** Assumption: share of buyers who, if their offer is refused, still buy at the published price. */
+export const REFUSED_BUYER_BUY_PROB = 0.5;

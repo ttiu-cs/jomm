@@ -33,6 +33,13 @@
 ## Default policy
 Floor $4.00, ceiling $9.50, max step $1.00 per publication, 60 store-minute cooldown, min expected gain $0.25, approval mode, below-cost allowed (floor is already above break-even), agents may not publish, low confidence requires approval, $0.25 price grid, quote TTL 5 minutes (real wall-clock).
 
+## Negotiation assumptions
+- 50% of buyers whose offer is refused still buy at the listed price (`REFUSED_BUYER_BUY_PROB`). This keeps the seller from discounting to people who would have paid full price.
+- Merchant cap: at most 35% off the listed price (`maxNegotiationDiscountBps`), never below the policy floor.
+- One unit per negotiation, at most 3 buyer offers, 10-minute negotiation lifetime, 5-minute price lock after agreement.
+- The demo buyer agent is a simple scripted strategy (open low, meet halfway, never exceed budget). It is not an LLM.
+- Demo scenarios ("Before lunch", "Near closing") reset the day and set clock and stock via a labeled MERCHANT adjustment.
+
 ## Modeling approximations (be honest about these)
 - One unit per order in the economics (qty > 1 orders still decrement correctly).
 - DP continuation ignores the step limit and cooldown for future hours. The current decision respects them.

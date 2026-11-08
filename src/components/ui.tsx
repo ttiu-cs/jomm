@@ -88,6 +88,7 @@ export function Code({ children }: { children: ReactNode }) {
 
 export function TopNav({ active }: { active: "merchant" | "shop" | "lab" | "agent" | "home" }) {
   const items = [
+    ["home", "/", "Demo"],
     ["merchant", "/merchant", "Command Center"],
     ["shop", "/shop", "Storefront"],
     ["lab", "/lab", "Pricing Lab"],

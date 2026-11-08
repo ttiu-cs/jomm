@@ -18,10 +18,11 @@ Retail prices are mostly static, while the economic value of an item changes con
 ## What it is not
 - Not an end-of-day markdown tool. Prices can rise after a decline; there is no time-based discount rule. Tested in `tests/optimizer.test.ts` and `tests/simulator.test.ts`.
 - Not a food ERP or recipe-costing tool. Costs are a small snapshot used only for economics.
-- Not a negotiation product (DealPilot could consume this API later), and not a buyer-agent platform.
+- Negotiation is a thin layer on top of the pricing engine: the seller's limits come from economics, not from LLM persuasion. Not a buyer-agent platform; the demo buyer agent is scripted.
 - Not a promise that every SKU should change price hourly. Changes happen only when expected gain clears the threshold and policy, cooldown and confidence allow it.
 
 ## Screens
+0. **Negotiation demo** (`/`, the main judged screen): pick "Before lunch" or "Near closing"; a scripted buyer agent negotiates for one salad within a budget; the seller agent answers from its engine-computed walk-away price (shown only in the seller's private panel); the agreed price is paid via PayPal Sandbox (or a labeled MOCK).
 1. **Merchant Command Center** (`/merchant`): store, SKU, stock (on hand, reserved, available), units sold by source, hours left, confidence, sell-through vs forecast; price chart with projected path and bounds; recommendation with reasons, quantitative evidence and recommend-vs-hold projections; Approve & publish, Reject, Recompute, Explain; time machine (advance hour, run to close, new day, reset) with weather, event and unforecasted-traffic controls; plain-language policy drafting with confirmation; policy editor (floor, ceiling, max step, cooldown, min gain, autopilot, below-cost, agent publish, low-confidence approval); unit economics with sunk vs incremental costs; payment activity separating SIMULATED, MOCK and PAYPAL SANDBOX.
 2. **Mobile Storefront** (`/shop`): current published price and version; quantity 1–3; server quote locks the price for 5 minutes and reserves stock; PayPal Sandbox buttons (or a clearly labeled MOCK when no credentials are set); pending, paid, failed, expired and cancelled states. An accepted quote is never silently repriced.
 3. **Pricing Lab** (`/lab`): deterministic seeded days, fixed vs adaptive under common random numbers, averages over N days, hour-by-hour table, and sensitivity to a misspecified demand model. Everything is labeled synthetic.

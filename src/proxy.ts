@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * deploying publicly). Shopper storefront, quote/order/PayPal routes and the token-authenticated
  * agent API stay public.
  */
-const MERCHANT_PATHS = [/^\/merchant/, /^\/lab/, /^\/api\/state/, /^\/api\/pricing\//, /^\/api\/simulations\//, /^\/api\/orders\/[^/]+\/reconcile/];
+const MERCHANT_PATHS = [/^\/merchant/, /^\/lab/, /^\/api\/state/, /^\/api\/pricing\//, /^\/api\/simulations\//, /^\/api\/seller\//, /^\/api\/orders\/[^/]+\/reconcile/];
 
 export function proxy(req: NextRequest) {
   const cred = process.env.MERCHANT_BASIC_AUTH;

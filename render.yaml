@@ -9,8 +9,6 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: DATABASE_PATH
-        value: ./data/pricing-os.db
       - key: PAYPAL_MODE
         value: sandbox
       - key: PAYPAL_API_BASE

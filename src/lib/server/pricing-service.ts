@@ -163,6 +163,7 @@ export const PolicyPatchSchema = z
     allowedEndHour: z.number().int().min(1).max(24),
     agentPublishAllowed: z.boolean(),
     lowConfidenceRequiresApproval: z.boolean(),
+    maxNegotiationDiscountBps: z.number().int().min(0).max(9000),
   })
   .partial()
   .strict();

@@ -34,6 +34,7 @@ export interface PricingPolicy {
   agentPublishAllowed: boolean;
   lowConfidenceRequiresApproval: boolean;
   priceGridCents: Cents;
+  maxNegotiationDiscountBps: number; // cap on negotiated discount vs published price (e.g. 3500 = 35%)
 }
 
 /** Interpretable, configurable demand model (assumptions, not estimates from real data). */

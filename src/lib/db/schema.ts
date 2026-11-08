@@ -89,6 +89,20 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   id TEXT PRIMARY KEY, event_type TEXT NOT NULL, received_at TEXT NOT NULL, verified INTEGER NOT NULL,
   processed INTEGER NOT NULL, note TEXT
 );
+-- Buyer-agent negotiations (one unit). walk_away_cents is seller-private.
+CREATE TABLE IF NOT EXISTS negotiations (
+  id TEXT PRIMARY KEY, product_id TEXT NOT NULL, sim_day INTEGER NOT NULL, sim_hour INTEGER NOT NULL,
+  buyer_label TEXT NOT NULL, status TEXT NOT NULL CHECK (status IN ('OPEN','AGREED','CLOSED','EXPIRED')),
+  buyer_offers INTEGER NOT NULL DEFAULT 0, last_counter_cents INTEGER, final_counter INTEGER NOT NULL DEFAULT 0,
+  agreed_price_cents INTEGER, quote_id TEXT, published_cents INTEGER NOT NULL, walk_away_cents INTEGER NOT NULL,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL, expires_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS negotiation_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, negotiation_id TEXT NOT NULL REFERENCES negotiations(id),
+  role TEXT NOT NULL CHECK (role IN ('buyer','seller')),
+  kind TEXT NOT NULL CHECK (kind IN ('OFFER','COUNTER','FINAL','ACCEPT','REJECT','DECLINE')),
+  price_cents INTEGER, text TEXT NOT NULL, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL,
   entity TEXT NOT NULL, entity_id TEXT, details_json TEXT NOT NULL

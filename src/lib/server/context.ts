@@ -3,6 +3,7 @@ import type { DB } from "../db/client";
 import { exposureConfidence, sellThroughCalibration } from "../pricing/calibration";
 import type { CostInputs, DemandModel, LocalEvent, PricingPolicy, Weather } from "../pricing/types";
 import { DomainError } from "./util";
+import { DEFAULT_POLICY } from "../pricing/scenario";
 
 export interface SimStateRow {
   seed: number;
@@ -139,7 +140,7 @@ export function getContext(db: DB, productId: string, now = new Date()): Product
     model: JSON.parse(p.demand_model_json),
     costs: JSON.parse(cost.costs_json),
     costSnapshotId: cost.id,
-    policy: JSON.parse(pol.policy_json),
+    policy: { ...DEFAULT_POLICY, ...JSON.parse(pol.policy_json) },
     policyVersion: pol.version,
     sim,
     batch: batch ? { id: batch.id, qtyProduced: batch.qty_produced, sellByHour: batch.sell_by_hour, status: batch.status } : null,

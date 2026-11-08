@@ -41,6 +41,8 @@ Production cost is sunk once made, so it is excluded from the objective and repo
 
 **Reason codes.** LUNCH_PEAK, POST_PEAK_LULL, LOW_STOCK, EXPIRY_RISK, SLOW_SELL_THROUGH, FAST_SELL_THROUGH, WEATHER_BOOST/DRAG, EVENT_DEMAND, LATE_DAY_CLEARANCE, PRICE_RECOVERY, HOLD_LOW_GAIN, GUARDRAIL_{HOLD,COOLDOWN,STEP_LIMIT,FLOOR,CEILING,HOURS}, BELOW_COST_BLOCKED, POLICY_BOUND_ADJUST, LOW_CONFIDENCE, SOLD_OUT, STORE_CLOSED. Each comes with a numeric explanation.
 
+**Negotiation (walk-away price).** For a one-unit negotiated sale now: if refused, the buyer still buys at the published price with probability q (assumption 0.5); otherwise the unit stays. Accept p iff `net(p) ≥ q·net(published) + (1−q)·Δ`, with `Δ = V(s) − V(s−1)` the unit's opportunity cost (both branches continue at the published price). The result is clamped to [max(floor, published × (1 − max negotiated discount)), published]. The seller concedes 35% → 70% → 100% of the gap between listed and walk-away over three buyer offers. Agreements become ordinary server-side quotes (`origin = NEGOTIATION`) and go through the same checkout. Code: `walkAwayPrice` in `optimizer.ts`, `src/lib/server/negotiation.ts`.
+
 **Feedback loop.** Each decision snapshots inputs. Each hour's forecast is stored and later compared with the outcome (`hour_outcomes`). Observed vs forecast sell-through gives a shrunk calibration factor in [0.6, 1.4] that scales remaining forecast demand. That is a state update, not model training. Confidence is derived from logged exposure volume (views, quotes, abandons) and price variety, so paid orders are never the only denominator.
 
 ## Data model (SQLite)
@@ -79,6 +81,12 @@ Upgrade path to PostgreSQL: the schema is plain SQL, and all writes go through a
 | GET | `/api/agent/pricing-context` | bearer, `pricing:read` |
 | POST | `/api/agent/recommend` | bearer, `pricing:recommend` |
 | POST | `/api/agent/publish` `{decisionId}` | bearer, `pricing:publish` + policy allows + no approval needed |
+| POST | `/api/negotiations` `{offerCents, sku?, buyer?}` | buyer agent opens a one-unit negotiation |
+| GET | `/api/negotiations/:id` | buyer-safe view (no walk-away price) |
+| POST | `/api/negotiations/:id/offer` `{offerCents}` | max 3 offers |
+| POST | `/api/negotiations/:id/accept` / `decline` | accept the seller's counter / walk away |
+| GET | `/api/seller/negotiation-view` | seller-private walk-away price + reason (merchant auth) |
+| POST | `/api/simulations/jump` `{scenario: lunch\|closing}` | demo shortcut |
 | GET | `/api/events` | SSE |
 
 ## Security notes
