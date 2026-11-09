@@ -8,20 +8,32 @@ import { SCENES, photoFor, photoToDataUrl, type SceneKind } from "@/lib/client/d
 import { ItemCard } from "@/components/ItemCard";
 import { IconCamera, IconMic, IconSend, IconStop, IconStore } from "@/components/icons";
 import { ROSA } from "@/lib/demo/rosa";
-import { prefetch, speak as speakLine, stopVoice } from "@/lib/client/voice";
+import { MINA } from "@/lib/demo/mina";
+import { prefetch, speak as speakLine, stopVoice, type VoiceRole } from "@/lib/client/voice";
 
-/** Rosa's sample video: one clip per crate, played while her lines go through the real teaching pipeline. */
-const CLIPS = ROSA.clips;
-const ROSA_LINES = ROSA.scenes.flatMap((sc) => sc.lines);
-const AGENT_HELLO = "Morning, Rosa! Show me what you've got today.";
-const sceneOfLine = (n: number) => {
-  let left = n;
-  for (let i = 0; i < ROSA.scenes.length; i++) {
-    if (left < ROSA.scenes[i].lines.length) return i;
-    left -= ROSA.scenes[i].lines.length;
-  }
-  return ROSA.scenes.length - 1;
+/**
+ * Sample videos: one phone clip per item, played while the owner's lines go through the real
+ * teaching pipeline and the agent's actual replies are spoken back.
+ */
+type VideoKind = "fruit" | "closet";
+interface VideoScript {
+  voice: VoiceRole;
+  hello: string;
+  open: string | null;
+  openPoster: string;
+  scenes: { clip: string; photo: string; lines: string[] }[];
+}
+const VIDEOS: Record<VideoKind, VideoScript> = {
+  fruit: {
+    voice: "owner",
+    hello: "Morning, Rosa! Show me what you've got today.",
+    open: ROSA.clips.open,
+    openPoster: "/photos/stall-live.jpg",
+    scenes: ROSA.scenes.map((sc, i) => ({ clip: ROSA.clips.scenes[i], photo: sc.photo, lines: sc.lines })),
+  },
+  closet: { voice: "mina", hello: MINA.hello, open: null, openPoster: "/photos/closet-bedroom.jpg", scenes: MINA.scenes },
 };
+const flat = (v: VideoScript) => v.scenes.flatMap((sc, si) => sc.lines.map((line) => ({ line, si })));
 
 interface Item {
   id: string;
@@ -67,7 +79,7 @@ interface SpeechRec {
   stop: () => void;
 }
 type SpeechCtor = new () => SpeechRec;
-type Source = { kind: "none" } | { kind: "camera" } | { kind: "demo"; scene: SceneKind } | { kind: "video" };
+type Source = { kind: "none" } | { kind: "camera" } | { kind: "demo"; scene: SceneKind } | { kind: "video"; scene: VideoKind };
 
 const GREETING = "Hi! Point me at something you sell and tell me what it is, like “These are Fuji apples, about 30 lb.”";
 
@@ -124,8 +136,14 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   const ready = session.items.filter((i) => i.quantity !== null && i.quantity > 0 && i.listPriceCents !== null).length;
   const lastAgent = agentLine ?? [...session.messages].reverse().find((m) => m.role === "agent")?.text ?? GREETING;
   const ownerSaid = session.messages.filter((m) => m.role === "owner").length;
-  const videoDone = source.kind === "video" && ownerSaid >= ROSA_LINES.length;
-  const clip = source.kind !== "video" ? null : ownerSaid === 0 && !caption ? CLIPS.open : CLIPS.scenes[sceneOfLine(Math.max(0, ownerSaid - (caption ? 0 : 1)))];
+  const vid = source.kind === "video" ? VIDEOS[source.scene] : null;
+  const vlines = useMemo(() => (vid ? flat(vid) : []), [vid]);
+  const [pos, setPos] = useState(0); // next script line in the sample video
+  const posRef = useRef(0);
+  const videoDone = !!vid && pos >= vlines.length;
+  const sceneNow = vid ? (vlines[Math.min(pos, vlines.length - 1)]?.si ?? 0) : 0;
+  const clip = !vid ? null : pos === 0 && !caption && vid.open ? vid.open : vid.scenes[sceneNow].clip;
+  const clipPoster = !vid ? undefined : clip === vid.open ? vid.openPoster : vid.scenes[sceneNow].photo;
   const demoPhoto = source.kind === "demo" ? (focusItem && photoFor(source.scene, focusItem.name)?.src) || SCENES[source.scene].wide : null;
   const nextLine = useMemo(() => {
     if (source.kind !== "demo") return null;
@@ -165,9 +183,9 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
       c.getContext("2d")!.drawImage(cv, 0, 0, c.width, c.height);
       return c.toDataURL("image/jpeg", 0.7);
     }
-    if (source.kind === "video") {
-      // Clip not loaded yet: use the matching still from Rosa's stall.
-      const still = ROSA.scenes[sceneOfLine(session.messages.filter((m) => m.role === "owner").length)]?.photo;
+    if (vid) {
+      // Clip not loaded yet: use the matching still.
+      const still = vid.scenes[sceneNow]?.photo;
       return still ? photoToDataUrl(still) : null;
     }
     if (source.kind === "demo") {
@@ -229,34 +247,47 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
     if (source.kind !== "video" || !playing) return;
     const ctl = { on: true };
     playRef.current = ctl;
+    const v = VIDEOS[source.scene];
+    const lines = flat(v);
     (async () => {
-      let said = ownerSaid;
-      if (said === 0) {
-        setAgentLine(AGENT_HELLO);
-        prefetch("owner", ROSA_LINES[0]);
-        await speakLine("agent", AGENT_HELLO, { muted: mutedRef.current });
+      let i = posRef.current;
+      let lastReply: string | null = [...session.messages].reverse().find((m) => m.role === "agent")?.text ?? null;
+      if (i === 0 && ownerSaid === 0) {
+        setAgentLine(v.hello);
+        prefetch(v.voice, lines[0].line);
+        await speakLine("agent", v.hello, { muted: mutedRef.current });
       }
-      while (ctl.on && said < ROSA_LINES.length) {
-        const line = ROSA_LINES[said];
+      while (ctl.on && i < lines.length) {
+        const line = scriptLine(lines[i].line, lastReply);
+        if (!line) {
+          // An answer the agent didn't ask for (e.g. the price elsewhere, already looked up on Channel3).
+          i++;
+          posRef.current = i;
+          setPos(i);
+          continue;
+        }
         setCaption(line);
-        await speakLine("owner", line, { muted: mutedRef.current });
+        await speakLine(v.voice, line, { muted: mutedRef.current });
         if (!ctl.on) break;
         const s = await sendRef.current(line);
         if (!s) break;
-        said++;
+        i++;
+        posRef.current = i;
+        setPos(i);
         setAgentLine(null);
-        if (said < ROSA_LINES.length) prefetch("owner", ROSA_LINES[said]);
+        lastReply = s.reply ?? null;
+        if (i < lines.length) prefetch(v.voice, lines[i].line.replace(/^\?market:/, ""));
         if (s.reply && ctl.on) await speakLine("agent", s.reply, { muted: mutedRef.current });
       }
       setCaption(null);
-      if (said >= ROSA_LINES.length) setPlaying(false);
+      if (i >= lines.length) setPlaying(false);
     })();
     return () => {
       ctl.on = false;
       stopVoice();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, source.kind]);
+  }, [playing, source]);
 
   const toggleMic = () => {
     if (listening) return recRef.current?.stop();
@@ -306,10 +337,10 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
       <section className="lg:sticky lg:top-20 lg:self-start">
         <div className="grain relative h-[58vh] min-h-[360px] overflow-hidden bg-black lg:aspect-[4/5] lg:h-auto lg:rounded-[32px]">
           {source.kind === "camera" && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
-          {clip && <video ref={clipRef} key={clip} src={clip} poster={clip === CLIPS.open ? "/photos/stall-live.jpg" : ROSA.scenes[CLIPS.scenes.indexOf(clip)]?.photo} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />}
+          {clip && <video ref={clipRef} key={clip} src={clip} poster={clipPoster} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />}
           {source.kind === "video" && caption && (
             <p key={caption} className="rise absolute inset-x-4 bottom-[132px] z-10 ml-auto w-fit max-w-[88%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[16px] leading-snug text-white shadow-lg">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/70">Rosa</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/70">{source.scene === "closet" ? MINA.owner : ROSA.owner}</span>
               {caption}
             </p>
           )}
@@ -330,7 +361,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                   <button
                     type="button"
                     onClick={() => {
-                      setSource({ kind: "video" });
+                      setSource({ kind: "video", scene: "fruit" });
                       setPlaying(true);
                     }}
                     className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-[17px] font-semibold text-label"
@@ -338,8 +369,15 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                     ▶ Play the sample video
                   </button>
                   <p className="mt-2 text-[13px] text-white/70">Rosa teaches her fruit stall’s assistant, with sound. For this demo, instead of your camera.</p>
-                  <button type="button" onClick={() => setSource({ kind: "demo", scene: "closet" })} className="frosted-dark mt-3 w-full rounded-full py-3 text-[16px] font-medium text-white">
-                    Sample closet · prices looked up with Channel3
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSource({ kind: "video", scene: "closet" });
+                      setPlaying(true);
+                    }}
+                    className="frosted-dark mt-3 w-full rounded-full py-3 text-[16px] font-medium text-white"
+                  >
+                    ▶ Sample closet video · 5 items, prices via Channel3
                   </button>
                   <button type="button" onClick={startCamera} className="mt-4 inline-flex items-center gap-1.5 text-[15px] text-white/80 hover:text-white">
                     <IconCamera size={16} /> Or use my camera (needs https)

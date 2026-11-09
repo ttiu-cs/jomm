@@ -1,3 +1,5 @@
+import { MINA } from "../demo/mina";
+
 /** Scripted owner walk-throughs, used by the demo camera and as a stage fallback. Client-safe. */
 export const EXAMPLE_SCRIPTS: Record<"fruit" | "closet", { shopName: string; lines: string[] }> = {
   fruit: {
@@ -12,23 +14,7 @@ export const EXAMPLE_SCRIPTS: Record<"fruit" | "closet", { shopName: string; lin
       "$5.49 a box, at least $4.25. Sell them by this week.",
     ],
   },
-  closet: {
-    shopName: "Mina's Closet",
-    // "?market:" lines are only said if the agent asks for the price elsewhere, i.e. when it
-    // couldn't look the item up on Channel3 (no CHANNEL3_API_KEY).
-    lines: [
-      "This is a Madewell wool coat, worn twice, size M.",
-      "Just one. Let's ask $115, but no less than $85.",
-      "No rush.",
-      "?market:New ones go for about $350 online.",
-      "Coats go fast once it gets cold.",
-      "Next is a Levi's trucker jacket, size S, small stain on the left cuff.",
-      "One left. $19, lowest $14. I'd like it gone this week.",
-      "?market:New ones are about $85 online.",
-      "If it doesn't sell, I'll donate it.",
-      "Denim sells okay.",
-    ],
-  },
+  closet: { shopName: MINA.shopName, lines: MINA.scenes.flatMap((sc) => sc.lines) },
 };
 
 const ASKS_MARKET = /elsewhere|supermarket|pay for/i;

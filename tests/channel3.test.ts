@@ -80,7 +80,7 @@ describe("teaching a second-hand item with Channel3", () => {
       reply = last.reply;
     }
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(last!.items.map((i) => i.rules?.marketCents)).toEqual([35000, 8500]);
+    expect(last!.items.map((i) => i.rules?.marketCents)).toEqual([35000, 8500, 13000, 20000, 21000]);
     expect(last!.items.every((i) => i.checklist.every((x) => x.done))).toBe(true);
   });
 });

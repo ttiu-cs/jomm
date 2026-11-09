@@ -17,6 +17,11 @@ const VOICES = {
     instructions:
       "You are Rosa, a warm, cheerful woman in her fifties who runs a fruit stall at a small-town farmers market. You're talking to your phone while you work: relaxed, friendly, a little smile in your voice, natural pace, not performing.",
   },
+  mina: {
+    voice: "coral",
+    instructions:
+      "You are Mina, a friendly woman in her late twenties selling a few things from her closet. You're filming with your phone in your bedroom, chatting casually and warmly, a bit upbeat, natural pace.",
+  },
   agent: {
     voice: "cedar",
     instructions: "You are a friendly shop assistant speaking from a phone app. Warm, calm and clear, conversational, like a helpful new employee asking a quick question. Natural pace.",
@@ -27,7 +32,8 @@ const dir = path.join(process.env.VOICE_CACHE_DIR || path.join(os.homedir(), ".r
 
 export async function GET(req: Request) {
   const u = new URL(req.url);
-  const role = u.searchParams.get("role") === "agent" ? "agent" : "owner";
+  const r = u.searchParams.get("role");
+  const role = r === "agent" ? "agent" : r === "mina" ? "mina" : "owner";
   const text = (u.searchParams.get("text") ?? "").trim().slice(0, 400);
   if (!text) return new Response("text required", { status: 422 });
   const key = process.env.OPENAI_API_KEY?.trim();

@@ -4,7 +4,7 @@
  * If voices aren't available (no OpenAI key) or sound is off, it waits about as long as it takes
  * to read the line, so captions still pace naturally.
  */
-export type VoiceRole = "owner" | "agent";
+export type VoiceRole = "owner" | "mina" | "agent";
 
 const url = (role: VoiceRole, text: string) => `/api/voice?role=${role}&text=${encodeURIComponent(text)}`;
 const readingMs = (text: string) => Math.min(6000, Math.max(1400, text.length * 55));

@@ -66,9 +66,9 @@ export function extractRules(t: string): { rules: SellingRules; marketAmount: nu
     marketAmount = Math.round(parseFloat(money[1]) * 100);
     rules.marketCents = marketAmount;
     const note = t.match(/\b(?:the |a )?(supermarket|grocery store|farm ?stand(?: down the (?:road|street))?|store(?: down the (?:road|street))?|market|stall next door|walmart|costco|whole foods|trader joe'?s|safeway)\b/i);
-    rules.marketNote = note ? `the ${note[1].toLowerCase()}` : "other shops";
+    rules.marketNote = /\bnew ones?\b/i.test(t) ? "new ones online" : note ? `the ${note[1].toLowerCase()}` : "other shops";
   }
-  if (/\b(sell(?:s)? out|go(?:es)? fast|fly off|always gone|gone by (?:noon|lunch|10|11))\b/i.test(t)) rules.demand = "high";
+  if (/\b(sell(?:s)? out|sells? fast|go(?:es)? fast|fly off|always gone|gone by (?:noon|lunch|10|11))\b/i.test(t)) rules.demand = "high";
   else if (/\b(slow|not moving|isn'?t moving|hard to sell|not selling|nobody(?:'s)? buying)\b/i.test(t)) rules.demand = "slow";
   else if (/\b(steady|normal|about \d+\s*\w*\s*(?:a|per) day|sells? (?:ok|okay|fine))\b/i.test(t)) rules.demand = "normal";
   const pct = t.match(/(\d{1,2})\s*%\s*off/i);
@@ -110,7 +110,7 @@ const QTY_LOOSE = /(?:we have|i have|there (?:are|is)|about|around|got)\s+(\d+)(
 const QTY_LEFT = /(\d+)\s+(?:of them|left|in stock|on hand)/i;
 
 const DESCRIPTOR =
-  /\b(sweet|sour|tart|crisp|crunchy|juicy|ripe|overripe|soft|firm|fresh|organic|local|picked|harvest|season|flavor|taste|tasty|size|large|small|big|medium|heavy|brand|vintage|wore|worn|wear|used|new|tags?|stain|stains|tear|hole|scratch|faded|fit|fits|warm|waterproof|leather|wool|cotton|silk|denim|condition|perfect|great|good|bruis\w*|blemish\w*|seedless|heirloom|grade|imported|handmade)\b|달|아삭|신선|당도|새것|얼룩|사이즈/i;
+  /\b(sweet|sour|tart|crisp|crunchy|juicy|ripe|overripe|soft|firm|fresh|organic|local|picked|harvest|season|flavor|taste|tasty|size|large|small|big|medium|heavy|brand|vintage|wore|worn|wear|used|new|tags?|stain|stains|tear|hole|scratch|faded|fit|fits|warm|waterproof|leather|wool|cotton|silk|denim|condition|perfect|great|good|bruis\w*|blemish\w*|seedless|heirloom|grade|imported|handmade|with (?:the |its |original )?(?:box|case|tags|dust bag|receipt)|original box)\b|달|아삭|신선|당도|새것|얼룩|사이즈/i;
 
 function round2(x: number) {
   return Math.round(x * 100);
@@ -188,7 +188,7 @@ export function interpretUtterance(text: string): Interpretation {
   else if (/\b(no rush|no hurry|not in a hurry|whenever|take (?:your|its) time)\b|급하지/i.test(t)) out.set.sellBy = "no_rush";
 
   if (/\b(like new|brand new|new with tags|never (?:worn|used)|unworn)\b|새것/i.test(t)) out.set.condition = "Like new";
-  else if (/\b(?:(?:barely|only) (?:worn|used)|worn (?:once|twice)|good condition|great condition)\b/i.test(t)) out.set.condition = "Good";
+  else if (/\b(?:(?:barely|only) (?:worn|used)|worn (?:once|twice|a few times|a couple of times)|good condition|great condition)\b/i.test(t)) out.set.condition = "Good";
   else if (/\b(stain|stains|tear|hole|scratch|damage|faded|worn out|missing button)\b|얼룩/i.test(t)) out.set.condition = "Has flaws";
   else if (/\b(overripe|very ripe|bruis\w*|soft)\b/i.test(t)) out.set.condition = "Very ripe";
   else if (/\b(fresh|picked (?:this|today)|this morning|just came in)\b|신선/i.test(t)) out.set.condition = "Fresh";

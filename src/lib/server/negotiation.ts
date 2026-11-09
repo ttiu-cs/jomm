@@ -308,7 +308,7 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
   const market =
     typeof r.marketCents !== "number"
       ? ""
-      : r.marketSource === "channel3"
+      : r.marketSource === "channel3" || r.marketNote === "new ones online"
         ? `New ones sell for about ${fmt(r.marketCents)} online`
         : `${capitalize(r.marketNote ?? "other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"} ${fmt(r.marketCents)}${per}`;
   const closing = k.sell_by === "today" && typeof r.closeHour === "number" ? `We close at ${hourLabel(r.closeHour)} and I’d like these gone today` : "";
@@ -319,7 +319,7 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
       r.leftover === "waste" && k.sell_by !== "no_rush"
         ? "I’d rather you have them than see them go to waste"
         : cheaperThanMarket
-          ? r.marketSource === "channel3"
+          ? r.marketSource === "channel3" || r.marketNote === "new ones online"
             ? `new ones sell for about ${fmt(r.marketCents!)} online, so it’s already a steal`
             : `that’s still well under ${r.marketNote ?? "other shops"}`
           : r.demand === "high"
