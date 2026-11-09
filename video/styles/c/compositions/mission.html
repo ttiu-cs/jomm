@@ -1,0 +1,35 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    .ph { position: absolute; inset: 0; overflow: hidden; }
+    .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(20,14,10,0.78) 0%, rgba(20,14,10,0.35) 55%, rgba(20,14,10,0.1) 100%); }
+    #c-mk { position: absolute; left: 140px; top: 250px; font-family: Caveat, cursive; font-size: 72px; color: #ffb38f; }
+    #c-mt { position: absolute; left: 140px; top: 340px; width: 1200px; font-family: 'Playfair Display', serif; font-size: 112px; line-height: 1.04; color: #fff; }
+    #c-ms { position: absolute; left: 144px; top: 760px; width: 1100px; font-size: 36px; line-height: 1.4; color: rgba(255,255,255,0.82); }
+  </style>
+  <div id="root" data-composition-id="mission" data-width="1920" data-height="1080">
+    <div id="c-mp" class="ph clip" data-start="0" data-duration="7.4" ><img src="assets/img/peaches-hand.jpg" alt="" /></div>
+    <div id="c-sh3" class="shade clip" data-start="0" data-duration="7.4" data-layout-ignore></div>
+    <p id="c-mk" class=" clip" data-start="0" data-duration="7.4" >our mission</p>
+    <h2 id="c-mt" class=" clip" data-start="0" data-duration="7.4" ><span class="w">Bring</span> <span class="w">every</span> <span class="w">small</span> <span class="w">seller</span> <span class="w">into</span> <span class="w">the</span> <span class="w">AI</span> <span class="w">era.</span></h2>
+    <p id="c-ms" class=" clip" data-start="0" data-duration="7.4" >PayPal believes everyone deserves a place in the digital economy. We carry that into the age of AI shopping agents.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-mp img", { scale: 1.1 }, { scale: 1.0, duration: 7.4, ease: "none" }, 0);
+    tl.fromTo("#c-ms", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.3);
+    tl.fromTo("#c-mk", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.6);
+    tl.fromTo("#c-mt .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.13, ease: "power4.out" }, 2.9);
+    tl.to(["#c-mk", "#c-mt", "#c-ms"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 7.15);
+    window.__timelines["mission"] = tl;
+  </script>
+</template>

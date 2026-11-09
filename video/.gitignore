@@ -2,5 +2,9 @@ raw/
 out/
 hf/assets/deal.mp4
 hf/assets/img/*.mp4
-hf/.hyperframes/
-hf/node_modules/
+**/.hyperframes/
+**/node_modules/
+styles/*/assets/
+styles/check_*.json
+styles/*.log
+styles/__pycache__/

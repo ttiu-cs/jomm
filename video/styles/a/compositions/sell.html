@@ -1,0 +1,27 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    .cap { position: absolute; left: 120px; bottom: 90px; padding: 22px 32px; border-radius: 22px; background: rgba(43,33,26,0.9); color: #fff; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
+    .cap small { display: block; font-size: 30px; font-weight: 400; color: rgba(255,255,255,0.7); margin-top: 6px; }
+    #a-tag { position: absolute; left: 120px; top: 60px; padding: 12px 22px; border-radius: 999px; background: #0b2a5c; color: #fff; font-size: 28px; font-weight: 700; }
+  </style>
+  <div id="root" data-composition-id="sell" data-width="1920" data-height="1080">
+    <p id="a-sc1" class="cap clip" data-start="0.2" data-duration="3.4">Sells to any shopper’s AI agent<small>haggling the way the owner would</small></p>
+    <p id="a-sc2" class="cap clip" data-start="3.8" data-duration="3.6">And PayPal pays them.<small>approved by the shopper · captured · verified</small></p>
+    <p id="a-tag" class="clip" data-start="3.8" data-duration="3.6">PayPal Sandbox · test money</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#a-sc1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 0.2);
+    tl.fromTo("#a-sc2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 3.8);
+    window.__timelines["sell"] = tl;
+  </script>
+</template>

@@ -1,0 +1,34 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #141010; color: #141010; }
+    #b-fl { position: absolute; inset: 0; background: #e0592a; transform-origin: 50% 100%; }
+    #b-mk { position: absolute; left: 120px; top: 160px; font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; letter-spacing: 0.1em; }
+    #b-mt { position: absolute; left: 110px; top: 230px; width: 1720px; font-size: 168px; font-weight: 900; letter-spacing: -0.055em; line-height: 0.92; }
+    #b-mt .wh { color: #fff; }
+    #b-ms { position: absolute; left: 120px; top: 830px; width: 1500px; font-size: 38px; line-height: 1.35; font-weight: 700; }
+  </style>
+  <div id="root" data-composition-id="mission" data-width="1920" data-height="1080">
+    <div id="b-fl" class=" clip" data-start="0" data-duration="7.4" data-layout-ignore></div>
+    <p id="b-mk" class=" clip" data-start="0" data-duration="7.4" >OUR MISSION</p>
+    <h2 id="b-mt" class=" clip" data-start="0" data-duration="7.4" ><span class="w">Every</span> <span class="w">small</span> <span class="w">seller,</span><br/><span class="w wh">ready</span> <span class="w wh">for</span> <span class="w wh">the</span> <span class="w wh">AI</span> <span class="w wh">era.</span></h2>
+    <p id="b-ms" class=" clip" data-start="0" data-duration="7.4" >PayPal believes everyone deserves a place in the digital economy. We carry that into the age of AI agents.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#b-fl", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power2.inOut" }, 0);
+    tl.fromTo("#b-ms", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.4);
+    tl.fromTo("#b-mk", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.7);
+    tl.fromTo("#b-mt .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.1, ease: "power4.out" }, 2.9);
+    tl.to(["#b-mk", "#b-mt", "#b-ms"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 7.15);
+    window.__timelines["mission"] = tl;
+  </script>
+</template>

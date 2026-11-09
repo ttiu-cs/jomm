@@ -1,0 +1,42 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #f6f1ea; color: #2b211a; }
+    #c-phone { position: absolute; left: 720px; top: 90px; width: 480px; height: 900px; border-radius: 56px; background: #111; padding: 14px; box-shadow: 0 40px 80px rgba(43,33,26,0.3); }
+    #c-phone .scr { position: relative; width: 100%; height: 100%; border-radius: 44px; overflow: hidden; }
+    #c-phone video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .hn { position: absolute; font-family: Caveat, cursive; font-size: 58px; color: #6b4a2b; }
+    .hn b { color: #e0592a; font-weight: 600; }
+    #c-ht { position: absolute; left: 120px; top: 120px; width: 560px; font-family: 'Playfair Display', serif; font-size: 70px; line-height: 1.08; }
+    #c-hs { position: absolute; left: 120px; top: 440px; width: 520px; font-size: 34px; line-height: 1.4; color: #6b5a4c; }
+  </style>
+  <div id="root" data-composition-id="how" data-width="1920" data-height="1080">
+    <h2 id="c-ht" class=" clip" data-start="0" data-duration="8.2" ><span class="w">Make</span> <span class="w">your</span> <span class="w">own</span> <span class="w">AI</span> <span class="w">agent.</span> <span class="w">Just</span> <span class="w">by</span> <span class="w">talking.</span></h2>
+    <p id="c-hs" class=" clip" data-start="0" data-duration="8.2" >Point the phone at the goods and talk. The agent keeps asking until it can haggle like you.</p>
+    <div id="c-phone"><div class="scr"><video id="c-pv" class="clip" src="assets/img/rosa-strawberries.mp4" muted playsinline data-start="0" data-duration="8.2" data-track-index="2"></video></div></div>
+    <p id="c-h1" class="hn clip" data-start="2.0" data-duration="6.2" style="left:1260px;top:200px">strawberries · <b>$5.49</b>/box</p>
+    <p id="c-h2" class="hn clip" data-start="3.4" data-duration="4.8" style="left:1260px;top:340px">never below <b>$4.25</b> 🔒</p>
+    <p id="c-h3" class="hn clip" data-start="4.6" data-duration="3.6" style="left:1260px;top:480px">must go <b>tonight</b></p>
+    <p id="c-h4" class="hn clip" data-start="5.6" data-duration="2.6" style="left:1260px;top:620px">supermarket: $4.99</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-ht .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.1, ease: "power4.out" }, 0.2);
+    tl.fromTo("#c-hs", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.6);
+    tl.fromTo("#c-phone", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.8, ease: "expo.out" }, 0.1);
+    tl.fromTo("#c-h1", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 2.0);
+    tl.fromTo("#c-h2", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 3.4);
+    tl.fromTo("#c-h3", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 4.6);
+    tl.fromTo("#c-h4", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 5.6);
+    tl.to(["#c-ht", "#c-hs", "#c-phone"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 7.95);
+    window.__timelines["how"] = tl;
+  </script>
+</template>

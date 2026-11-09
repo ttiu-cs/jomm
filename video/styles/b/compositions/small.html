@@ -1,0 +1,37 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #141010; color: #fff; }
+    #b-s0 { position: absolute; left: 120px; top: 150px; font-size: 64px; font-weight: 700; letter-spacing: -0.03em; color: rgba(255,255,255,0.7); }
+    .slot { position: absolute; left: 110px; top: 290px; font-size: 250px; font-weight: 900; letter-spacing: -0.06em; line-height: 1; color: #e0592a; }
+    #b-s4 { position: absolute; left: 120px; top: 720px; font-size: 80px; font-weight: 900; letter-spacing: -0.04em; }
+    #b-s4 .w { position: relative; }
+    .strike { position: absolute; left: -6px; right: -6px; top: 52%; height: 10px; background: #e0592a; transform-origin: left center; }
+  </style>
+  <div id="root" data-composition-id="small" data-width="1920" data-height="1080">
+    <p id="b-s0" class=" clip" data-start="0" data-duration="9" >But most of the world’s sellers are small.</p>
+    <h2 id="b-sl1" class="slot clip" data-start="2.2" data-duration="1.1">a fruit stall.</h2>
+    <h2 id="b-sl2" class="slot clip" data-start="3.3" data-duration="1.0">a closet.</h2>
+    <h2 id="b-sl3" class="slot clip" data-start="4.3" data-duration="4.7">one person.</h2>
+    <p id="b-s4" class=" clip" data-start="0" data-duration="9" ><span class="w">website<i class="strike"></i></span>&nbsp;&nbsp;<span class="w">tech team<i class="strike"></i></span>&nbsp;&nbsp;<span class="w">developer<i class="strike"></i></span></p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#b-s0", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.1);
+    tl.fromTo("#b-sl1", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "expo.out" }, 2.2);
+    tl.fromTo("#b-sl2", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "expo.out" }, 3.3);
+    tl.fromTo("#b-sl3", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "expo.out" }, 4.3);
+    tl.fromTo("#b-s4 .w", { opacity: 0 }, { opacity: 1, duration: 0.15, stagger: 0.2 }, 6.0);
+    tl.fromTo("#b-s4 .strike", { scaleX: 0 }, { scaleX: 1, duration: 0.25, stagger: 0.25, ease: "power3.out" }, 6.5);
+    tl.to(["#b-s0", "#b-sl3", "#b-s4"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 8.75);
+    window.__timelines["small"] = tl;
+  </script>
+</template>

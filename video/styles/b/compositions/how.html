@@ -1,0 +1,28 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #141010; color: #fff; }
+    #b-ht { position: absolute; left: 120px; top: 90px; font-size: 92px; font-weight: 900; letter-spacing: -0.045em; }
+    #b-ht .acc { color: #e0592a; }
+    #b-hl { position: absolute; left: 120px; top: 930px; font-family: 'JetBrains Mono', monospace; font-size: 30px; color: rgba(255,255,255,0.6); }
+  </style>
+  <div id="root" data-composition-id="how" data-width="1920" data-height="1080">
+    <h2 id="b-ht" class=" clip" data-start="0" data-duration="8.2" ><span class="w">Talk</span> <span class="w">to</span> <span class="w">your</span> <span class="w">stall.</span> <span class="w acc">Get</span> <span class="w acc">an</span> <span class="w acc">agent.</span></h2>
+    <p id="b-hl" class=" clip" data-start="0" data-duration="8.2" >price · lowest price 🔒 · sell-by · prices elsewhere · bulk deals · leftovers</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#b-ht .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.09, ease: "power4.out" }, 0.2);
+    tl.fromTo("#b-hl", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.0);
+    tl.to(["#b-ht", "#b-hl"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 7.95);
+    window.__timelines["how"] = tl;
+  </script>
+</template>

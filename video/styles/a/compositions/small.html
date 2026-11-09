@@ -1,0 +1,37 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #f6f1ea; color: #2b211a; }
+    .card { position: absolute; top: 250px; width: 500px; height: 560px; border-radius: 32px; overflow: hidden; box-shadow: 0 30px 60px rgba(43,33,26,0.18); }
+    .card img { width: 100%; height: 100%; object-fit: cover; }
+    .card p { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 28px; font-family: Caveat, cursive; font-size: 54px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.6)); }
+    #a-c1 { left: 160px; } #a-c2 { left: 710px; } #a-c3 { left: 1260px; }
+    #a-s1 { position: absolute; left: 160px; top: 110px; font-size: 64px; font-weight: 700; letter-spacing: -0.03em; }
+    #a-s2 { position: absolute; left: 160px; top: 870px; font-size: 56px; font-weight: 700; letter-spacing: -0.03em; color: #e0592a; }
+  </style>
+  <div id="root" data-composition-id="small" data-width="1920" data-height="1080">
+    <h2 id="a-s1" class=" clip" data-start="0" data-duration="9" >But most of the world’s sellers are small.</h2>
+    <div id="a-c1" class="card clip" data-start="0" data-duration="9" ><img src="assets/img/stall-live.jpg" alt="" /><p>a fruit stall</p></div>
+    <div id="a-c2" class="card clip" data-start="0" data-duration="9" ><img src="assets/img/closet-bedroom.jpg" alt="" /><p>a closet</p></div>
+    <div id="a-c3" class="card clip" data-start="0" data-duration="9" ><img src="assets/img/hero-vendor.jpg" alt="" /><p>one person</p></div>
+    <h2 id="a-s2" class=" clip" data-start="0" data-duration="9" >No website. No tech team.</h2>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#a-s1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.2);
+    tl.fromTo("#a-c1", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.7, ease: "expo.out" }, 2.3);
+    tl.fromTo("#a-c2", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.7, ease: "expo.out" }, 3.3);
+    tl.fromTo("#a-c3", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.7, ease: "expo.out" }, 4.2);
+    tl.fromTo("#a-s2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 6.1);
+    tl.to(["#a-s1", "#a-s2", "#a-c1", "#a-c2", "#a-c3"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 8.75);
+    window.__timelines["small"] = tl;
+  </script>
+</template>

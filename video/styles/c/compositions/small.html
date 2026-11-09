@@ -1,0 +1,42 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    .ph { position: absolute; inset: 0; overflow: hidden; }
+    .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(20,14,10,0.78) 0%, rgba(20,14,10,0.35) 55%, rgba(20,14,10,0.1) 100%); }
+    .note { position: absolute; left: 140px; bottom: 150px; font-family: Caveat, cursive; font-size: 96px; color: #fff; }
+    #c-st { position: absolute; left: 140px; top: 120px; font-size: 52px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    #c-sb { position: absolute; left: 140px; top: 190px; font-size: 40px; color: #ffb38f; }
+  </style>
+  <div id="root" data-composition-id="small" data-width="1920" data-height="1080">
+    <div id="c-q1" class="ph clip" data-start="0" data-duration="3.4"><img src="assets/img/stall-live.jpg" alt="" /></div>
+    <div id="c-q2" class="ph clip" data-start="3.4" data-duration="1.0"><img src="assets/img/closet-bedroom.jpg" alt="" style="object-position:50% 40%" /></div>
+    <div id="c-q3" class="ph clip" data-start="4.4" data-duration="4.6"><img src="assets/img/hero-vendor.jpg" alt="" style="object-position:50% 30%" /></div>
+    <div id="c-sh2" class="shade clip" data-start="0" data-duration="9" data-layout-ignore></div>
+    <p id="c-st" class=" clip" data-start="0" data-duration="9" >But most of the world’s sellers are small.</p>
+    <p id="c-n1" class="note clip" data-start="2.2" data-duration="1.2">a fruit stall.</p>
+    <p id="c-n2" class="note clip" data-start="3.4" data-duration="1.0">a closet.</p>
+    <p id="c-n3" class="note clip" data-start="4.4" data-duration="4.6">one person.</p>
+    <p id="c-sb" class="clip" data-start="6.0" data-duration="3.0">No website. No tech team.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-q1 img", { scale: 1.0 }, { scale: 1.08, duration: 3.4, ease: "none" }, 0);
+    tl.fromTo("#c-q3 img", { scale: 1.08 }, { scale: 1.0, duration: 4.6, ease: "none" }, 4.4);
+    tl.fromTo("#c-st", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.2);
+    tl.fromTo("#c-n1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out" }, 2.2);
+    tl.fromTo("#c-n2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out" }, 3.4);
+    tl.fromTo("#c-n3", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out" }, 4.4);
+    tl.fromTo("#c-sb", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 6.0);
+    tl.to(["#c-st", "#c-sb", "#c-n3"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 8.75);
+    window.__timelines["small"] = tl;
+  </script>
+</template>

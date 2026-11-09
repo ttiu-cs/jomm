@@ -1,0 +1,30 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #f6f1ea; color: #2b211a; }
+    #a-logo { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font-size: 230px; }
+    #a-tg { position: absolute; left: 0; right: 0; top: 620px; text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -0.03em; }
+    #a-url { position: absolute; left: 0; right: 0; top: 730px; text-align: center; font-size: 34px; color: #8a7868; }
+  </style>
+  <div id="root" data-composition-id="end" data-width="1920" data-height="1080">
+    <div id="a-logo" class="clip" data-start="0" data-duration="6.9"><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span></div>
+    <p id="a-tg" class=" clip" data-start="0" data-duration="6.9" ><span class="w">Teach</span> <span class="w">your</span> <span class="w">stall.</span> <span class="w">It</span> <span class="w">haggles</span> <span class="w">with</span> <span class="w">AI.</span> <span class="w" style="color:#0b2a5c">PayPal</span> <span class="w" style="color:#0b2a5c">pays.</span></p>
+    <p id="a-url" class=" clip" data-start="0" data-duration="6.9" >jomm.onrender.com</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#a-logo", { opacity: 0, scale: 1.12, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 0.1);
+    tl.fromTo("#a-logo .dot", { y: -300 }, { y: 0, duration: 0.6, ease: "back.out(1.6)" }, 0.5);
+    tl.fromTo("#a-tg .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.2, ease: "power4.out" }, 1.3);
+    tl.fromTo("#a-url", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 4.4);
+    window.__timelines["end"] = tl;
+  </script>
+</template>

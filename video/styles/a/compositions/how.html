@@ -1,0 +1,32 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { color: #2b211a; }
+    #a-ht { position: absolute; left: 140px; top: 250px; width: 620px; font-size: 76px; line-height: 1.04; font-weight: 700; letter-spacing: -0.035em; }
+    #a-ht .acc { color: #e0592a; }
+    #a-hc { position: absolute; left: 140px; top: 620px; width: 620px; display: flex; flex-wrap: wrap; gap: 14px; }
+    #a-hc span { padding: 12px 22px; border-radius: 999px; background: #fffdf9; font-size: 32px; box-shadow: 0 6px 16px rgba(43,33,26,0.08); }
+    #a-hn { position: absolute; left: 140px; top: 820px; font-family: Caveat, cursive; font-size: 46px; color: #6b4a2b; }
+  </style>
+  <div id="root" data-composition-id="how" data-width="1920" data-height="1080">
+    <h2 id="a-ht" class=" clip" data-start="0" data-duration="8.2" ><span class="w">Make</span> <span class="w">your</span> <span class="w">own</span> <span class="w">AI</span> <span class="w">agent</span> <span class="w">in</span> <span class="w">minutes.</span><br/><span class="w acc">Just</span> <span class="w acc">by</span> <span class="w acc">talking.</span></h2>
+    <div id="a-hc" class=" clip" data-start="0" data-duration="8.2" ><span>No code</span><span>No website</span><span>No tech team</span></div>
+    <p id="a-hn" class=" clip" data-start="0" data-duration="8.2" >↗ Rosa teaches her stall with her phone camera</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#a-ht .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.09, ease: "power4.out" }, 0.3);
+    tl.fromTo("#a-hc span", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.25, ease: "expo.out" }, 4.6);
+    tl.fromTo("#a-hn", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.4);
+    tl.to(["#a-ht", "#a-hc", "#a-hn"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 7.95);
+    window.__timelines["how"] = tl;
+  </script>
+</template>

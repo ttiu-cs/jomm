@@ -1,0 +1,32 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #f6f1ea; color: #2b211a; }
+    #c-logo { position: absolute; left: 0; right: 0; top: 300px; text-align: center; font-size: 220px; }
+    #c-tg { position: absolute; left: 0; right: 0; top: 590px; text-align: center; font-family: 'Playfair Display', serif; font-size: 58px; }
+    #c-hand { position: absolute; left: 0; right: 0; top: 700px; text-align: center; font-family: Caveat, cursive; font-size: 54px; color: #e0592a; }
+    #c-url { position: absolute; left: 0; right: 0; top: 800px; text-align: center; font-size: 32px; color: #8a7868; }
+  </style>
+  <div id="root" data-composition-id="end" data-width="1920" data-height="1080">
+    <div id="c-logo" class="clip" data-start="0" data-duration="6.9"><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span></div>
+    <p id="c-tg" class=" clip" data-start="0" data-duration="6.9" ><span class="w">Teach</span> <span class="w">your</span> <span class="w">stall.</span> <span class="w">It</span> <span class="w">haggles</span> <span class="w">with</span> <span class="w">AI.</span></p>
+    <p id="c-hand" class=" clip" data-start="0" data-duration="6.9" >…and PayPal pays.</p>
+    <p id="c-url" class=" clip" data-start="0" data-duration="6.9" >jomm.onrender.com</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-logo", { opacity: 0, filter: "blur(12px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out" }, 0.1);
+    tl.fromTo("#c-tg .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.2, ease: "power4.out" }, 1.3);
+    tl.fromTo("#c-hand", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power4.out" }, 3.2);
+    tl.fromTo("#c-url", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 4.4);
+    window.__timelines["end"] = tl;
+  </script>
+</template>

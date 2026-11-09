@@ -1,0 +1,47 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    @font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+    
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+
+    .w { display: inline-block; }
+
+    #root { background: #f6f1ea; color: #2b211a; }
+    .chip { position: absolute; left: -420px; padding: 14px 26px; border-radius: 999px; background: #fffdf9; box-shadow: 0 8px 24px rgba(43,33,26,0.10); font-size: 30px; white-space: nowrap; }
+    #a-store { position: absolute; left: 1300px; top: 290px; width: 440px; height: 500px; border-radius: 36px; background: #fffdf9; box-shadow: 0 30px 60px rgba(43,33,26,0.14); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    #a-store b { font-size: 52px; } #a-store span { font-size: 30px; color: #8a7868; }
+    #a-t1 { position: absolute; left: 160px; top: 360px; width: 1060px; font-size: 96px; line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; }
+    #a-t2 { position: absolute; left: 160px; top: 610px; font-size: 44px; color: #6b5a4c; }
+    #a-t1 .acc { color: #e0592a; }
+  </style>
+  <div id="root" data-composition-id="hook" data-width="1920" data-height="1080">
+    <div id="a-chips" data-layout-ignore>
+      <div class="chip" id="ac1" style="top:130px">🤖 “3 boxes of strawberries”</div>
+      <div class="chip" id="ac2" style="top:880px">🤖 “a wool coat under $120”</div>
+      <div class="chip" id="ac3" style="top:210px">🤖 “cheapest peaches”</div>
+      <div class="chip" id="ac4" style="top:960px">🤖 “running shoes, size 9”</div>
+    </div>
+    <div id="a-store" class=" clip" data-start="0" data-duration="5.6" ><b>Big store</b><span>API · catalog · checkout</span></div>
+    <h1 id="a-t1" class=" clip" data-start="0" data-duration="5.6" ><span class="w">Shopping</span> <span class="w">is</span> <span class="w">moving</span> <span class="w">to</span> <span class="w acc">AI&nbsp;agents.</span></h1>
+    <p id="a-t2" class=" clip" data-start="0" data-duration="5.6" >Big stores will plug in fast.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#a-t1 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.1, ease: "power4.out" }, 0.0);
+    tl.fromTo("#a-store", { opacity: 1, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.8, ease: "expo.out" }, 0);
+    tl.fromTo("#ac1", { x: 0, y: 0, opacity: 1 }, { x: 1720, y: 220, opacity: 1, duration: 2.3, ease: "power2.in" }, 1.2);
+    tl.to("#ac1", { opacity: 0, duration: 0.15 }, 3.3499999999999996);
+    tl.fromTo("#ac2", { x: 0, y: 0, opacity: 1 }, { x: 1720, y: -520, opacity: 1, duration: 2.3, ease: "power2.in" }, 1.5);
+    tl.to("#ac2", { opacity: 0, duration: 0.15 }, 3.65);
+    tl.fromTo("#ac3", { x: 0, y: 0, opacity: 1 }, { x: 1720, y: 140, opacity: 1, duration: 2.3, ease: "power2.in" }, 1.7999999999999998);
+    tl.to("#ac3", { opacity: 0, duration: 0.15 }, 3.9499999999999997);
+    tl.fromTo("#ac4", { x: 0, y: 0, opacity: 1 }, { x: 1720, y: -600, opacity: 1, duration: 2.3, ease: "power2.in" }, 2.1);
+    tl.to("#ac4", { opacity: 0, duration: 0.15 }, 4.25);
+    tl.fromTo("#a-t2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.9);
+    tl.to(["#a-t1", "#a-t2", "#a-store"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 5.35);
+    window.__timelines["hook"] = tl;
+  </script>
+</template>
