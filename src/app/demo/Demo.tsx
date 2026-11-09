@@ -321,7 +321,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
         </span>
         <span className="flex shrink-0 items-center gap-2 text-right">
           <span>
-            <b className="block text-label">{run ? `${run.who}’s agent` : "Shopper’s agent"}</b>buys for {run ? (run.who === "You" ? "you" : run.who) : "a shopper"}
+            <b className="block text-label">{run ? (run.who === "You" ? "Your agent" : `${run.who}’s agent`) : "Shopper’s agent"}</b>buys for {run ? (run.who === "You" ? "you" : run.who) : "a shopper"}
           </span>
           <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-[16px] text-white">{run?.emoji ?? <IconCart size={16} />}</span>
         </span>
@@ -347,7 +347,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
           )}
           {msgs.map((l, i) =>
             l.who === "note" ? (
-              <p key={i} className="rise py-1 text-center text-[12px] font-medium text-label-3">
+              <p key={i} className="rise break-words py-1 text-center text-[12px] font-medium text-label-3 [overflow-wrap:anywhere]">
                 {l.text}
               </p>
             ) : (
@@ -437,7 +437,7 @@ function RosaPhone({ shopId, since, runs }: { shopId: string; since: string; run
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/photos/stall-live.jpg" alt="" className="warm-photo h-28 w-full object-cover" />
           <div className="absolute left-1/2 top-2 h-6 w-20 -translate-x-1/2 rounded-full bg-black" />
-          <div className="-mt-6 space-y-3 px-3 pb-4">
+          <div className={`${sales.length ? "-mt-6" : "pt-3"} space-y-3 px-3 pb-4`}>
             {sales.length > 0 && (
               <ul className="space-y-2">
                 {sales.slice(0, 3).map((s, i) => {

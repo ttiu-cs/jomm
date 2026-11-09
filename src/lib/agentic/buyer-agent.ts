@@ -237,8 +237,11 @@ export async function runBuyerAgent(db: DB, shopId: string, intentText: string, 
       await openaiAgent(db, shopId, text, emit, new OpenAI({ apiKey: key }), model, toolkit);
       return;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      emit({ type: "note", text: `OpenAI request failed (${msg.slice(0, 120)}). Switching to the rule-based agent.` });
+      // Never echo key fragments back to the page.
+      const raw = e instanceof Error ? e.message : String(e);
+      const msg = raw.replace(/:?\s*\S*(sk-|\*{4,})\S*/g, "").replace(/\s+/g, " ").trim().slice(0, 100);
+      const hint = /401|api key/i.test(raw) ? " Check OPENAI_API_KEY in .env.local (it should start with sk-)." : /model/i.test(raw) ? " Check OPENAI_MODEL." : "";
+      emit({ type: "note", text: `OpenAI request failed (${msg}).${hint} Switching to the rule-based agent.` });
     }
   }
   await rulesAgent(db, shopId, text, emit, !!toolkit, !!key);
