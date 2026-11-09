@@ -7,7 +7,7 @@
 ## Setup
 - Start the app. Open `/seller` on a phone (camera needs https or localhost) or a laptop, and `/market` in a second window.
 - With PayPal Sandbox keys, run one checkout beforehand so the Sandbox login is warm. Keep a backup recording of the PayPal step. Never present a MOCK payment as PayPal.
-- Stage fallback: **Fruit stand** example on `/seller` replays the same walk-through through the same conversation logic.
+- Stage fallback: on the Teach screen choose **Try it with a demo fruit stand**. The illustrated stall pans to each crate, and **Tap to say** sends the next scripted line through the same conversation logic (no camera or microphone needed). Or open **Sample fruit stand** on `/seller`.
 
 ## Script
 | Time | Screen | Do | Say |

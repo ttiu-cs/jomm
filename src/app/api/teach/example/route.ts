@@ -4,7 +4,7 @@ import { DomainError } from "@/lib/server/util";
 // Rehearsal / stage fallback: replays a scripted owner walk-through through the normal turn logic.
 export const POST = handle(async (req: Request) => {
   const b = await readJson<{ script?: string }>(req);
-  const sc = EXAMPLE_SCRIPTS[b.script ?? ""];
+  const sc = EXAMPLE_SCRIPTS[(b.script ?? "") as keyof typeof EXAMPLE_SCRIPTS];
   if (!sc) throw new DomainError("VALIDATION", "script must be fruit or closet", 422);
   const d = db();
   const s = createShopSession(d, sc.shopName);

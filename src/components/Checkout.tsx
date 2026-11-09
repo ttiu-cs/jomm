@@ -103,17 +103,17 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
         <>
           <SourceBadge source="PAYPAL_SANDBOX" />
           <div ref={ref} className="min-h-12" />
-          <p className="text-[11px] text-muted">PayPal Sandbox (test money). Paid only after the server verifies the capture.</p>
+          <p className="text-xs text-ink-2">PayPal Sandbox, test money. The sale counts only after our server checks the payment with PayPal.</p>
         </>
       ) : (
         <>
           <SourceBadge source="MOCK_CHECKOUT" />
-          <p className="text-xs text-ink-2">No PayPal Sandbox keys on this server, so this is an offline MOCK payment. It is not a PayPal payment.</p>
+          <p className="text-sm text-ink-2">PayPal isn’t connected on this server yet, so this is a practice payment. No money moves.</p>
           <div className="flex gap-2">
-            <button type="button" disabled={busy} className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-white disabled:opacity-50" onClick={() => mock("success")}>
-              Pay (MOCK)
+            <button type="button" disabled={busy} className="flex-1 rounded-full bg-leaf py-3 font-bold text-white disabled:opacity-50" onClick={() => mock("success")}>
+              Pay (practice)
             </button>
-            <button type="button" disabled={busy} className="rounded-lg border border-line px-3 py-2 text-sm" onClick={() => mock("fail")}>
+            <button type="button" disabled={busy} className="rounded-full border border-line px-4 py-3 text-sm" onClick={() => mock("fail")}>
               Decline
             </button>
           </div>

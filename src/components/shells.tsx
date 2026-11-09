@@ -2,24 +2,36 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { IconCamera, IconChat, IconHome, IconTag } from "./icons";
 
-const BRAND = "Retail Pricing OS";
+export const BRAND = "Stallkeeper";
 
-/** Public pages (home, buyer agent, shop pages): two clear audiences. */
+export function Logo({ light }: { light?: boolean }) {
+  return (
+    <Link href="/" className={`font-sign flex items-center gap-2 text-2xl font-extrabold leading-none ${light ? "text-white" : "text-leaf"}`}>
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden>
+        <path d="M2 9 5 3h16l3 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" />
+        <path d="M2 9h22v2.5a3.7 3.7 0 0 1-7.3 0 3.7 3.7 0 0 1-7.4 0 3.7 3.7 0 0 1-7.3 0Z" fill="currentColor" />
+        <path d="M4 14v9h18v-9" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      </svg>
+      {BRAND}
+    </Link>
+  );
+}
+
+/** Public pages: two audiences, two links. */
 export function SiteHeader() {
   const path = usePathname();
   return (
-    <header className="border-b border-line bg-surface">
+    <header className="border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="font-bold tracking-tight">
-          {BRAND}
-        </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link href="/market" className={`hidden rounded-md px-3 py-1.5 sm:inline ${path.startsWith("/market") ? "bg-surface-2 font-semibold" : "text-ink-2 hover:text-ink"}`}>
+        <Logo />
+        <nav className="flex items-center gap-2 text-[15px]">
+          <Link href="/market" className={`hidden rounded-full px-3 py-2 sm:inline ${path.startsWith("/market") ? "font-bold text-leaf" : "text-ink-2 hover:text-ink"}`}>
             Try a buyer agent
           </Link>
-          <Link href="/seller" className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-white">
-            For sellers
+          <Link href="/seller" className="rounded-full bg-leaf px-4 py-2 font-bold text-white hover:bg-leaf-2">
+            Sell with Stallkeeper
           </Link>
         </nav>
       </div>
@@ -29,76 +41,85 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted">
-        <span>Payments: PayPal Sandbox (test money) when configured, otherwise a labeled offline mock.</span>
-        <span className="flex flex-wrap gap-3">
-          <span>Under the hood:</span>
+    <footer className="mt-20 border-t border-line">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-8 text-sm text-ink-2 sm:grid-cols-2">
+        <p>Payments run on PayPal Sandbox (test money) when it is configured, and on a clearly marked practice checkout when it is not.</p>
+        <p className="sm:text-right">
+          For developers:{" "}
           <Link className="underline" href="/demo/salad">
-            Pricing engine demo
+            pricing engine
           </Link>
+          ,{" "}
           <Link className="underline" href="/merchant">
-            Command center
+            hourly pricing
           </Link>
+          ,{" "}
           <Link className="underline" href="/lab">
-            Lab
+            lab
           </Link>
+          ,{" "}
           <Link className="underline" href="/agent">
-            Agent API
+            agent API
           </Link>
-        </span>
+        </p>
       </div>
     </footer>
   );
 }
 
 const TABS = [
-  { key: "", label: "Home", icon: "🏠" },
-  { key: "/teach", label: "Teach", icon: "📷" },
-  { key: "/items", label: "Items", icon: "🏷️" },
-  { key: "/deals", label: "Deals", icon: "💬" },
+  { key: "", label: "Today", Icon: IconHome },
+  { key: "/teach", label: "Teach", Icon: IconCamera },
+  { key: "/items", label: "Stock", Icon: IconTag },
+  { key: "/deals", label: "Sales", Icon: IconChat },
 ] as const;
 
-/** Seller app frame: shop name on top, four tabs (bottom bar on phones, top tabs on desktop). */
+/** Seller app: the shop's sign on top, four tabs (bottom bar on phones, inline on desktop). */
 export function SellerShell({ shopId, shopName, children }: { shopId: string; shopName: string; children: ReactNode }) {
   const path = usePathname();
   const base = `/seller/${shopId}`;
   const active = TABS.find((t) => t.key && path.startsWith(base + t.key))?.key ?? "";
   const teaching = active === "/teach";
   return (
-    <div className="min-h-screen pb-20 lg:pb-0">
-      <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur print:hidden">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2.5">
+    <div className="min-h-screen pb-24 lg:pb-0">
+      <header className={`sticky top-0 z-30 bg-leaf text-white print:hidden ${teaching ? "max-lg:hidden" : ""}`}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="min-w-0">
-            <div className="text-[11px] text-muted">My shop</div>
-            <div className="truncate font-bold">{shopName}</div>
+            <div className="font-sign truncate text-2xl font-bold leading-tight">{shopName}</div>
+            <Link href={`/shop/${shopId}`} className="text-xs text-white/75 underline underline-offset-2">
+              See what shoppers see
+            </Link>
           </div>
           <nav className="hidden gap-1 lg:flex">
-            {TABS.map((t) => (
-              <Link key={t.key} href={base + t.key} className={`rounded-md px-3 py-1.5 text-sm ${active === t.key ? "bg-surface-2 font-semibold" : "text-ink-2 hover:text-ink"}`}>
-                {t.label}
+            {TABS.map(({ key, label, Icon }) => (
+              <Link
+                key={key}
+                href={base + key}
+                aria-current={active === key ? "page" : undefined}
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[15px] ${active === key ? "bg-white font-bold text-leaf" : "text-white/85 hover:bg-white/10"}`}
+              >
+                <Icon size={18} />
+                {label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-2 text-xs">
-            <Link href={`/shop/${shopId}`} className="rounded-md border border-line px-2 py-1 text-ink-2 hover:text-ink">
-              View my shop page
-            </Link>
-            <Link href="/seller?switch=1" className="text-muted underline">
-              Switch
-            </Link>
-          </div>
+          <Link href="/seller?switch=1" className="shrink-0 text-sm text-white/80 underline underline-offset-2">
+            Switch shop
+          </Link>
         </div>
       </header>
       {children}
       {!teaching && (
-        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-surface lg:hidden print:hidden">
-          {TABS.map((t) => (
-            <Link key={t.key} href={base + t.key} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active === t.key ? "font-semibold text-accent" : "text-ink-2"}`}>
-              <span className="text-lg" aria-hidden>
-                {t.icon}
-              </span>
-              {t.label}
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden" aria-label="Seller sections">
+          {TABS.map(({ key, label, Icon }) => (
+            <Link
+              key={key}
+              href={base + key}
+              aria-current={active === key ? "page" : undefined}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-xs ${active === key ? "font-bold text-leaf" : "text-ink-2"}`}
+            >
+              <Icon size={24} />
+              {label}
             </Link>
           ))}
         </nav>

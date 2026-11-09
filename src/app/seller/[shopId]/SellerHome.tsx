@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useSeller } from "@/lib/client/seller";
 import { usd } from "@/lib/client/format";
 import { rememberShop } from "@/components/shells";
+import { IconCamera, IconClock, IconQr } from "@/components/icons";
 
 export default function SellerHome({ shopId }: { shopId: string }) {
   const { data: d, error } = useSeller(shopId);
@@ -12,83 +13,102 @@ export default function SellerHome({ shopId }: { shopId: string }) {
   useEffect(() => rememberShop(shopId), [shopId]);
 
   if (!d) return <main className="p-6 text-ink-2">{error ?? "Loading…"}</main>;
-  const attention = d.items.flatMap((i) => {
-    if (i.available === 0) return [{ key: i.sku, tone: "text-ink-2", text: `${i.name} is sold out.` }];
-    if (i.sellBy === "today") return [{ key: i.sku, tone: "text-warn", text: `${i.name}: ${i.available} ${i.unit} must sell today. Your agent may go down to ${usd(i.floorCents)}.` }];
-    if (i.available <= 3) return [{ key: i.sku, tone: "text-ink-2", text: `${i.name}: only ${i.available} ${i.unit} left.` }];
-    return [];
-  });
-  const agreed = d.negotiations.filter((n) => n.status === "AGREED").length;
+  const urgent = d.items.filter((i) => i.sellBy === "today" && i.available > 0);
+  const low = d.items.filter((i) => i.sellBy !== "today" && i.available > 0 && i.available <= 3);
+  const soldOut = d.items.filter((i) => i.available === 0);
+  const deals = d.negotiations.filter((n) => n.status === "AGREED").length;
 
   return (
-    <main className="mx-auto max-w-3xl space-y-5 px-4 py-5">
-      {opened && <div className="rounded-xl border border-good/40 bg-good/10 px-4 py-3 text-sm font-semibold text-good">🎉 Your shop is open. Your seller agent is now answering buyers.</div>}
+    <main className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+      {opened && (
+        <div className="mb-4 rounded-2xl bg-sticker px-4 py-3 font-bold text-ink" role="status">
+          Your shop is open. Your assistant is answering buyers now.
+        </div>
+      )}
 
-      <Link href={`/seller/${shopId}/teach`} className="flex items-center gap-4 rounded-2xl bg-accent p-5 text-white shadow-sm">
-        <span className="text-4xl" aria-hidden>
-          📷
+      <section aria-label="Money today" className="rounded-3xl bg-surface p-5 shadow-[0_1px_0_var(--line)]">
+        <div className="text-ink-2">Received through PayPal</div>
+        <div className="font-sign tnum text-6xl font-extrabold leading-none text-leaf">{usd(d.totals.paypalCents)}</div>
+        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-ink-2">
+          <span>
+            <b className="text-ink">{d.totals.orders}</b> paid orders
+          </span>
+          <span>
+            <b className="text-ink">{deals}</b> deals your assistant made
+          </span>
+          {d.totals.mockCents > 0 && <span className="text-warn">{usd(d.totals.mockCents)} in practice payments</span>}
+        </div>
+      </section>
+
+      <Link href={`/seller/${shopId}/teach`} className="mt-4 flex items-center gap-4 rounded-3xl bg-leaf p-5 text-white hover:bg-leaf-2">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/15">
+          <IconCamera size={30} />
         </span>
         <span>
-          <span className="block text-lg font-bold">{d.items.length ? "Start today’s walk-through" : "Teach your first items"}</span>
-          <span className="block text-sm text-white/85">Show the camera what’s in stock and talk. Takes about a minute.</span>
+          <span className="font-sign block text-3xl font-bold leading-tight">{d.items.length ? "Morning walk-through" : "Teach your first items"}</span>
+          <span className="block text-white/85">Show what’s in stock and talk. About a minute.</span>
         </span>
       </Link>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-line bg-surface p-3">
-          <div className="text-xs text-muted">Paid via PayPal</div>
-          <div className="tnum text-xl font-bold text-good">{usd(d.totals.paypalCents)}</div>
-          {d.totals.mockCents > 0 && <div className="text-[11px] text-muted">+ {usd(d.totals.mockCents)} mock</div>}
-        </div>
-        <div className="rounded-xl border border-line bg-surface p-3">
-          <div className="text-xs text-muted">Paid orders</div>
-          <div className="tnum text-xl font-bold">{d.totals.orders}</div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface p-3">
-          <div className="text-xs text-muted">Deals made</div>
-          <div className="tnum text-xl font-bold">{agreed}</div>
-        </div>
-      </div>
-
-      {attention.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold">Needs your attention</h2>
-          <ul className="space-y-1.5">
-            {attention.map((a) => (
-              <li key={a.key} className={`rounded-lg border border-line bg-surface px-3 py-2 text-sm ${a.tone}`}>
-                {a.text}
+      {(urgent.length > 0 || low.length > 0 || soldOut.length > 0) && (
+        <section className="mt-6">
+          <h2 className="font-sign text-2xl font-bold">Keep an eye on</h2>
+          <ul className="mt-2 space-y-2">
+            {urgent.map((i) => (
+              <li key={i.sku} className="flex items-start gap-3 rounded-2xl border-l-4 border-tomato bg-surface p-3">
+                <IconClock className="mt-0.5 shrink-0 text-tomato" />
+                <span>
+                  <b>{i.name}</b>: {i.available} {i.unit} must sell today. Your assistant can go down to {usd(i.floorCents)}.
+                </span>
+              </li>
+            ))}
+            {low.map((i) => (
+              <li key={i.sku} className="rounded-2xl border-l-4 border-sticker bg-surface p-3">
+                <b>{i.name}</b>: only {i.available} {i.unit} left.
+              </li>
+            ))}
+            {soldOut.map((i) => (
+              <li key={i.sku} className="rounded-2xl border-l-4 border-line bg-surface p-3 text-ink-2">
+                <b className="text-ink">{i.name}</b> sold out.
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Latest from your agent</h2>
-          <Link href={`/seller/${shopId}/deals`} className="text-xs text-s1">
-            All deals →
+      <section className="mt-6">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-sign text-2xl font-bold">What your assistant did</h2>
+          <Link href={`/seller/${shopId}/deals`} className="font-bold text-leaf underline-offset-2 hover:underline">
+            All sales
           </Link>
         </div>
         {d.negotiations.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-line p-4 text-sm text-muted">
-            No buyers yet. Share your <Link className="underline" href={`/shop/${shopId}`}>shop page</Link>, print <Link className="underline" href={`/seller/${shopId}/items`}>QR labels</Link>, or{" "}
-            <Link className="underline" href="/market">
-              send a test buyer agent
-            </Link>
-            .
-          </p>
+          <div className="mt-2 rounded-2xl border-2 border-dashed border-line p-5 text-ink-2">
+            <p>No buyers yet. Get the word out:</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href={`/seller/${shopId}/items`} className="flex items-center gap-1.5 rounded-full bg-surface px-4 py-2 font-bold text-leaf shadow-sm">
+                <IconQr size={18} /> Print price tags with QR
+              </Link>
+              <Link href="/market" className="rounded-full bg-surface px-4 py-2 font-bold text-leaf shadow-sm">
+                Send a test buyer
+              </Link>
+            </div>
+          </div>
         ) : (
-          <ul className="space-y-2">
-            {d.negotiations.slice(0, 3).map((n) => (
-              <li key={n.id} className="rounded-lg border border-line bg-surface p-3 text-sm">
-                <div className="flex justify-between gap-2">
-                  <span className="font-semibold">
+          <ul className="mt-2 space-y-2">
+            {d.negotiations.slice(0, 4).map((n) => (
+              <li key={n.id} className="rounded-2xl bg-surface p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-bold">
                     {n.name} × {n.qty}
+                    {n.unit === "each" ? "" : ` ${n.unit}`}
                   </span>
-                  <span className={`text-xs font-semibold ${n.status === "AGREED" ? "text-good" : "text-ink-2"}`}>{n.status === "AGREED" ? `Sold at ${usd(n.agreed_price_cents)}` : n.status === "OPEN" ? "Negotiating" : "No deal"}</span>
+                  <span className={`font-sign text-xl font-bold ${n.status === "AGREED" ? "text-leaf" : "text-ink-2"}`}>
+                    {n.status === "AGREED" ? `Sold ${usd(n.agreed_price_cents)}` : n.status === "OPEN" ? "Talking…" : "No deal"}
+                  </span>
                 </div>
-                {n.last_message && <div className="mt-0.5 text-xs text-muted">“{n.last_message}”</div>}
+                {n.last_message && <p className="mt-1 text-sm text-ink-2">“{n.last_message}”</p>}
               </li>
             ))}
           </ul>

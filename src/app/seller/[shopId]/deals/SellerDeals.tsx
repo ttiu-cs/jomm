@@ -7,42 +7,44 @@ export default function SellerDeals({ shopId }: { shopId: string }) {
   const { data: d, error } = useSeller(shopId);
   if (!d) return <main className="p-6 text-ink-2">{error ?? "Loading…"}</main>;
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-5">
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Money received</h2>
-        {d.sales.length === 0 && <p className="text-sm text-muted">No orders yet.</p>}
-        <ul className="space-y-2">
+    <main className="mx-auto max-w-3xl space-y-8 px-4 pb-10 pt-5">
+      <section>
+        <h2 className="font-sign text-3xl font-bold">Money in</h2>
+        {d.sales.length === 0 && <p className="mt-2 text-ink-2">No payments yet. They show up here the moment a buyer pays.</p>}
+        <ul className="mt-3 divide-y divide-line overflow-hidden rounded-2xl bg-surface">
           {d.sales.map((s) => (
-            <li key={s.id} className="rounded-xl border border-line bg-surface p-3 text-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {s.name} × {s.qty} · <b className="tnum">{usd(s.total_cents)}</b> {s.origin === "NEGOTIATION" && <span className="text-xs text-ink-2">(negotiated)</span>}
+            <li key={s.id} className="p-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">
+                  <b>{s.name}</b> × {s.qty}
+                  {s.origin === "NEGOTIATION" && <span className="ml-1.5 rounded-full bg-sticker/60 px-2 py-0.5 text-xs font-bold">negotiated</span>}
                 </span>
-                <span className={`text-xs font-semibold ${s.status === "PAID" ? "text-good" : "text-ink-2"}`}>{s.status === "PAID" ? "Paid" : s.status}</span>
+                <span className={`font-sign tnum text-2xl font-bold ${s.status === "PAID" ? "text-leaf" : "text-ink-2"}`}>{usd(s.total_cents)}</span>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-ink-2">
                 <SourceBadge source={s.payment_source} />
-                {s.payment_source === "PAYPAL_SANDBOX" && s.capture_id && <span className="break-all font-mono text-[10px] text-muted">capture {s.capture_id}</span>}
+                {s.status !== "PAID" && <span>{s.status.toLowerCase().replace("_", " ")}</span>}
+                {s.payment_source === "PAYPAL_SANDBOX" && s.capture_id && <span className="break-all font-mono text-xs">capture {s.capture_id}</span>}
               </div>
             </li>
           ))}
         </ul>
       </section>
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Conversations your agent handled</h2>
-        {d.negotiations.length === 0 && <p className="text-sm text-muted">No negotiations yet.</p>}
-        <ul className="space-y-2">
+      <section>
+        <h2 className="font-sign text-3xl font-bold">Conversations</h2>
+        {d.negotiations.length === 0 && <p className="mt-2 text-ink-2">When a buyer or buyer agent makes an offer, the whole back-and-forth is kept here.</p>}
+        <ul className="mt-3 space-y-2">
           {d.negotiations.map((n) => (
-            <li key={n.id} className="rounded-xl border border-line bg-surface p-3 text-sm">
-              <div className="flex justify-between gap-2">
-                <span className="font-semibold">
+            <li key={n.id} className="rounded-2xl bg-surface p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <b>
                   {n.name} × {n.qty} {n.unit === "each" ? "" : n.unit}
-                </span>
-                <span className={`text-xs font-semibold ${n.status === "AGREED" ? "text-good" : "text-ink-2"}`}>
-                  {n.status === "AGREED" ? `${usd(n.agreed_price_cents)} (listed ${usd(n.published_cents)})` : n.status === "OPEN" ? "Negotiating" : "No deal"}
+                </b>
+                <span className={`text-sm font-bold ${n.status === "AGREED" ? "text-leaf" : "text-ink-2"}`}>
+                  {n.status === "AGREED" ? `${usd(n.agreed_price_cents)} each (listed ${usd(n.published_cents)})` : n.status === "OPEN" ? "Still talking" : "No deal"}
                 </span>
               </div>
-              {n.last_message && <div className="mt-0.5 text-xs text-muted">“{n.last_message}”</div>}
+              {n.last_message && <p className="mt-1 text-sm text-ink-2">“{n.last_message}”</p>}
             </li>
           ))}
         </ul>

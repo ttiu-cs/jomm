@@ -1,8 +1,8 @@
-# Retail Pricing OS
+# Stallkeeper (working name; repo: retail-pricing-os)
 
 **Pricing Intelligence for Every Seller Agent.** Every buyer agent knows how to find the best price. Every seller agent should know how to set one.
 
-**Seller agents for the smallest sellers.** Turn on the camera, walk through your shop and talk. Your AI seller agent asks questions like a new employee (how many, what price, the lowest you'd take, what buyers should know), builds SKUs, stock and prices from your answers, then sells to buyer agents within your limits and gets paid through PayPal.
+**AI shop assistants for the smallest sellers.** Turn on the camera, walk through your shop and talk. Your AI seller agent asks questions like a new employee (how many, what price, the lowest you'd take, what buyers should know), builds SKUs, stock and prices from your answers, then sells to buyer agents within your limits and gets paid through PayPal.
 
 | Who | Where | What |
 |---|---|---|
@@ -21,6 +21,9 @@ How it works:
 - **Teaching:** each turn sends the owner's words plus the current camera frame. With `ANTHROPIC_API_KEY`, Claude reads both; without it, a deterministic parser handles it (English, some Korean). Prices, quantities and floors only ever come from what the owner said, and the owner can tap any card to correct it.
 - **Selling:** the seller agent answers questions only from the owner's facts. It negotiates per unit (max 3 buyer offers) and never goes below the owner's private floor. How far it goes depends on urgency: "today" means it may concede down to the floor, "this week" 70% of the gap, "no rush" 40%.
 - **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a labeled MOCK without keys). Stock is decremented exactly once after a verified capture.
+
+## Design
+Market-stall visual language: products are kraft hang tags (the torn-off strip holds the owner's private lowest price), prices are set in Barlow Condensed like market signage, body text in Lexend for reading ease, leaf green for trust, sticker yellow for the main action, tomato for "sell today", PayPal blue only around payment. Without a camera, **Try it with a demo fruit stand** (or closet) shows an illustrated stall drawn in SVG (`src/components/DemoScene.tsx`) that pans to the item being discussed, and offers the next line as a "Tap to say" button. Tag photos are cropped from that scene.
 
 ## Quick start
 Requires Node 20+ (tested on 22).

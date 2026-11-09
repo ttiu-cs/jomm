@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, usd } from "@/lib/client/format";
 import { parseBuyerRequest } from "@/lib/buyer/request";
-import { Card, SourceBadge } from "@/components/ui";
+import { SourceBadge } from "@/components/ui";
 import { SiteFooter, SiteHeader } from "@/components/shells";
 import { Checkout, type OrderView } from "@/components/Checkout";
+import { HangTag } from "@/components/HangTag";
+import { IconCart, IconLock, IconStore } from "@/components/icons";
 
 interface CatalogItem {
   shopId: string;
@@ -19,7 +21,6 @@ interface CatalogItem {
   condition: string | null;
   facts: string[];
   negotiable: boolean;
-  score?: number;
 }
 interface Neg {
   id: string;
@@ -38,33 +39,35 @@ interface SellerView {
   publishedCents: number;
   floorCents: number;
   reason: string;
-  stock: number;
-  unit: string;
 }
-type Line = { who: "buyer" | "seller" | "system"; text: string };
+type Line = { who: "buyer" | "seller" | "note"; text: string };
 
+const EXAMPLES = ["2 lb of sweet apples, max $6 total", "3 lb peaches, budget $6", "1 box of strawberries under $5", "a wool coat under $50"];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const round5 = (c: number) => Math.round(c / 5) * 5;
 
 export default function BuyerAgent() {
-  const [request, setRequest] = useState("2 lb of sweet apples, max $6 total");
+  const [request, setRequest] = useState(EXAMPLES[0]);
   const [lines, setLines] = useState<Line[]>([]);
   const [result, setResult] = useState<Line | null>(null);
-  const [candidates, setCandidates] = useState<CatalogItem[]>([]);
   const [chosen, setChosen] = useState<CatalogItem | null>(null);
   const [seller, setSeller] = useState<SellerView | null>(null);
   const [neg, setNeg] = useState<Neg | null>(null);
   const [order, setOrder] = useState<OrderView | null>(null);
   const [running, setRunning] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
+  const endRef = useRef<HTMLDivElement>(null);
   const push = (l: Line) => setLines((x) => [...x, l]);
+  const thread: Line[] = [...lines, ...(neg?.messages ?? []).map((m) => ({ who: m.role, text: m.text }) as Line), ...(result ? [result] : [])];
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [thread.length]);
 
   const go = async () => {
     setErr(null);
     setLines([]);
     setResult(null);
-    setCandidates([]);
     setChosen(null);
     setSeller(null);
     setNeg(null);
@@ -72,41 +75,35 @@ export default function BuyerAgent() {
     setRunning(true);
     try {
       const r = parseBuyerRequest(request);
-      push({ who: "system", text: `Understood: ${r.qty}${r.unit ? " " + r.unit : ""} · “${r.keywords}”${r.budgetCents ? ` · budget ${usd(r.budgetCents)} total` : ""}` });
-      await sleep(500);
-      push({ who: "buyer", text: "Searching shops that have a seller agent…" });
+      push({ who: "note", text: `Looking for ${r.qty}${r.unit ? " " + r.unit : ""} of “${r.keywords}”${r.budgetCents ? `, ${usd(r.budgetCents)} total at most` : ""}.` });
       const cat = await api<{ items: CatalogItem[] }>(`/api/catalog?q=${encodeURIComponent(r.keywords)}`);
       const items = cat.items.filter((i) => i.available >= r.qty);
-      setCandidates(cat.items.slice(0, 3));
       if (!items.length) {
-        push({ who: "system", text: cat.items.length ? "Found matches, but none with enough stock." : "No shop sells that yet. Teach a shop first (Step 1)." });
+        push({ who: "note", text: cat.items.length ? "Found it, but not enough in stock anywhere." : "No shop sells that yet. Open a sample shop from the seller side first." });
         return;
       }
       const pick = items[0];
       setChosen(pick);
-      await sleep(700);
-      push({ who: "buyer", text: `Best match: ${pick.name} at ${pick.shopName}, listed ${usd(pick.listPriceCents)}${pick.unit === "each" ? "" : "/" + pick.unit}.` });
+      await sleep(600);
+      push({ who: "note", text: `Best match: ${pick.name} at ${pick.shopName}, ${usd(pick.listPriceCents)}${pick.unit === "each" ? "" : "/" + pick.unit}.` });
       api<SellerView>(`/api/seller/negotiation-view?productId=${pick.productId}`).then(setSeller).catch(() => {});
-
       if (r.question) {
         await sleep(700);
         push({ who: "buyer", text: r.question });
         const a = await api<{ answer: string }>(`/api/shops/${pick.shopId}/items/${encodeURIComponent(pick.sku)}/ask`, { question: r.question });
-        await sleep(500);
+        await sleep(600);
         push({ who: "seller", text: a.answer });
       }
-
       const unitBudget = r.budgetCents ? Math.floor(r.budgetCents / r.qty / 5) * 5 : pick.listPriceCents;
       let offer = Math.min(unitBudget, round5(pick.listPriceCents * 0.7));
       await sleep(700);
       let n = await api<Neg>("/api/negotiations", { productId: pick.productId, qty: r.qty, offerCents: offer, buyer: "demo-buyer-agent" });
       setNeg(n);
       while (n.status === "OPEN") {
-        await sleep(1000);
+        await sleep(1100);
         const counter = n.sellerCounterCents!;
         const lastChance = n.sellerCounterIsFinal || n.offersLeft <= 0;
         const closeEnough = counter - offer <= Math.max(5, round5(pick.listPriceCents * 0.03));
-        // Keep haggling while offers remain; accept once the seller's offer is final (or close) and within budget.
         if (counter <= unitBudget && (lastChance || closeEnough)) n = await api<Neg>(`/api/negotiations/${n.id}/accept`, {});
         else if (lastChance) n = await api<Neg>(`/api/negotiations/${n.id}/decline`, {});
         else {
@@ -116,9 +113,9 @@ export default function BuyerAgent() {
         setNeg(n);
       }
       if (n.status === "AGREED" && n.quote) {
-        setResult({ who: "system", text: `Deal: ${usd(n.agreedPriceCents)}${n.unit === "each" ? "" : "/" + n.unit} × ${n.qty} = ${usd((n.agreedPriceCents ?? 0) * n.qty)}. Waiting for your approval in PayPal.` });
+        setResult({ who: "note", text: `Deal reached. Waiting for you to approve the payment.` });
         setOrder(await api<OrderView>("/api/orders", { quoteId: n.quote.id }));
-      } else setResult({ who: "system", text: "No deal within your budget. Nothing was charged." });
+      } else setResult({ who: "note", text: "No deal inside your budget. Nothing was charged." });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -128,137 +125,127 @@ export default function BuyerAgent() {
 
   const onPaid = useCallback((o: OrderView) => setOrder(o), []);
   const paid = order?.order.status === "PAID";
-  const negLines: Line[] = (neg?.messages ?? []).map((m) => ({ who: m.role, text: m.text }));
+  const per = chosen && chosen.unit !== "each" ? `/${chosen.unit}` : "";
 
   return (
     <div>
       <SiteHeader />
-      <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
-        <div>
-          <p className="text-sm font-semibold text-s1">For shoppers · try a buyer agent</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Tell your buyer agent what you want.</h1>
-          <p className="mt-2 text-ink-2">It finds a shop, asks the seller agent what the owner said, negotiates within your budget, and you approve the payment in PayPal.</p>
-          <p className="mt-1 text-sm text-muted">
-            No shops yet?{" "}
-            <Link className="underline" href="/seller">
-              Create one in a minute
-            </Link>{" "}
-            or use the fruit-stand example.
-          </p>
-        </div>
+      <main className="mx-auto max-w-6xl px-4 pb-10 pt-8">
+        <h1 className="font-sign text-5xl font-extrabold leading-none text-leaf sm:text-6xl">Send a buyer agent shopping</h1>
+        <p className="mt-3 max-w-2xl text-lg text-ink-2">Say what you want and what you’ll spend. It finds a stall, asks the stall’s assistant, haggles, and comes back for your OK before paying with PayPal.</p>
+
         <form
-          className="flex flex-col gap-2 sm:flex-row"
+          className="mt-6 flex flex-col gap-2 rounded-3xl bg-surface p-2 shadow-[0_1px_0_var(--line)] sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
             go();
           }}
         >
-          <input className="flex-1 rounded-xl border border-line bg-surface px-4 py-3 text-lg" value={request} onChange={(e) => setRequest(e.target.value)} />
-          <button type="submit" disabled={running} className="rounded-xl bg-accent px-6 py-3 font-semibold text-white disabled:opacity-40">
-            {running ? "Shopping…" : "Send buyer agent"}
+          <input aria-label="What do you want to buy?" className="min-w-0 flex-1 rounded-2xl bg-transparent px-4 py-3 text-xl outline-none" value={request} onChange={(e) => setRequest(e.target.value)} />
+          <button type="submit" disabled={running} className="flex items-center justify-center gap-2 rounded-2xl bg-leaf px-6 py-3 text-lg font-bold text-white disabled:opacity-50">
+            <IconCart /> {running ? "Shopping…" : "Go shopping"}
           </button>
         </form>
-        <div className="flex flex-wrap gap-2 text-xs">
-          {["2 lb of sweet apples, max $6 total", "3 lb peaches, budget $6", "1 box of strawberries under $5", "a wool coat under $50"].map((s) => (
-            <button key={s} type="button" onClick={() => setRequest(s)} className="rounded-full border border-line bg-surface px-3 py-1 text-ink-2 hover:text-ink">
+        <div className="mt-3 flex flex-wrap gap-2">
+          {EXAMPLES.map((s) => (
+            <button key={s} type="button" onClick={() => setRequest(s)} className={`rounded-full border px-3 py-1.5 text-sm ${request === s ? "border-leaf bg-leaf-soft text-leaf" : "border-line bg-surface text-ink-2"}`}>
               {s}
             </button>
           ))}
         </div>
-        {err && <div className="rounded-lg border border-bad/40 px-3 py-2 text-sm text-bad">{err}</div>}
+        {err && <p className="mt-4 rounded-xl border border-tomato/40 bg-tomato/5 px-3 py-2 text-tomato">{err}</p>}
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card title="🛒 Your buyer agent ↔ 🏪 seller agent">
-            <div className="space-y-2">
-              {lines.length === 0 && <p className="text-sm text-muted">Type what you want above and press “Send buyer agent”.</p>}
-              {[...lines, ...negLines, ...(result ? [result] : [])]
-                .map((l, i) => (
-                  <div key={i} className={`flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
-                        l.who === "buyer" ? "bg-accent text-white" : l.who === "seller" ? "border border-line bg-surface-2" : "bg-transparent text-xs text-muted"
-                      }`}
-                    >
-                      {l.who !== "system" && <div className="mb-0.5 text-[10px] font-semibold uppercase opacity-70">{l.who === "buyer" ? "Buyer agent" : `Seller agent · ${chosen?.shopName ?? ""}`}</div>}
-                      {l.text}
-                    </div>
-                  </div>
-                ))}
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+          <section aria-label="Conversation" className="rounded-3xl bg-surface p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between text-sm font-bold">
+              <span className="flex items-center gap-2 text-leaf">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-white">
+                  <IconStore size={18} />
+                </span>
+                {chosen ? `${chosen.shopName}’s assistant` : "Stall assistant"}
+              </span>
+              <span className="flex items-center gap-2 text-ink">
+                Your buyer agent
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-white">
+                  <IconCart size={18} />
+                </span>
+              </span>
             </div>
-          </Card>
+            <div className="min-h-[280px] space-y-2.5">
+              {thread.length === 0 && <p className="pt-16 text-center text-ink-2">Pick an example above, or write your own, then press Go shopping.</p>}
+              {thread.map((l, i) =>
+                l.who === "note" ? (
+                  <p key={i} className="tag-in py-1 text-center text-sm text-ink-2">
+                    {l.text}
+                  </p>
+                ) : (
+                  <div key={i} className={`tag-in flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
+                    <p className={`max-w-[82%] rounded-3xl px-4 py-2.5 leading-snug ${l.who === "buyer" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-leaf-soft text-ink"}`}>{l.text}</p>
+                  </div>
+                ),
+              )}
+              <div ref={endRef} />
+            </div>
+          </section>
 
-          <div className="space-y-4">
-            {candidates.length > 0 && (
-              <Card title="Shops found">
-                <ul className="space-y-2">
-                  {candidates.map((c) => (
-                    <li key={c.productId} className={`rounded-lg border p-2 text-sm ${chosen?.productId === c.productId ? "border-accent" : "border-line"}`}>
-                      <div className="flex justify-between gap-2">
-                        <span className="font-semibold">{c.name}</span>
-                        <span className="tnum">
-                          {usd(c.listPriceCents)}
-                          {c.unit === "each" ? "" : "/" + c.unit}
-                        </span>
-                      </div>
-                      <div className="text-xs text-ink-2">
-                        {c.shopName} · {c.available} {c.unit} left {c.negotiable ? "· negotiable" : ""}
-                      </div>
-                      {c.facts[0] && <div className="mt-1 text-xs text-muted">“{c.facts[0]}”</div>}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            )}
-            {seller && chosen && (
-              <details open className="rounded-xl border border-line bg-surface p-4">
-                <summary className="cursor-pointer text-sm font-semibold">🔒 Behind the scenes: the seller agent’s private limits</summary>
-                <div className="mt-3">
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <div className="text-xs text-muted">Listed</div>
-                    <div className="tnum font-bold">{usd(seller.publishedCents)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted">Owner’s floor</div>
-                    <div className="tnum font-bold">{usd(seller.floorCents)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted">Will go down to</div>
-                    <div className="tnum font-bold text-s1">{usd(seller.walkAwayCents)}</div>
-                  </div>
-                </div>
-                <p className="mt-2 rounded-lg bg-surface-2 p-2 text-sm">{seller.reason}</p>
-                <p className="mt-1 text-[11px] text-muted">Shown only to explain the demo. The buyer agent never receives this.</p>
-                </div>
-              </details>
-            )}
+          <aside className="space-y-5">
+            {chosen && <HangTag t={{ name: chosen.name, unit: chosen.unit, quantity: chosen.available, listPriceCents: chosen.listPriceCents, floorPriceCents: null, sellBy: null, facts: chosen.facts, condition: chosen.condition }} showPrivate={false} />}
+
             {order && (
-              <Card title="💳 Approve the payment">
+              <section className="rounded-3xl bg-surface p-5 shadow-[0_1px_0_var(--line)]" aria-label="Payment">
                 {paid ? (
                   <div className="space-y-2">
-                    <div className="text-lg font-semibold text-good">✓ Paid {usd(order.order.total_cents)}</div>
+                    <div className="font-sign text-4xl font-extrabold text-leaf">Paid {usd(order.order.total_cents)}</div>
                     <SourceBadge source={order.order.payment_source} />
-                    {order.order.payment_source === "PAYPAL_SANDBOX" && order.payment?.capture_id && (
-                      <div className="break-all font-mono text-[11px] text-muted">PayPal capture {order.payment.capture_id} · verified by server</div>
-                    )}
-                    {order.order.payment_source === "MOCK_CHECKOUT" && <div className="text-xs text-warn">Offline mock payment. No money moved and PayPal was not called.</div>}
+                    {order.order.payment_source === "MOCK_CHECKOUT" && <p className="text-sm text-warn">Practice payment: no money moved and PayPal wasn’t called.</p>}
                     {chosen && (
-                      <Link className="inline-block text-sm underline" href={`/seller/${chosen.shopId}/deals`}>
-                        See it on the owner’s dashboard →
+                      <Link className="inline-block font-bold text-leaf underline underline-offset-2" href={`/seller/${chosen.shopId}/deals`}>
+                        See it on the stall’s phone
                       </Link>
                     )}
                   </div>
                 ) : order.order.status === "AWAITING_APPROVAL" || order.order.status === "CREATED" ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-ink-2">The agreed {usd(order.order.total_cents)} is locked for 5 minutes. You approve; the buyer agent cannot pay on its own.</p>
+                  <div className="space-y-3">
+                    <div className="text-sm text-ink-2">Your agent agreed on</div>
+                    <div className="font-sign tnum text-5xl font-extrabold leading-none">
+                      {usd(order.order.total_cents)}
+                      <span className="ml-2 text-lg font-semibold text-ink-2">
+                        {neg ? `${neg.qty} × ${usd(neg.agreedPriceCents)}${per}` : ""}
+                      </span>
+                    </div>
+                    <p className="text-sm text-ink-2">Held for 5 minutes. Your agent can’t pay on its own: you approve below.</p>
                     <Checkout orderId={order.order.id} onDone={onPaid} />
                   </div>
                 ) : (
-                  <p className="text-sm text-bad">Not paid ({order.order.status}). Nothing was charged.</p>
+                  <p className="text-tomato">Not paid ({order.order.status.toLowerCase()}). Nothing was charged.</p>
                 )}
-              </Card>
+              </section>
             )}
-          </div>
+
+            {seller && chosen && (
+              <details className="rounded-3xl border border-line bg-paper p-5">
+                <summary className="flex cursor-pointer items-center gap-2 font-bold">
+                  <IconLock size={18} /> Behind the counter (demo only)
+                </summary>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-xs text-ink-2">Listed</div>
+                    <div className="font-sign text-2xl font-bold">{usd(seller.publishedCents)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-ink-2">Owner’s lowest</div>
+                    <div className="font-sign text-2xl font-bold">{usd(seller.floorCents)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-ink-2">Will go to</div>
+                    <div className="font-sign text-2xl font-bold text-leaf">{usd(seller.walkAwayCents)}</div>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-ink-2">{seller.reason}</p>
+                <p className="mt-2 text-xs text-muted">Shown here so you can see why the assistant answered as it did. Buyer agents never receive this.</p>
+              </details>
+            )}
+          </aside>
         </div>
       </main>
       <SiteFooter />
