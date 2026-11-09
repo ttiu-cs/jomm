@@ -131,9 +131,9 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       const offer = args.offer_per_unit_usd === undefined || args.offer_per_unit_usd === null ? undefined : Math.round(Number(args.offer_per_unit_usd) * 100);
       const listed = listCatalog(db, undefined, ctx.shopId).find((i) => i.sku === sku);
       if (!listed) return { error: `Unknown sku ${sku}` };
-      if (offer !== undefined && offer >= listed.listPriceCents && ctx.mandate.priority !== "quality") return { error: `An offer of ${usd(offer)} isn't below the listed ${usd(listed.listPriceCents)}. The shopper wants a good price: offer less.` };
       if (offer === undefined && ctx.mandate.priority !== "quality") return { error: "The shopper wants a good price: open with an offer (offer_per_unit_usd) instead of paying the listed price." };
       if (overBudget(ctx, offer ?? listed.listPriceCents, qty)) return { error: `Refused by the shopper's mandate: ${qty} × ${usd(offer ?? listed.listPriceCents)} is over the max total ${usd(ctx.mandate.max_total_cents)}.` };
+      if (offer !== undefined && offer >= listed.listPriceCents && ctx.mandate.priority !== "quality") return { error: `An offer of ${usd(offer)} isn't below the listed ${usd(listed.listPriceCents)}. The shopper wants a good price: offer less.` };
       const body = { items: [{ id: sku, quantity: qty }], ...(offer === undefined ? {} : { negotiation: { offer_per_unit: offer } }), buyer: { agent: "buyer-agent" } };
       const s0 = createSession(db, body);
       if (offer !== undefined) applyBuyerWords(db, s0.id, args.message as string | undefined, offer);
