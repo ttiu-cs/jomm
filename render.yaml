@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: retail-pricing-os
+    name: jomm
     runtime: node
     plan: starter
     buildCommand: npm ci && npm run build
@@ -23,5 +23,9 @@ services:
         sync: false
       - key: MERCHANT_BASIC_AUTH
         sync: false
-      - key: ANTHROPIC_API_KEY
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
+      - key: CHANNEL3_API_KEY
         sync: false
