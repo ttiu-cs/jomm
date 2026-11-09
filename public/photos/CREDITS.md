@@ -1,16 +1,16 @@
 # Photo credits
 
 All photos are from Pexels and used under the Pexels License (free to use, no attribution required).
-Source pages:
+Chosen for a candid, phone-camera feel rather than studio stock.
 
 | File | Pexels page |
 |---|---|
-| hero-vendor-phone.jpg | https://www.pexels.com/photo/local-fruit-vendor-in-cebu-city-s-bustling-market-37333800/ |
-| seller-portrait.jpg | https://www.pexels.com/photo/woman-at-shopping-mall-16817332/ |
-| stall-wide.jpg | https://www.pexels.com/photo/vibrant-farmers-market-fruit-display-32189195/ |
-| apples-crate.jpg | https://www.pexels.com/photo/red-apples-on-wooden-crates-2949140/ |
-| white-peaches.jpg | https://www.pexels.com/photo/fresh-peaches-on-white-fabric-5056328/ |
-| strawberries-basket.jpg | https://www.pexels.com/photo/close-up-photography-of-strawberries-1143489/ |
+| hero-vendor.jpg | https://www.pexels.com/photo/a-vendor-wiping-the-fruits-on-his-stall-7596821/ |
+| seller-setup.jpg | https://www.pexels.com/photo/man-standing-beside-table-with-vegetables-near-buildings-1635330/ |
+| stall-live.jpg | https://www.pexels.com/photo/customers-browsing-vegetables-at-a-market-38384722/ |
+| apples-box.jpg | https://www.pexels.com/photo/a-red-apple-fruits-on-a-carton-box-10568559/ |
+| peaches-hand.jpg | https://www.pexels.com/photo/a-person-holding-a-fruit-9811474/ |
+| strawberries-market.jpg | https://www.pexels.com/photo/close-up-photo-of-strawberries-on-plastic-container-1435296/ |
+| closet-bedroom.jpg | https://www.pexels.com/photo/wardrobe-with-clothes-on-hangers-near-bed-at-home-6347597/ |
 | coat-on-hook.jpg | https://www.pexels.com/photo/coats-and-shoulder-bag-on-hooks-in-house-7790205/ |
 | denim-jacket.jpg | https://www.pexels.com/photo/denim-jacket-with-pockets-16428589/ |
-| closet-wall.jpg | https://www.pexels.com/photo/clothes-hanging-on-hooks-on-wall-4846383/ |

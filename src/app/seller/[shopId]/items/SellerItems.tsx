@@ -35,7 +35,7 @@ export default function SellerItems({ shopId }: { shopId: string }) {
       {d.items.length === 0 && (
         <div className="mt-8 rounded-[22px] bg-card p-8 text-center">
           <p className="text-[17px] text-label-2">Nothing for sale yet.</p>
-          <Link href={`/seller/${shopId}/teach`} className="mt-4 inline-block rounded-full bg-blue px-5 py-2.5 text-[15px] font-medium text-white">
+          <Link href={`/seller/${shopId}/teach`} className="mt-4 inline-block rounded-full bg-brand px-5 py-2.5 text-[15px] font-medium text-white">
             Show your first item
           </Link>
         </div>

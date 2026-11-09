@@ -110,7 +110,7 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
           <SourceBadge source="MOCK_CHECKOUT" />
           <p className="text-sm text-ink-2">PayPal isn’t connected on this server yet, so this is a practice payment. No money moves.</p>
           <div className="flex gap-2">
-            <button type="button" disabled={busy} className="flex-1 rounded-full bg-blue py-3 text-[17px] font-medium text-white hover:bg-blue-hover disabled:opacity-50" onClick={() => mock("success")}>
+            <button type="button" disabled={busy} className="flex-1 rounded-full bg-brand py-3 text-[17px] font-medium text-white hover:bg-brand-hover disabled:opacity-50" onClick={() => mock("success")}>
               Pay (practice)
             </button>
             <button type="button" disabled={busy} className="rounded-full bg-fill px-4 py-3 text-[15px]" onClick={() => mock("fail")}>

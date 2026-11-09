@@ -7,6 +7,11 @@ import { usd } from "@/lib/client/format";
 import { rememberShop } from "@/components/shells";
 import { IconCamera } from "@/components/icons";
 
+function greeting() {
+  const h = new Date().getHours();
+  return h < 11 ? "Good morning! Fresh stock in?" : h < 17 ? "Afternoon! Here’s how it’s going." : "Evening. Here’s how today went.";
+}
+
 export default function SellerHome({ shopId }: { shopId: string }) {
   const { data: d, error } = useSeller(shopId);
   const opened = useSearchParams().get("opened");
@@ -25,7 +30,8 @@ export default function SellerHome({ shopId }: { shopId: string }) {
 
   return (
     <main className="mx-auto max-w-[720px] px-5 pb-10 pt-6">
-      <h1 className="text-[34px] font-bold tracking-tight">Today</h1>
+      <p className="hand text-[26px]">{greeting()}</p>
+      <h1 className="text-[34px] font-bold tracking-tight">Today at {d.shop.name}</h1>
       {opened && (
         <div className="rise mt-3 rounded-[14px] bg-green-fill/15 px-4 py-3 text-[15px] font-medium text-green" role="status">
           Your shop is open. Your assistant is answering buyers now.
@@ -50,7 +56,7 @@ export default function SellerHome({ shopId }: { shopId: string }) {
 
       <Link href={`/seller/${shopId}/teach`} className="relative mt-4 block overflow-hidden rounded-[22px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/photos/stall-wide.jpg" alt="" className="h-40 w-full object-cover" />
+        <img src="/photos/stall-live.jpg" alt="" className="warm-photo h-40 w-full object-cover" />
         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-black/0 p-5 text-white">
           <div className="flex w-full items-center justify-between gap-3">
             <div>

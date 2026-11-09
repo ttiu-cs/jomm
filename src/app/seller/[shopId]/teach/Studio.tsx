@@ -204,19 +204,21 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
     <main className="mx-auto max-w-[1100px] lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-10 lg:px-5 lg:py-8">
       {/* Viewfinder */}
       <section className="lg:sticky lg:top-20 lg:self-start">
-        <div className="relative h-[58vh] min-h-[360px] overflow-hidden bg-black lg:aspect-[4/5] lg:h-auto lg:rounded-[32px]">
+        <div className="grain relative h-[58vh] min-h-[360px] overflow-hidden bg-black lg:aspect-[4/5] lg:h-auto lg:rounded-[32px]">
           {source.kind === "camera" && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
           {demoPhoto && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={demoPhoto} src={demoPhoto} alt="Sample camera view" className="kenburns absolute inset-0 h-full w-full object-cover" />
+            <img key={demoPhoto} src={demoPhoto} alt="Sample camera view" className="handheld warm-photo absolute inset-0 h-full w-full object-cover" />
           )}
+          {source.kind !== "none" && <span key={`focus-${demoPhoto ?? "cam"}-${session.focusItemId ?? ""}`} className="focus-square z-10" aria-hidden />}
           {source.kind === "none" && (
             <div className="absolute inset-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/photos/stall-wide.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+              <img src="/photos/stall-live.jpg" alt="" className="warm-photo absolute inset-0 h-full w-full object-cover opacity-55" />
               <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-black/30 to-black/80 p-6">
                 <div className="w-full max-w-sm text-center text-white">
-                  <h2 className="display text-[34px] leading-tight">Show me your stall.</h2>
+                  <p className="hand text-[30px] text-[#ffd9a8]">Morning! What are we selling today?</p>
+                  <h2 className="display mt-1 text-[30px] leading-tight">Show me your stall.</h2>
                   <p className="mt-2 text-[17px] text-white/80">Walk around with the camera on and talk, like you’re training a new helper.</p>
                   <button type="button" onClick={startCamera} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-[17px] font-semibold text-label">
                     <IconCamera size={22} /> Turn on camera
@@ -237,12 +239,12 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
             <Link href={`/seller/${session.shopId}`} className="frosted-dark rounded-full px-3.5 py-1.5 text-[15px] text-white lg:hidden">
               Done
             </Link>
-            <span className="hidden text-[13px] font-medium text-white/85 lg:inline">{source.kind === "demo" ? "Sample camera" : source.kind === "camera" ? "Camera" : ""}</span>
+            {source.kind !== "none" ? <LiveBadge sample={source.kind === "demo"} /> : <span />}
             <button
               type="button"
               onClick={openShop}
               disabled={!ready || opening}
-              className="rounded-full bg-blue px-4 py-1.5 text-[15px] font-semibold text-white shadow disabled:bg-white/25 disabled:text-white/80"
+              className="rounded-full bg-brand px-4 py-1.5 text-[15px] font-semibold text-white shadow disabled:bg-white/25 disabled:text-white/80"
             >
               {opening ? "Opening…" : ready ? `Open shop · ${ready}` : "Open shop"}
             </button>
@@ -275,7 +277,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
               onClick={() => send(nextLine)}
               className="mb-2.5 flex w-full items-center gap-3 rounded-[18px] bg-card px-3.5 py-2.5 text-left shadow-[0_1px_6px_rgba(0,0,0,0.08)] disabled:opacity-50"
             >
-              <span className="shrink-0 text-[13px] font-semibold text-blue">Tap to say</span>
+              <span className="shrink-0 text-[13px] font-semibold text-brand">Tap to say</span>
               <span className="line-clamp-2 text-[15px] text-label">“{nextLine}”</span>
             </button>
           )}
@@ -286,7 +288,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                 onClick={toggleMic}
                 disabled={sending}
                 aria-label={listening ? "Stop listening" : "Talk"}
-                className={`grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-white ${listening ? "listening bg-[#ff3b30]" : "bg-blue"} disabled:opacity-40`}
+                className={`grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-white ${listening ? "listening bg-[#ff3b30]" : "bg-brand"} disabled:opacity-40`}
               >
                 {listening ? <IconStop size={24} /> : <IconMic size={24} />}
               </button>
@@ -305,7 +307,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
-              <button type="submit" disabled={sending || !text.trim()} aria-label="Send" className="grid h-10 w-10 place-items-center rounded-full bg-blue text-white disabled:bg-transparent disabled:text-label-3">
+              <button type="submit" disabled={sending || !text.trim()} aria-label="Send" className="grid h-10 w-10 place-items-center rounded-full bg-brand text-white disabled:bg-transparent disabled:text-label-3">
                 <IconSend size={18} />
               </button>
             </form>
@@ -361,13 +363,32 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
           <div className="mx-5 mt-3 max-h-80 space-y-2 overflow-y-auto rounded-[22px] bg-card p-4 lg:mx-0">
             {session.messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "owner" ? "justify-end" : ""}`}>
-                <span className={`max-w-[85%] rounded-[18px] px-3.5 py-2 text-[15px] ${m.role === "owner" ? "bg-blue text-white" : "bg-fill"}`}>{m.text}</span>
+                <span className={`max-w-[85%] rounded-[18px] px-3.5 py-2 text-[15px] ${m.role === "owner" ? "bg-brand text-white" : "bg-fill"}`}>{m.text}</span>
               </div>
             ))}
           </div>
         )}
       </section>
     </main>
+  );
+}
+
+/** "● Live 00:42" like a phone camera recording, so the screen reads as a live camera, not a photo. */
+function LiveBadge({ sample }: { sample: boolean }) {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSecs((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return (
+    <span className="frosted-dark flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-white">
+      <span className="rec-dot h-2 w-2 rounded-full bg-[#ff3b30]" aria-hidden />
+      <span className="tnum">
+        {sample ? "Sample" : "Live"} {mm}:{ss}
+      </span>
+    </span>
   );
 }
 

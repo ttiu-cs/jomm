@@ -30,7 +30,7 @@ export function SiteHeader() {
           <Link href="/market" className={`hidden sm:inline ${path.startsWith("/market") ? "text-label" : "text-label-2 hover:text-label"}`}>
             Buyer agent
           </Link>
-          <Link href="/seller" className="rounded-full bg-blue px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-blue-hover">
+          <Link href="/seller" className="rounded-full bg-brand px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-brand-hover">
             Start selling
           </Link>
         </nav>
@@ -117,7 +117,7 @@ export function SellerShell({ shopId, shopName, children }: { shopId: string; sh
               key={key}
               href={base + key}
               aria-current={active === key ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 pb-1.5 pt-2 text-[10px] font-medium ${active === key ? "text-blue" : "text-label-3"}`}
+              className={`flex flex-col items-center gap-0.5 pb-1.5 pt-2 text-[10px] font-medium ${active === key ? "text-brand" : "text-label-3"}`}
             >
               <Icon size={25} />
               {label}

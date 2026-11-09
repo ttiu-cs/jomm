@@ -4,21 +4,21 @@ export const EXAMPLE_SCRIPTS: Record<"fruit" | "closet", { shopName: string; lin
     shopName: "Sunny Fruit Stand",
     lines: [
       "These are Fuji apples, about 30 lb. They're really sweet and crisp this year.",
-      "$3 a pound, but no less than $2.40.",
+      "$2.89 a pound, but no less than $2.35.",
       "No rush, they keep well.",
       "Next is white peaches, 12 lb. A little soft, they have to go today.",
-      "$4 per pound, lowest $2.",
+      "$3.79 per pound, lowest $2.15.",
       "And this is strawberries, 8 box. Picked this morning, very fragrant.",
-      "$6 a box, at least $4.50. Sell them by this week.",
+      "$5.49 a box, at least $4.25. Sell them by this week.",
     ],
   },
   closet: {
     shopName: "Mina's Closet",
     lines: [
       "This is a wool coat, worn twice, size M.",
-      "Just one. $60, at least $45. No rush.",
+      "Just one. $64, at least $47.50. No rush.",
       "Next is denim jacket, size S, small stain on the left cuff.",
-      "One left. $25, lowest $15. I'd like it gone this week.",
+      "One left. $27.50, lowest $16. I'd like it gone this week.",
     ],
   },
 };

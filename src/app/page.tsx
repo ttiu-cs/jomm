@@ -16,29 +16,33 @@ export default function Home() {
         {/* Hero */}
         <section className="px-5 pt-14 text-center sm:pt-20">
           <p className="text-[21px] font-semibold">Stallkeeper</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[48px] leading-[1.05] sm:text-[72px]">Your stall. Now with an assistant.</h1>
+          <h1 className="display mx-auto mt-1 max-w-3xl text-[48px] leading-[1.05] sm:text-[72px]">Your stall. Now with a helping hand.</h1>
           <p className="mx-auto mt-4 max-w-2xl text-[21px] leading-snug text-label-2 sm:text-[24px]">
-            Show it your stock and talk. It sells to shoppers and their AI agents, haggles within your limits, and gets you paid with PayPal.
+            Show it what came in this morning and talk, the way you’d brief a new helper. It answers shoppers and their AI agents, haggles like you would, and gets you paid with PayPal.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <Link href="/seller" className="rounded-full bg-blue px-6 py-3 text-[17px] text-white hover:bg-blue-hover">
+            <Link href="/seller" className="rounded-full bg-brand px-6 py-3 text-[17px] text-white hover:bg-brand-hover">
               Start selling
             </Link>
             <Link href="/market" className="text-[17px] text-link hover:underline">
               Watch a buyer agent shop ›
             </Link>
           </div>
-          <div className="mx-auto mt-12 max-w-[1024px] overflow-hidden rounded-[28px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/photos/hero-vendor-phone.jpg" alt="A fruit seller talking on her phone at her stall" className="aspect-[16/10] w-full object-cover sm:aspect-[16/8]" />
-          </div>
+          <figure className="mx-auto mt-12 max-w-[1024px]">
+            <div className="overflow-hidden rounded-[28px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/photos/hero-vendor.jpg" alt="A young vendor wiping fruit at his street stall" className="warm-photo aspect-[16/10] w-full object-cover sm:aspect-[16/8]" />
+            </div>
+            <figcaption className="hand mt-3 text-[24px]">Every stall opens the same way: crates out, prices up, coffee on. Now there’s help.</figcaption>
+          </figure>
         </section>
 
         {/* Teach by talking */}
         <section className="mt-20 bg-canvas px-5 py-20">
           <div className="mx-auto grid max-w-[1024px] items-center gap-14 lg:grid-cols-2">
             <div>
-              <h2 className="display text-[40px] leading-tight sm:text-[56px]">Teach it the way you’d teach a new helper.</h2>
+              <h2 className="display text-[40px] leading-tight sm:text-[56px]">Teach it like you’d teach a new helper.</h2>
+              <p className="hand mt-2 text-[26px]">“These are sweet. Don’t go under $2.35.”</p>
               <p className="mt-4 text-[19px] leading-relaxed text-label-2">
                 Point your phone at a crate and say what it is. Your assistant asks for what it still needs: how many, the price, the lowest you’d take, and whether it has to go
                 today. Every answer becomes a product, ready to sell.
@@ -54,25 +58,25 @@ export default function Home() {
         {/* Three promises */}
         <section className="px-5 py-20">
           <div className="mx-auto max-w-[1024px]">
-            <h2 className="display text-center text-[40px] leading-tight sm:text-[48px]">Small stall. Serious assistant.</h2>
+            <h2 className="display text-center text-[40px] leading-tight sm:text-[48px]">Small stall. Big help.</h2>
             <div className="mt-12 grid gap-5 md:grid-cols-3">
               <div className="overflow-hidden rounded-[28px] bg-canvas">
                 <div className="p-7">
-                  <IconCamera size={30} className="text-blue" />
+                  <IconCamera size={30} className="text-brand" />
                   <h3 className="mt-3 text-[24px] font-semibold leading-tight">Talk, don’t type.</h3>
                   <p className="mt-2 text-[17px] text-label-2">No catalog, no forms. If you can describe it to a customer, it’s listed.</p>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/photos/strawberries-basket.jpg" alt="" className="aspect-[4/3] w-full object-cover" />
+                <img src="/photos/strawberries-market.jpg" alt="" className="warm-photo aspect-[4/3] w-full object-cover" />
               </div>
               <div className="overflow-hidden rounded-[28px] bg-canvas">
                 <div className="p-7">
-                  <IconLock size={30} className="text-blue" />
+                  <IconLock size={30} className="text-brand" />
                   <h3 className="mt-3 text-[24px] font-semibold leading-tight">Never below your price.</h3>
                   <p className="mt-2 text-[17px] text-label-2">Your lowest price stays private. The assistant haggles above it, and gives more ground on what must go today.</p>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/photos/white-peaches.jpg" alt="" className="aspect-[4/3] w-full object-cover" />
+                <img src="/photos/peaches-hand.jpg" alt="" className="warm-photo aspect-[4/3] w-full object-cover" />
               </div>
               <div className="overflow-hidden rounded-[28px] bg-canvas">
                 <div className="p-7">
@@ -81,7 +85,7 @@ export default function Home() {
                   <p className="mt-2 text-[17px] text-label-2">The buyer approves in PayPal. Stock and money update on your phone. Agents can’t pay without a person.</p>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/photos/seller-portrait.jpg" alt="" className="aspect-[4/3] w-full object-cover object-top" />
+                <img src="/photos/seller-setup.jpg" alt="" className="warm-photo aspect-[4/3] w-full object-cover" />
               </div>
             </div>
           </div>
@@ -91,6 +95,7 @@ export default function Home() {
           <section className="px-5 pb-20">
             <div className="mx-auto max-w-[1024px]">
               <h2 className="text-[28px] font-semibold">Open now</h2>
+              <p className="hand text-[22px]">Go say hi.</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {shops.map((s) => (
                   <Link key={s.id} href={`/shop/${s.id}`} className="rounded-full bg-canvas px-5 py-3 text-[17px] hover:bg-fill">

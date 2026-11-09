@@ -49,7 +49,7 @@ describe("teach → open shop → buyer agent deal → PayPal", () => {
     const names = r.items.map((i) => i.name);
     expect(names).toEqual(["Fuji apples", "White peaches", "Strawberries"]);
     const apples = r.items[0];
-    expect(apples).toMatchObject({ quantity: 30, unit: "lb", listPriceCents: 300, floorPriceCents: 240, sellBy: "no_rush" });
+    expect(apples).toMatchObject({ quantity: 30, unit: "lb", listPriceCents: 289, floorPriceCents: 235, sellBy: "no_rush" });
     expect(r.messages.filter((m) => m.role === "agent").length).toBeGreaterThan(5);
   });
 
@@ -62,7 +62,7 @@ describe("teach → open shop → buyer agent deal → PayPal", () => {
     expect(cat[0].name).toBe("Fuji apples");
     expect(cat[0].available).toBe(30);
     expect(JSON.stringify(cat)).not.toMatch(/floor/i);
-    expect(getContext(db, cat[0].productId, T).published?.priceCents).toBe(300);
+    expect(getContext(db, cat[0].productId, T).published?.priceCents).toBe(289);
     await expect(teachTurn(db, id, { text: "more" }, T)).rejects.toThrow(/opened the shop/);
   });
 
@@ -84,25 +84,25 @@ describe("teach → open shop → buyer agent deal → PayPal", () => {
     publishSession(db, id, T);
     const peaches = listCatalog(db, "peaches")[0];
     const view = sellerNegotiationView(db, peaches.productId, T);
-    expect(view.walkAwayCents).toBe(200); // must sell today -> may go all the way to the owner's floor
+    expect(view.walkAwayCents).toBe(215); // must sell today -> may go all the way to the owner's floor
     const apples = listCatalog(db, "apples")[0];
-    expect(sellerNegotiationView(db, apples.productId, T).walkAwayCents).toBe(276); // no rush -> 40% of the gap only
+    expect(sellerNegotiationView(db, apples.productId, T).walkAwayCents).toBe(267); // no rush -> 40% of the gap only
 
     let n = startNegotiation(db, peaches.productId, 150, "buyer", T, 2);
     expect(n.qty).toBe(2);
     expect(n.status).toBe("OPEN");
     while (n.status === "OPEN" && !n.sellerCounterIsFinal) n = makeOffer(db, n.id, 150, T);
-    expect(n.sellerCounterCents).toBe(200);
+    expect(n.sellerCounterCents).toBe(215);
     n = acceptCounter(db, n.id, T);
     expect(n.status).toBe("AGREED");
     const order = createOrderFromQuote(db, n.quote!.id, T);
-    expect(order.total_cents).toBe(400);
+    expect(order.total_cents).toBe(430);
     const { paypalOrderId } = await createPayPalOrder(db, pp, order.id, T);
     pp.approve(paypalOrderId);
     expect((await capturePayPalOrder(db, pp, paypalOrderId, T)).status).toBe("PAID");
     expect(listCatalog(db, "peaches")[0].available).toBe(10);
     const dash = sellerDashboard(db, peaches.shopId);
-    expect(dash.totals.paypalCents).toBe(400);
+    expect(dash.totals.paypalCents).toBe(430);
     expect(dash.items.find((i) => i.name === "White peaches")!.sold).toBe(2);
   });
 
@@ -112,7 +112,7 @@ describe("teach → open shop → buyer agent deal → PayPal", () => {
     const apples = listCatalog(db, "apples")[0];
     const a = await answerQuestion(db, apples.productId, "Are they sweet?");
     expect(a.answer).toMatch(/sweet and crisp/);
-    expect(a.answer).not.toMatch(/2\.40|floor|lowest/i);
+    expect(a.answer).not.toMatch(/2\.35|floor|lowest/i);
   });
 
   it("lets the owner correct a card and refuses incomplete shops", async () => {

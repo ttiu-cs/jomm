@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
 /*
- * Apple-style system (after apple.com and the iOS Human Interface Guidelines):
- * system font, near-black label on white / #f5f5f7, one blue for actions, iOS system
- * colors only for status, generous space, large type, frosted bars, grouped lists.
+ * Apple-style structure (after apple.com and the iOS Human Interface Guidelines) warmed up for
+ * small shops: system font, warm paper whites instead of cold grays, a persimmon accent for actions,
+ * the owner's own words in handwriting, candid photos with a live-camera feel.
  */
 :root {
   color-scheme: light;
-  --canvas: #f5f5f7;
-  --card: #ffffff;
-  --fill: #e8e8ed;
-  --separator: #d2d2d7;
-  --label: #1d1d1f;
-  --label-2: #6e6e73;
-  --label-3: #86868b;
-  --blue: #0071e3;
-  --blue-hover: #0077ed;
-  --link: #0066cc;
-  --green: #248a3d;
-  --green-fill: #34c759;
+  --canvas: #f6f1ea;
+  --card: #fffdf9;
+  --fill: #eee6dc;
+  --separator: #dfd3c5;
+  --label: #2b211a;
+  --label-2: #75675b;
+  --label-3: #9a8b7e;
+  --brand: #e0592a;
+  --brand-hover: #c94c21;
+  --link: #b8481c;
+  --hand: #6b4a2b;
+  --green: #2f7a3b;
+  --green-fill: #43a554;
   --red: #d70015;
   --orange: #c93400;
   --yellow-fill: #ffcc00;
@@ -26,20 +27,20 @@
   /* legacy names used by the pricing-engine screens */
   --bg: var(--canvas);
   --surface: var(--card);
-  --surface-2: #f2f2f7;
-  --line: #e5e5ea;
+  --surface-2: #f3ece3;
+  --line: #ece3d8;
   --border: var(--line);
   --ink: var(--label);
   --ink-2: var(--label-2);
   --muted: var(--label-3);
   --text: var(--label);
   --text-2: var(--label-2);
-  --series-1: #0071e3;
+  --series-1: #e0592a;
   --series-2: #ff9500;
   --good: var(--green);
   --warn: #b25000;
   --bad: var(--red);
-  --accent: var(--blue);
+  --accent: var(--brand);
 }
 
 @theme inline {
@@ -50,8 +51,9 @@
   --color-label: var(--label);
   --color-label-2: var(--label-2);
   --color-label-3: var(--label-3);
-  --color-blue: var(--blue);
-  --color-blue-hover: var(--blue-hover);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-hand: var(--hand);
   --color-link: var(--link);
   --color-green: var(--green);
   --color-green-fill: var(--green-fill);
@@ -73,6 +75,7 @@
   --color-accent: var(--accent);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
 }
 
 html {
@@ -93,8 +96,19 @@ body {
   letter-spacing: -0.025em;
   font-weight: 600;
 }
+/* The owner's own words, as if written on a chalkboard or a price card. */
+.hand {
+  font-family: var(--font-hand);
+  color: var(--hand);
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+/* Candid photos: a touch of warmth. */
+.warm-photo {
+  filter: saturate(1.06) contrast(1.03) sepia(0.07);
+}
 .frosted {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 252, 247, 0.74);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
@@ -104,7 +118,7 @@ body {
   backdrop-filter: saturate(180%) blur(20px);
 }
 :focus-visible {
-  outline: 3px solid rgba(0, 113, 227, 0.6);
+  outline: 3px solid rgba(224, 89, 42, 0.55);
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -133,6 +147,72 @@ body {
 .kenburns {
   animation: kenburns 9s ease-out both;
 }
+/* Live camera feel: slight handheld drift, film grain, focus square. */
+@keyframes handheld {
+  0% {
+    transform: scale(1.08) translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.085) translate(-0.6%, 0.4%) rotate(-0.25deg);
+  }
+  50% {
+    transform: scale(1.08) translate(0.4%, -0.3%) rotate(0.2deg);
+  }
+  75% {
+    transform: scale(1.09) translate(-0.2%, -0.5%) rotate(-0.1deg);
+  }
+  100% {
+    transform: scale(1.08) translate(0, 0) rotate(0deg);
+  }
+}
+.handheld {
+  animation: handheld 7s ease-in-out infinite;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+@keyframes focus-in {
+  0% {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+.focus-square {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 92px;
+  height: 92px;
+  border: 1.5px solid #ffd60a;
+  border-radius: 4px;
+  animation: focus-in 1.6s ease-out both;
+  pointer-events: none;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.rec-dot {
+  animation: blink 1.2s steps(2, start) infinite;
+}
 @keyframes listen {
   0%,
   100% {
@@ -148,6 +228,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .kenburns,
+  .handheld,
+  .focus-square,
+  .rec-dot,
   .listening {
     animation: none;
   }

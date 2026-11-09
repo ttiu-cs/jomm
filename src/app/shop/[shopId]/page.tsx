@@ -25,7 +25,8 @@ export default async function Page({ params }: { params: Promise<{ shopId: strin
       <SiteHeader />
       <main className="mx-auto max-w-[1024px] px-5 pb-20 pt-12">
         <h1 className="display text-[44px] leading-tight sm:text-[56px]">{data.shop.name}</h1>
-        <p className="mt-2 text-[19px] text-label-2">Tap anything to ask the stall’s assistant, make an offer, or pay with PayPal.</p>
+        <p className="hand mt-1 text-[26px]">Fresh today. Ask me anything.</p>
+        <p className="mt-2 text-[17px] text-label-2">Tap an item to ask the stall’s assistant, make an offer, or pay with PayPal.</p>
         {data.items.length === 0 && <p className="mt-10 text-[17px] text-label-2">Nothing for sale right now. Check back after the morning delivery.</p>}
         <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
           {data.items.map((i) => {
@@ -35,7 +36,7 @@ export default async function Page({ params }: { params: Promise<{ shopId: strin
                 <div className="overflow-hidden rounded-[22px] bg-canvas">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={photo} alt="" className="aspect-square w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
+                    <img src={photo} alt="" className="warm-photo aspect-square w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
                   ) : (
                     <div className="grid aspect-square place-items-center text-label-3">No photo</div>
                   )}

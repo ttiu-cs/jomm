@@ -122,7 +122,7 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
 
       {item.photo ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.photo} alt={item.name} className="aspect-square w-full object-cover" />
+        <img src={item.photo} alt={item.name} className="warm-photo aspect-square w-full object-cover" />
       ) : (
         <div className="grid aspect-[4/3] place-items-center bg-canvas text-label-3">No photo</div>
       )}
@@ -138,7 +138,11 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
           {item.condition ? ` · ${item.condition}` : ""}
           {item.negotiable ? " · Offers welcome" : ""}
         </p>
-        {item.facts.length > 0 && <p className="mt-3 text-[17px] leading-relaxed">{item.facts.join(" ")}</p>}
+        {item.facts.length > 0 && (
+          <p className="hand mt-3 text-[26px]">
+            “{item.facts.join(" ")}” <span className="text-[18px] text-label-3">— the owner</span>
+          </p>
+        )}
       </div>
 
       {err && <p className="mx-5 mt-4 rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
@@ -158,7 +162,7 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
             </div>
           </div>
 
-          <button type="button" disabled={busy} onClick={buyAtListed} className="w-full rounded-[14px] bg-blue py-4 text-[17px] font-semibold text-white hover:bg-blue-hover disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={buyAtListed} className="w-full rounded-[14px] bg-brand py-4 text-[17px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
             Buy {qty > 1 ? `${qty} ` : ""}for {usd(item.listPriceCents * qty)}
           </button>
 
@@ -168,7 +172,7 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
             <div className="mt-4 space-y-2">
               {thread.map((m, i) => (
                 <div key={i} className={`rise flex ${m.role === "buyer" ? "justify-end" : ""}`}>
-                  <p className={`max-w-[80%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${m.role === "buyer" ? "rounded-br-[6px] bg-blue text-white" : "rounded-bl-[6px] bg-[#e9e9eb]"}`}>{m.text}</p>
+                  <p className={`max-w-[80%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${m.role === "buyer" ? "rounded-br-[6px] bg-brand text-white" : "rounded-bl-[6px] bg-[#e9e9eb]"}`}>{m.text}</p>
                 </div>
               ))}
             </div>
@@ -209,7 +213,7 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
               </form>
             )}
             {neg?.status === "OPEN" && neg.sellerCounterCents !== null && (
-              <button type="button" disabled={busy} onClick={acceptCounter} className="mt-3 w-full rounded-[14px] bg-blue py-3.5 text-[17px] font-semibold text-white">
+              <button type="button" disabled={busy} onClick={acceptCounter} className="mt-3 w-full rounded-[14px] bg-brand py-3.5 text-[17px] font-semibold text-white">
                 Accept {usd(neg.sellerCounterCents)}
                 {per}
               </button>

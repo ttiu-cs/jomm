@@ -41,9 +41,10 @@ export default function SellerEntry({ shops }: { shops: { id: string; name: stri
       <main className="mx-auto grid max-w-[1024px] gap-10 px-5 pb-20 pt-10 lg:grid-cols-2 lg:items-center lg:pt-16">
         <div className="overflow-hidden rounded-[28px] max-lg:hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/photos/seller-portrait.jpg" alt="A smiling shop owner at her fruit stall" className="aspect-[4/5] w-full object-cover" />
+          <img src="/photos/seller-setup.jpg" alt="A vendor setting out produce at his market table" className="warm-photo aspect-[4/5] w-full object-cover" />
         </div>
         <div>
+          <p className="hand text-[28px]">Nice to meet you.</p>
           <h1 className="display text-[40px] leading-tight sm:text-[48px]">What’s your shop called?</h1>
           <p className="mt-3 text-[19px] text-label-2">That’s the only thing you type. Everything else, you tell your assistant out loud.</p>
           {err && <p className="mt-4 rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
@@ -57,13 +58,13 @@ export default function SellerEntry({ shops }: { shops: { id: string; name: stri
             <input
               autoFocus
               aria-label="Shop name"
-              className="w-full rounded-[14px] border border-separator bg-card px-4 py-4 text-[19px] outline-none focus:border-blue focus:ring-4 focus:ring-blue/15"
+              className="w-full rounded-[14px] border border-separator bg-card px-4 py-4 text-[19px] outline-none focus:border-brand focus:ring-4 focus:ring-brand/15"
               placeholder="Sunny Fruit Stand"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
             />
-            <button type="submit" disabled={busy || name.trim().length < 2} className="w-full rounded-[14px] bg-blue py-4 text-[17px] font-semibold text-white hover:bg-blue-hover disabled:opacity-40">
+            <button type="submit" disabled={busy || name.trim().length < 2} className="w-full rounded-[14px] bg-brand py-4 text-[17px] font-semibold text-white hover:bg-brand-hover disabled:opacity-40">
               {busy ? "Opening camera…" : "Continue"}
             </button>
           </form>
@@ -98,7 +99,7 @@ export default function SellerEntry({ shops }: { shops: { id: string; name: stri
             <div className="mt-1.5 overflow-hidden rounded-[14px] bg-card">
               <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "fruit" }), true)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[17px] hover:bg-fill/50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/photos/apples-crate.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
+                <img src="/photos/apples-box.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
                 <span className="flex-1">Sample fruit stand</span>
                 <span className="text-label-3">›</span>
               </button>

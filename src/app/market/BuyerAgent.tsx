@@ -43,7 +43,7 @@ interface SellerView {
 }
 type Line = { who: "buyer" | "seller" | "note"; text: string };
 
-const EXAMPLES = ["2 lb of sweet apples, max $6 total", "3 lb peaches, budget $6", "1 box of strawberries under $5", "a wool coat under $50"];
+const EXAMPLES = ["2 lb of sweet apples, max $6 total", "3 lb peaches, budget $7", "1 box of strawberries under $5", "a wool coat under $60"];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const round5 = (c: number) => Math.round(c / 5) * 5;
 
@@ -145,7 +145,7 @@ export default function BuyerAgent() {
           }}
         >
           <input aria-label="What do you want to buy?" className="min-w-0 flex-1 bg-transparent py-2 text-[17px] outline-none" value={request} onChange={(e) => setRequest(e.target.value)} />
-          <button type="submit" disabled={running} className="flex shrink-0 items-center gap-1.5 rounded-full bg-blue px-5 py-2.5 text-[15px] font-medium text-white hover:bg-blue-hover disabled:opacity-50">
+          <button type="submit" disabled={running} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-[15px] font-medium text-white hover:bg-brand-hover disabled:opacity-50">
             <IconCart size={18} /> {running ? "Shopping…" : "Shop"}
           </button>
         </form>
@@ -169,7 +169,7 @@ export default function BuyerAgent() {
               </span>
               <span className="flex items-center gap-2">
                 Your buyer agent
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-blue text-white">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-white">
                   <IconCart size={15} />
                 </span>
               </span>
@@ -183,7 +183,7 @@ export default function BuyerAgent() {
                   </p>
                 ) : (
                   <div key={i} className={`rise flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
-                    <p className={`max-w-[78%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${l.who === "buyer" ? "rounded-br-[6px] bg-blue text-white" : "rounded-bl-[6px] bg-[#e9e9eb] text-label"}`}>{l.text}</p>
+                    <p className={`max-w-[78%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${l.who === "buyer" ? "rounded-br-[6px] bg-brand text-white" : "rounded-bl-[6px] bg-[#e9e9eb] text-label"}`}>{l.text}</p>
                   </div>
                 ),
               )}
@@ -242,7 +242,7 @@ export default function BuyerAgent() {
                   </div>
                   <div>
                     <div className="text-[12px] text-label-2">Will go to</div>
-                    <div className="tnum text-[22px] font-semibold text-blue">{usd(seller.walkAwayCents)}</div>
+                    <div className="tnum text-[22px] font-semibold text-brand">{usd(seller.walkAwayCents)}</div>
                   </div>
                 </div>
                 <p className="mt-3 text-[14px] text-label-2">{seller.reason}</p>

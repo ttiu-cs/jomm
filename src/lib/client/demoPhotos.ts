@@ -3,15 +3,15 @@ export type SceneKind = "fruit" | "closet";
 
 export const SCENES: Record<SceneKind, { wide: string; items: { match: RegExp; src: string; alt: string }[] }> = {
   fruit: {
-    wide: "/photos/stall-wide.jpg",
+    wide: "/photos/stall-live.jpg",
     items: [
-      { match: /apple|사과/i, src: "/photos/apples-crate.jpg", alt: "A crate of red apples" },
-      { match: /peach|복숭아/i, src: "/photos/white-peaches.jpg", alt: "Ripe peaches on a cloth" },
-      { match: /strawberr|berry|딸기/i, src: "/photos/strawberries-basket.jpg", alt: "A basket of strawberries" },
+      { match: /apple|사과/i, src: "/photos/apples-box.jpg", alt: "A crate of red apples" },
+      { match: /peach|복숭아/i, src: "/photos/peaches-hand.jpg", alt: "Ripe peaches on a cloth" },
+      { match: /strawberr|berry|딸기/i, src: "/photos/strawberries-market.jpg", alt: "A basket of strawberries" },
     ],
   },
   closet: {
-    wide: "/photos/closet-wall.jpg",
+    wide: "/photos/closet-bedroom.jpg",
     items: [
       { match: /coat|trench|코트/i, src: "/photos/coat-on-hook.jpg", alt: "Coats hanging on hooks" },
       { match: /denim|jean|jacket|자켓|재킷/i, src: "/photos/denim-jacket.jpg", alt: "A denim jacket" },

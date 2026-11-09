@@ -34,11 +34,11 @@ export function ItemCard({ t, active, showPrivate = true, className = "" }: { t:
   const missing = steps.filter((s) => !s.done);
   const per = t.unit === "each" ? "" : ` / ${t.unit}`;
   return (
-    <div className={`rounded-[22px] bg-card p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)] ${active ? "ring-2 ring-blue" : ""} ${className}`}>
+    <div className={`rounded-[22px] bg-card p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)] ${active ? "ring-2 ring-brand" : ""} ${className}`}>
       <div className="flex gap-3.5">
         {t.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={t.photo} alt="" className="h-[72px] w-[72px] shrink-0 rounded-[14px] object-cover" />
+          <img src={t.photo} alt="" className="warm-photo h-[72px] w-[72px] shrink-0 rounded-[14px] object-cover" />
         ) : (
           <div className="h-[72px] w-[72px] shrink-0 rounded-[14px] bg-fill" aria-hidden />
         )}
@@ -57,7 +57,7 @@ export function ItemCard({ t, active, showPrivate = true, className = "" }: { t:
           </div>
         </div>
       </div>
-      {t.facts.length > 0 && <p className="mt-3 line-clamp-2 text-[14px] text-label-2">“{t.facts.join(" ")}”</p>}
+      {t.facts.length > 0 && <p className="hand mt-3 line-clamp-2 text-[21px]">“{t.facts.join(" ")}”</p>}
       {showPrivate && (
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[14px]">
           <span className="flex items-center gap-1.5 text-label-2">

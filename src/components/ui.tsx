@@ -61,7 +61,7 @@ export function Btn({
 }) {
   const cls =
     kind === "primary"
-      ? "bg-blue text-white hover:bg-blue-hover"
+      ? "bg-brand text-white hover:bg-brand-hover"
       : kind === "danger"
         ? "text-red hover:bg-red/5"
         : "bg-fill text-label hover:bg-separator/60";
