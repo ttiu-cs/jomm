@@ -89,14 +89,14 @@ export function Code({ children }: { children: ReactNode }) {
 }
 
 export function TopNav({ active }: { active: "merchant" | "shop" | "lab" | "agent" | "home" | "teach" | "market" | "salad" }) {
+  // Developer / pricing-engine area. Sellers and shoppers use the seller app and public pages instead.
   const items = [
-    ["home", "/", "Home"],
-    ["teach", "/teach", "1 · Teach"],
-    ["market", "/market", "2 · Buyer agent"],
-    ["salad", "/demo/salad", "Pricing engine"],
-    ["merchant", "/merchant", "Command Center"],
+    ["home", "/", "← Back to app"],
+    ["salad", "/demo/salad", "Negotiation engine"],
+    ["merchant", "/merchant", "Hourly pricing"],
+    ["shop", "/shop", "Salad storefront"],
     ["lab", "/lab", "Lab"],
-    ["agent", "/agent", "API"],
+    ["agent", "/agent", "Agent API"],
   ] as const;
   return (
     <header className="border-b border-line bg-surface">

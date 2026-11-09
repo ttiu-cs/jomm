@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { api, usd } from "@/lib/client/format";
 import { parseBuyerRequest } from "@/lib/buyer/request";
-import { Card, SourceBadge, TopNav } from "@/components/ui";
+import { Card, SourceBadge } from "@/components/ui";
+import { SiteFooter, SiteHeader } from "@/components/shells";
 import { Checkout, type OrderView } from "@/components/Checkout";
 
 interface CatalogItem {
@@ -131,12 +132,19 @@ export default function BuyerAgent() {
 
   return (
     <div>
-      <TopNav active="market" />
+      <SiteHeader />
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
         <div>
-          <p className="text-sm font-semibold text-s1">Step 2 · A buyer agent shops at taught shops</p>
+          <p className="text-sm font-semibold text-s1">For shoppers · try a buyer agent</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">Tell your buyer agent what you want.</h1>
           <p className="mt-2 text-ink-2">It finds a shop, asks the seller agent what the owner said, negotiates within your budget, and you approve the payment in PayPal.</p>
+          <p className="mt-1 text-sm text-muted">
+            No shops yet?{" "}
+            <Link className="underline" href="/seller">
+              Create one in a minute
+            </Link>{" "}
+            or use the fruit-stand example.
+          </p>
         </div>
         <form
           className="flex flex-col gap-2 sm:flex-row"
@@ -162,7 +170,7 @@ export default function BuyerAgent() {
         <div className="grid gap-4 lg:grid-cols-2">
           <Card title="🛒 Your buyer agent ↔ 🏪 seller agent">
             <div className="space-y-2">
-              {lines.length === 0 && <p className="text-sm text-muted">Nothing yet. No shops? Teach one first in Step 1 (the fruit-stand rehearsal takes one click).</p>}
+              {lines.length === 0 && <p className="text-sm text-muted">Type what you want above and press “Send buyer agent”.</p>}
               {[...lines, ...negLines, ...(result ? [result] : [])]
                 .map((l, i) => (
                   <div key={i} className={`flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
@@ -202,7 +210,9 @@ export default function BuyerAgent() {
               </Card>
             )}
             {seller && chosen && (
-              <Card title="🔒 Seller agent's private limits (demo view)">
+              <details open className="rounded-xl border border-line bg-surface p-4">
+                <summary className="cursor-pointer text-sm font-semibold">🔒 Behind the scenes: the seller agent’s private limits</summary>
+                <div className="mt-3">
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <div className="text-xs text-muted">Listed</div>
@@ -218,8 +228,9 @@ export default function BuyerAgent() {
                   </div>
                 </div>
                 <p className="mt-2 rounded-lg bg-surface-2 p-2 text-sm">{seller.reason}</p>
-                <p className="mt-1 text-[11px] text-muted">Shown here only so judges can see why the agent answers as it does. The buyer agent never receives this.</p>
-              </Card>
+                <p className="mt-1 text-[11px] text-muted">Shown only to explain the demo. The buyer agent never receives this.</p>
+                </div>
+              </details>
             )}
             {order && (
               <Card title="💳 Approve the payment">
@@ -232,7 +243,7 @@ export default function BuyerAgent() {
                     )}
                     {order.order.payment_source === "MOCK_CHECKOUT" && <div className="text-xs text-warn">Offline mock payment. No money moved and PayPal was not called.</div>}
                     {chosen && (
-                      <Link className="inline-block text-sm underline" href={`/seller/${chosen.shopId}`}>
+                      <Link className="inline-block text-sm underline" href={`/seller/${chosen.shopId}/deals`}>
                         See it on the owner’s dashboard →
                       </Link>
                     )}
@@ -250,6 +261,7 @@ export default function BuyerAgent() {
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

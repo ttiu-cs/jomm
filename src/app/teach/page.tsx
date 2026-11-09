@@ -1,7 +1,6 @@
-import TeachStudio from "./TeachStudio";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
+// Teaching now lives inside the seller app.
 export default function Page() {
-  return <TeachStudio />;
+  redirect("/seller");
 }

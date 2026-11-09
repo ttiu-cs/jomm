@@ -4,13 +4,18 @@
 
 **Seller agents for the smallest sellers.** Turn on the camera, walk through your shop and talk. Your AI seller agent asks questions like a new employee (how many, what price, the lowest you'd take, what buyers should know), builds SKUs, stock and prices from your answers, then sells to buyer agents within your limits and gets paid through PayPal.
 
-| Step | Path |
-|---|---|
-| **1 · Teach by talking (camera conversation)** | `/teach` |
-| **2 · A buyer agent shops, asks, negotiates, pays** | `/market` |
-| Seller dashboard + QR shelf labels | `/seller/{shopId}` |
-| Item page (what a QR label opens) | `/s/{shopId}/{sku}` |
-| Pricing engine demos (salad negotiation, hourly command center, lab, agent API) | `/demo/salad`, `/merchant`, `/lab`, `/agent` |
+| Who | Where | What |
+|---|---|---|
+| Everyone | `/` | Two choices: "I sell things" or "Watch a buyer agent shop" |
+| **Seller** (phone-first app) | `/seller` | Name your shop once; the app remembers it |
+| | `/seller/{shopId}` | Home: today's money, items that need attention, latest deals |
+| | `/seller/{shopId}/teach` | Camera conversation: show items and talk; cards fill in; "Open my shop" |
+| | `/seller/{shopId}/items` | Items (stock, price, private lowest price) and printable QR labels |
+| | `/seller/{shopId}/deals` | Payments received and conversations the agent handled |
+| **Shopper** | `/shop/{shopId}` | Public shop page (shareable link) |
+| | `/s/{shopId}/{sku}` | Item page from a QR label: ask, make an offer, pay with PayPal |
+| | `/market` | Try a buyer agent |
+| Developers | footer links | Pricing engine demo, hourly pricing, lab, agent API |
 
 How it works:
 - **Teaching:** each turn sends the owner's words plus the current camera frame. With `ANTHROPIC_API_KEY`, Claude reads both; without it, a deterministic parser handles it (English, some Korean). Prices, quantities and floors only ever come from what the owner said, and the owner can tap any card to correct it.

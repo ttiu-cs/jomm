@@ -68,6 +68,9 @@ export function createShopSession(db: DB, shopName: string, now = new Date()) {
 export function newSessionForShop(db: DB, storeId: string, now = new Date()) {
   const st = db.prepare("SELECT id FROM stores WHERE id=?").get(storeId);
   if (!st) throw new DomainError("NOT_FOUND", "Shop not found", 404);
+  // Resume an unfinished walk-through instead of losing its draft cards.
+  const open = db.prepare("SELECT id FROM teach_sessions WHERE store_id=? AND status='OPEN' ORDER BY created_at DESC, rowid DESC LIMIT 1").get(storeId) as { id: string } | undefined;
+  if (open) return getSession(db, open.id);
   const id = newId("teach");
   db.prepare("INSERT INTO teach_sessions (id, store_id, status, created_at, updated_at) VALUES (?,?,'OPEN',?,?)").run(id, storeId, now.toISOString(), now.toISOString());
   return getSession(db, id);

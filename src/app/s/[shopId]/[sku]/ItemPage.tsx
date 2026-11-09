@@ -87,7 +87,9 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
   const per = item.unit === "each" ? "" : `/${item.unit}`;
   return (
     <main className="mx-auto min-h-screen max-w-md space-y-4 bg-surface px-4 pb-10 pt-5">
-      <div className="text-xs text-muted">{item.shopName} · seller agent online</div>
+      <a href={`/shop/${item.shopId}`} className="text-xs text-ink-2 underline-offset-2 hover:underline">
+        ← {item.shopName} · seller agent online
+      </a>
       <div className="overflow-hidden rounded-2xl border border-line">
         {item.photo ? (
           // eslint-disable-next-line @next/next/no-img-element

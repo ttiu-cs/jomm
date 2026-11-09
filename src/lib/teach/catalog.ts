@@ -163,3 +163,10 @@ export function listShops(db: DB) {
     )
     .all() as { id: string; name: string; items: number }[];
 }
+
+/** Public storefront of one taught shop (no floors). */
+export function shopPage(db: DB, shopId: string) {
+  const shop = db.prepare("SELECT id, name FROM stores WHERE id=?").get(shopId) as { id: string; name: string } | undefined;
+  if (!shop) throw new DomainError("NOT_FOUND", "Shop not found", 404);
+  return { shop, items: listCatalog(db, undefined, shopId) };
+}

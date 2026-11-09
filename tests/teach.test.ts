@@ -134,6 +134,14 @@ describe("teach → open shop → buyer agent deal → PayPal", () => {
     expect(listCatalog(db)).toHaveLength(3);
   });
 
+  it("resumes an unfinished walk-through for the same shop", async () => {
+    const s = createShopSession(db, "Corner Deli", T);
+    await teachTurn(db, s.id, { text: "These are bagels, 24 each." }, T);
+    const again = newSessionForShop(db, s.shopId, T);
+    expect(again.id).toBe(s.id);
+    expect(again.items).toHaveLength(1);
+  });
+
   it("salad demo reset does not wipe taught shops", async () => {
     const id = await teachFruit();
     publishSession(db, id, T);
