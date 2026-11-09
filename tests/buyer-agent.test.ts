@@ -3,7 +3,9 @@ import type OpenAI from "openai";
 import { freshDb } from "./helpers";
 import { setPayPalApi } from "@/lib/paypal/client";
 import { setupRosa } from "@/lib/demo/setup";
-import { openaiAgent, runBuyerAgent, type AgentEvent } from "@/lib/agentic/buyer-agent";
+import { normalizeMandate, openaiAgent, runBuyerAgent, type AgentEvent } from "@/lib/agentic/buyer-agent";
+import { parseIntent, pickForIntent } from "@/lib/demo/rosa";
+import { listCatalog } from "@/lib/teach/catalog";
 import type { DB } from "@/lib/db/client";
 
 let db: DB;
@@ -115,4 +117,23 @@ describe("rule-based buyer agent (no OpenAI key)", () => {
     const rex = await run("2 boxes of strawberries. I’ll pay $5 total, not a cent more.");
     expect(rex.at(-1)).toMatchObject({ type: "done", outcome: "walked" });
   }, 20000);
+});
+
+describe("reading the shopper's intent", () => {
+  it("accepts loosely typed model JSON", () => {
+    expect(normalizeMandate({ want: "red fruit", quantity: "2", max_total_usd: "$10", priority: "cheapest", questions: "Are they sweet?" }, "x")).toEqual({
+      want: "red fruit",
+      quantity: 2,
+      max_total_cents: 1000,
+      priority: "cheapest",
+      questions: ["Are they sweet?"],
+    });
+    expect(normalizeMandate({ quantity: null, max_total_usd: null, priority: "?" }, "red ones")).toMatchObject({ want: "red ones", quantity: 1, max_total_cents: null, priority: "balanced", questions: [] });
+  });
+  it("doesn't read a $ amount as a quantity, and matches colours", async () => {
+    expect(parseIntent("red ones under $10")).toMatchObject({ qty: 1, budgetCents: 1000 });
+    const { shopId } = await setupRosa(db);
+    const items = listCatalog(db, undefined, shopId).map((i) => ({ productId: i.productId, sku: i.sku, shopId, name: i.name, unit: i.unit, listPriceCents: i.listPriceCents, available: i.available, facts: i.facts }));
+    expect(["Strawberries", "Fuji apples"]).toContain(pickForIntent(items, parseIntent("red ones under $10"))?.item.name);
+  });
 });

@@ -84,7 +84,7 @@ const PURPOSE = /\b(smoothies?|jam|pies?|baking|lunch(?:box(?:es)?)?|kids?|party
 /** Turn a shopper's own sentence into an agent intent (deterministic, no AI needed). */
 export function parseIntent(text: string): Intent {
   const t = text.trim();
-  const qm = t.match(/(\d+(?:\.\d+)?)\s*(lbs?|pounds?|boxes|box|kg)\b/i) ?? t.match(/\b(\d+)\b(?!\s*(?:dollars|\$))/);
+  const qm = t.match(/(\d+(?:\.\d+)?)\s*(lbs?|pounds?|boxes|box|kg)\b/i) ?? t.match(/(?<![$\d.])\b(\d+)\b(?!\s*(?:dollars|\$|\.\d))/);
   const qty = qm ? Math.max(1, Math.min(10, Math.round(parseFloat(qm[1])))) : 1;
   const bm = t.match(/(?:under|below|max|budget|up to|at most|no more than|pay)\s*\$\s*(\d+(?:\.\d{1,2})?)/i) ?? t.match(/\$\s*(\d+(?:\.\d{1,2})?)/);
   const priceFree = /price doesn.?t matter|any price|whatever it costs/i.test(t);
@@ -115,6 +115,9 @@ export interface CatalogItemLite {
   facts: string[];
 }
 
+/** What colour a shopper might mean, for the rule-based agent only (the OpenAI agent just knows). */
+const COLOURS: Record<string, string[]> = { red: ["strawberr", "apple", "cherr"], pink: ["peach", "strawberr"], orange: ["peach", "orange"], yellow: ["peach", "banana"], green: ["apple", "grape"] };
+
 const words = (s: string) => (s.toLowerCase().match(/[a-z]+/g) ?? []).map((w) => w.replace(/(ies)$/, "y").replace(/(es|s)$/, ""));
 
 /** The buyer agent picks the product that best fits the intent, using only public catalog data. */
@@ -126,7 +129,8 @@ export function pickForIntent(items: CatalogItemLite[], intent: Intent): { item:
       const nameHits = words(i.name).filter((w) => want.has(w)).length;
       const factWords = words(i.facts.join(" "));
       const factHits = [...new Set(factWords.filter((w) => want.has(w) && w.length > 3))];
-      const generic = want.has("fruit") ? 1 : 0;
+      const colourHit = [...want].some((w) => (COLOURS[w] ?? []).some((stem) => i.name.toLowerCase().includes(stem)));
+      const generic = (want.has("fruit") ? 1 : 0) + (colourHit ? 2 : 0);
       const priceScore = intent.priority === "cheapest" ? -i.listPriceCents / 1000 : 0;
       return { i, score: nameHits * 3 + factHits.length * 2 + generic + priceScore, nameHits, factHits };
     })

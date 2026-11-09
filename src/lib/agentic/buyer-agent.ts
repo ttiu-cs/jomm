@@ -12,7 +12,6 @@
  */
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam, ChatCompletionTool, ChatCompletionMessageFunctionToolCall } from "openai/resources/chat/completions";
-import { z } from "zod";
 import type { DB } from "../db/client";
 import { listCatalog, answerQuestion } from "../teach/catalog";
 import { cancelSession, completeSession, createSession, sessionView, updateSession } from "./checkout";
@@ -215,13 +214,25 @@ function brief(s: ReturnType<typeof sessionView>) {
 
 // ------------------------------------------------------------------ mandate
 
-const MandateSchema = z.object({
-  want: z.string().min(1).max(80),
-  quantity: z.number().int().min(1).max(10),
-  max_total_usd: z.number().positive().max(1000).nullable(),
-  priority: z.enum(["cheapest", "quality", "balanced"]),
-  questions: z.array(z.string().max(120)).max(2),
-});
+/** Models phrase JSON loosely ("10", null, a single question string…); accept that and normalize. */
+const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" ? parseFloat(v.replace(/[^\d.]/g, "")) : NaN);
+export function normalizeMandate(raw: unknown, fallbackWant: string): Mandate {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const q = num(o.quantity);
+  const budget = num(o.max_total_usd ?? o.budget ?? o.max_total);
+  const questions = (Array.isArray(o.questions) ? o.questions : typeof o.questions === "string" ? [o.questions] : typeof o.question === "string" ? [o.question] : [])
+    .filter((x): x is string => typeof x === "string" && x.trim().length > 3)
+    .map((x) => x.trim().slice(0, 120))
+    .slice(0, 1);
+  const priority = o.priority === "cheapest" || o.priority === "quality" || o.priority === "balanced" ? o.priority : "balanced";
+  return {
+    want: (typeof o.want === "string" && o.want.trim() ? o.want.trim() : fallbackWant).slice(0, 80),
+    quantity: Number.isFinite(q) ? Math.min(10, Math.max(1, Math.round(q))) : 1,
+    max_total_cents: Number.isFinite(budget) && budget > 0 ? Math.round(Math.min(budget, 1000) * 100) : null,
+    priority,
+    questions,
+  };
+}
 
 function rulesMandate(text: string): Mandate {
   const i = parseIntent(text);
@@ -274,9 +285,14 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
       { role: "user", content: text },
     ],
   });
-  const parsed = MandateSchema.safeParse(JSON.parse(m.choices[0]?.message?.content ?? "{}"));
-  if (!parsed.success) throw new Error("could not read the shopper's intent");
-  const mandate: Mandate = { ...parsed.data, max_total_cents: parsed.data.max_total_usd === null ? null : Math.round(parsed.data.max_total_usd * 100) };
+  let raw: unknown = null;
+  try {
+    raw = JSON.parse(m.choices[0]?.message?.content?.match(/\{[\s\S]*\}/)?.[0] ?? "null");
+  } catch {
+    raw = null;
+  }
+  // If the model's JSON is unusable, read the sentence with the rules but keep shopping with the model.
+  const mandate = raw ? normalizeMandate(raw, text) : rulesMandate(text);
   emit({ type: "mode", agent: "openai", model, paypalToolkit: !!toolkit });
   emit({ type: "mandate", mandate });
 
