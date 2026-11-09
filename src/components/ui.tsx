@@ -28,8 +28,8 @@ export function Stat({ label, value, sub }: { label: string; value: ReactNode; s
 const SOURCE_STYLE: Record<string, { label: string; cls: string; icon: string }> = {
   SIMULATED: { label: "SIMULATED", cls: "border-line bg-surface-2 text-ink-2", icon: "◌" },
   SYNTHETIC_HISTORY: { label: "SYNTHETIC", cls: "border-line bg-surface-2 text-ink-2", icon: "◌" },
-  PAYPAL_SANDBOX: { label: "Paid with PayPal (Sandbox)", cls: "border-paypal/30 bg-paypal/10 text-paypal", icon: "✓" },
-  MOCK_CHECKOUT: { label: "Practice payment, not PayPal", cls: "border-warn/50 bg-warn/10 text-warn", icon: "!" },
+  PAYPAL_SANDBOX: { label: "Paid with PayPal (Sandbox)", cls: "border-transparent bg-[#0070e0]/10 text-[#0058b8]", icon: "✓" },
+  MOCK_CHECKOUT: { label: "Practice payment, not PayPal", cls: "border-transparent bg-[#ff9500]/12 text-[#b25000]", icon: "!" },
   MERCHANT: { label: "MERCHANT", cls: "border-line text-ink-2", icon: "•" },
   SYSTEM: { label: "SYSTEM", cls: "border-line text-ink-2", icon: "•" },
 };
@@ -37,7 +37,7 @@ const SOURCE_STYLE: Record<string, { label: string; cls: string; icon: string }>
 export function SourceBadge({ source }: { source: string }) {
   const s = SOURCE_STYLE[source] ?? { label: source, cls: "border-line text-ink-2", icon: "•" };
   return (
-    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-bold ${s.cls}`}>
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12px] font-semibold ${s.cls}`}>
       <span aria-hidden>{s.icon}</span>
       {s.label}
     </span>
@@ -61,17 +61,17 @@ export function Btn({
 }) {
   const cls =
     kind === "primary"
-      ? "bg-leaf text-white hover:bg-leaf-2"
+      ? "bg-blue text-white hover:bg-blue-hover"
       : kind === "danger"
-        ? "border border-tomato/50 text-tomato hover:bg-tomato/10"
-        : "border border-line bg-surface text-ink hover:border-leaf/40";
+        ? "text-red hover:bg-red/5"
+        : "bg-fill text-label hover:bg-separator/60";
   return (
     <button
       type={type}
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-[15px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
+      className={`rounded-full px-4 py-2 text-[15px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
     >
       {children}
     </button>

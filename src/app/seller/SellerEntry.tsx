@@ -3,7 +3,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client/format";
 import { SiteHeader, rememberShop, rememberedShop } from "@/components/shells";
-import { IconStore } from "@/components/icons";
 
 interface SessionLite {
   shopId: string;
@@ -37,71 +36,82 @@ export default function SellerEntry({ shops }: { shops: { id: string; name: stri
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-canvas">
       <SiteHeader />
-      <main className="mx-auto max-w-md px-4 pb-16 pt-10">
-        <h1 className="font-sign text-5xl font-extrabold leading-[0.95] text-leaf">What’s your stall called?</h1>
-        <p className="mt-3 text-lg text-ink-2">That’s the only thing you type. Everything else, you tell your assistant out loud.</p>
-        {err && <p className="mt-4 rounded-xl border border-tomato/40 bg-tomato/5 px-3 py-2 text-tomato">{err}</p>}
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (name.trim().length >= 2) open(() => api<SessionLite>("/api/teach/sessions", { shopName: name }), true);
-          }}
-        >
-          <input
-            autoFocus
-            aria-label="Shop name"
-            className="w-full rounded-2xl border-2 border-line bg-surface px-4 py-4 text-xl focus:border-leaf focus:outline-none"
-            placeholder="Sunny Fruit Stand"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={60}
-          />
-          <button type="submit" disabled={busy || name.trim().length < 2} className="w-full rounded-full bg-leaf py-4 text-lg font-bold text-white disabled:opacity-40">
-            {busy ? "Opening the camera…" : "Start teaching"}
-          </button>
-        </form>
+      <main className="mx-auto grid max-w-[1024px] gap-10 px-5 pb-20 pt-10 lg:grid-cols-2 lg:items-center lg:pt-16">
+        <div className="overflow-hidden rounded-[28px] max-lg:hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/photos/seller-portrait.jpg" alt="A smiling shop owner at her fruit stall" className="aspect-[4/5] w-full object-cover" />
+        </div>
+        <div>
+          <h1 className="display text-[40px] leading-tight sm:text-[48px]">What’s your shop called?</h1>
+          <p className="mt-3 text-[19px] text-label-2">That’s the only thing you type. Everything else, you tell your assistant out loud.</p>
+          {err && <p className="mt-4 rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
+          <form
+            className="mt-7 space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name.trim().length >= 2) open(() => api<SessionLite>("/api/teach/sessions", { shopName: name }), true);
+            }}
+          >
+            <input
+              autoFocus
+              aria-label="Shop name"
+              className="w-full rounded-[14px] border border-separator bg-card px-4 py-4 text-[19px] outline-none focus:border-blue focus:ring-4 focus:ring-blue/15"
+              placeholder="Sunny Fruit Stand"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+            />
+            <button type="submit" disabled={busy || name.trim().length < 2} className="w-full rounded-[14px] bg-blue py-4 text-[17px] font-semibold text-white hover:bg-blue-hover disabled:opacity-40">
+              {busy ? "Opening camera…" : "Continue"}
+            </button>
+          </form>
 
-        {shops.length > 0 && (
-          <section className="mt-10">
-            <h2 className="font-sign text-2xl font-bold">Your shops</h2>
-            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-              {shops.map((s) => (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      rememberShop(s.id);
-                      router.push(`/seller/${s.id}`);
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-leaf-soft"
-                  >
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-leaf-soft text-leaf">
-                      <IconStore size={20} />
-                    </span>
-                    <span className="flex-1 font-bold">{s.name}</span>
-                    <span className="text-sm text-ink-2">{s.items} items</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {shops.length > 0 && (
+            <section className="mt-10">
+              <h2 className="px-4 text-[13px] uppercase tracking-wide text-label-2">Your shops</h2>
+              <ul className="mt-1.5 overflow-hidden rounded-[14px] bg-card">
+                {shops.map((s, i) => (
+                  <li key={s.id} className={i ? "border-t border-line" : ""}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        rememberShop(s.id);
+                        router.push(`/seller/${s.id}`);
+                      }}
+                      className="flex w-full items-center justify-between px-4 py-3.5 text-left text-[17px] hover:bg-fill/50"
+                    >
+                      {s.name}
+                      <span className="text-label-3">
+                        {s.items} items <span aria-hidden>›</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="mt-8">
+            <h2 className="px-4 text-[13px] uppercase tracking-wide text-label-2">Just looking</h2>
+            <div className="mt-1.5 overflow-hidden rounded-[14px] bg-card">
+              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "fruit" }), true)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[17px] hover:bg-fill/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/photos/apples-crate.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
+                <span className="flex-1">Sample fruit stand</span>
+                <span className="text-label-3">›</span>
+              </button>
+              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "closet" }), true)} className="flex w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[17px] hover:bg-fill/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/photos/denim-jacket.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
+                <span className="flex-1">Sample closet</span>
+                <span className="text-label-3">›</span>
+              </button>
+            </div>
+            <p className="px-4 pt-2 text-[13px] text-label-2">Opens a shop that’s already been taught, so you can see what the assistant learned.</p>
           </section>
-        )}
-
-        <section className="mt-10 rounded-2xl bg-leaf-soft p-5">
-          <h2 className="font-sign text-2xl font-bold text-leaf">Just looking around?</h2>
-          <p className="mt-1 text-ink-2">Open a sample shop that’s already been taught, and see what the assistant learned.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "fruit" }), true)} className="rounded-full bg-surface px-4 py-2 font-bold text-leaf shadow-sm">
-              Sample fruit stand
-            </button>
-            <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "closet" }), true)} className="rounded-full bg-surface px-4 py-2 font-bold text-leaf shadow-sm">
-              Sample closet
-            </button>
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   );

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/server/http";
 import { shopPage } from "@/lib/teach/catalog";
-import { SiteHeader } from "@/components/shells";
+import { SiteFooter, SiteHeader } from "@/components/shells";
 
 export const dynamic = "force-dynamic";
 
@@ -23,40 +23,35 @@ export default async function Page({ params }: { params: Promise<{ shopId: strin
   return (
     <div>
       <SiteHeader />
-      <div className="bg-leaf text-white">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <h1 className="font-sign text-5xl font-extrabold leading-none">{data.shop.name}</h1>
-          <p className="mt-2 text-white/85">Tap anything to ask the stall’s assistant, make an offer or pay with PayPal.</p>
-        </div>
-      </div>
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        {data.items.length === 0 && <p className="text-ink-2">Nothing for sale right now. Check back after the morning delivery.</p>}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+      <main className="mx-auto max-w-[1024px] px-5 pb-20 pt-12">
+        <h1 className="display text-[44px] leading-tight sm:text-[56px]">{data.shop.name}</h1>
+        <p className="mt-2 text-[19px] text-label-2">Tap anything to ask the stall’s assistant, make an offer, or pay with PayPal.</p>
+        {data.items.length === 0 && <p className="mt-10 text-[17px] text-label-2">Nothing for sale right now. Check back after the morning delivery.</p>}
+        <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
           {data.items.map((i) => {
             const photo = photos.get(i.productId);
             return (
               <Link key={i.sku} href={`/s/${shopId}/${encodeURIComponent(i.sku)}`} className="group block">
-                <div className="overflow-hidden rounded-2xl bg-surface-2">
+                <div className="overflow-hidden rounded-[22px] bg-canvas">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={photo} alt="" className="aspect-square w-full object-cover transition group-hover:scale-[1.03]" />
+                    <img src={photo} alt="" className="aspect-square w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
                   ) : (
-                    <div className="grid aspect-square place-items-center text-ink-2">No photo</div>
+                    <div className="grid aspect-square place-items-center text-label-3">No photo</div>
                   )}
                 </div>
-                <div className="tag relative -mt-6 ml-2 mr-1 pb-2 pl-8 pr-3 pt-2">
-                  <div className="font-sign truncate text-lg font-bold leading-tight">{i.name}</div>
-                  <div className="font-sign tnum text-2xl font-extrabold leading-none">
-                    {usd(i.listPriceCents)}
-                    <span className="text-sm font-semibold">{i.unit === "each" ? "" : `/${i.unit}`}</span>
-                  </div>
-                  <div className="text-xs">{i.available > 0 ? (i.negotiable ? "Offers welcome" : `${i.available} left`) : "Sold out"}</div>
+                <div className="mt-3 text-[17px] font-semibold">{i.name}</div>
+                <div className="tnum text-[17px]">
+                  {usd(i.listPriceCents)}
+                  <span className="text-label-2">{i.unit === "each" ? "" : ` / ${i.unit}`}</span>
                 </div>
+                <div className="text-[14px] text-label-2">{i.available > 0 ? (i.negotiable ? "Offers welcome" : `${i.available} available`) : "Sold out"}</div>
               </Link>
             );
           })}
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

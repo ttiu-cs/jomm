@@ -125,7 +125,8 @@ export function sellerDashboard(db: DB, shopId: string) {
   const items = listCatalog(db, undefined, shopId).map((i) => {
     const k = getKnowledge(db, i.productId)!;
     const sold = (db.prepare("SELECT COALESCE(-SUM(qty_delta),0) AS v FROM inventory_movements WHERE product_id=? AND type='SALE'").get(i.productId) as { v: number }).v;
-    return { ...i, floorCents: k.floor_cents, sellBy: k.sell_by, sold };
+    const photo = (db.prepare("SELECT photo FROM product_knowledge WHERE product_id=?").get(i.productId) as { photo: string | null }).photo;
+    return { ...i, floorCents: k.floor_cents, sellBy: k.sell_by, sold, photo };
   });
   const negotiations = db
     .prepare(

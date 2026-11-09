@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { api, usd } from "@/lib/client/format";
 import { SourceBadge } from "@/components/ui";
 import { Checkout, type OrderView } from "@/components/Checkout";
-import { IconStore } from "@/components/icons";
 
 interface Item {
   shopId: string;
@@ -106,141 +105,139 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
     [load],
   );
 
-  if (!item) return <main className="mx-auto max-w-md p-6 text-ink-2">{err ?? "Loading…"}</main>;
-  const per = item.unit === "each" ? "" : `/${item.unit}`;
+  if (!item) return <main className="mx-auto max-w-md p-6 text-label-2">{err ?? "Loading…"}</main>;
+  const per = item.unit === "each" ? "" : ` / ${item.unit}`;
   const thread = [...chat, ...(neg?.messages ?? [])];
 
   return (
-    <main className="mx-auto min-h-screen max-w-md pb-12">
-      <header className="flex items-center gap-2 bg-leaf px-4 py-3 text-white">
-        <IconStore size={20} />
-        <Link href={`/shop/${item.shopId}`} className="font-sign text-xl font-bold underline-offset-2 hover:underline">
-          {item.shopName}
+    <main className="mx-auto min-h-screen max-w-[480px] bg-card pb-14">
+      <header className="frosted sticky top-0 z-20 flex h-12 items-center justify-between border-b border-black/5 px-4">
+        <Link href={`/shop/${item.shopId}`} className="text-[17px] text-link">
+          ‹ {item.shopName}
         </Link>
-        <span className="ml-auto text-sm text-white/80">assistant online</span>
+        <span className="flex items-center gap-1.5 text-[13px] text-label-2">
+          <span className="h-2 w-2 rounded-full bg-green-fill" /> Assistant online
+        </span>
       </header>
 
       {item.photo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={item.photo} alt={item.name} className="aspect-square w-full object-cover" />
       ) : (
-        <div className="grid aspect-[4/3] place-items-center bg-surface-2 text-ink-2">No photo</div>
+        <div className="grid aspect-[4/3] place-items-center bg-canvas text-label-3">No photo</div>
       )}
 
-      <div className="relative -mt-10 px-4">
-        <div className="tag pb-4 pl-9 pr-4 pt-3">
-          <h1 className="font-sign text-3xl font-bold leading-tight">{item.name}</h1>
-          <div className="font-sign tnum text-5xl font-extrabold leading-none">
-            {usd(item.listPriceCents)}
-            <span className="text-xl font-semibold">{per}</span>
-          </div>
-          <p className="mt-1">
-            {item.available > 0 ? `${item.available} ${item.unit === "each" ? "left" : item.unit + " left"}` : "Sold out"}
-            {item.condition ? `, ${item.condition.toLowerCase()}` : ""}
-            {item.negotiable ? ". Offers welcome." : "."}
-          </p>
-          {item.facts.length > 0 && <p className="mt-2 italic">“{item.facts.join(" ")}”</p>}
+      <div className="px-5 pt-5">
+        <h1 className="display text-[32px] leading-tight">{item.name}</h1>
+        <div className="tnum mt-1 text-[24px] font-semibold">
+          {usd(item.listPriceCents)}
+          <span className="text-[17px] font-normal text-label-2">{per}</span>
         </div>
+        <p className="mt-1 text-[15px] text-label-2">
+          {item.available > 0 ? `${item.available} ${item.unit === "each" ? "available" : item.unit + " available"}` : "Sold out"}
+          {item.condition ? ` · ${item.condition}` : ""}
+          {item.negotiable ? " · Offers welcome" : ""}
+        </p>
+        {item.facts.length > 0 && <p className="mt-3 text-[17px] leading-relaxed">{item.facts.join(" ")}</p>}
       </div>
 
-      {err && <p className="mx-4 mt-4 rounded-xl border border-tomato/40 bg-tomato/5 px-3 py-2 text-tomato">{err}</p>}
+      {err && <p className="mx-5 mt-4 rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
 
       {!order && item.available > 0 && (
-        <div className="space-y-5 px-4 pt-5">
-          <div className="flex items-center justify-between rounded-2xl bg-surface p-3">
-            <span className="font-bold">How many {item.unit === "each" ? "" : item.unit}</span>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label="Less" disabled={!!neg || qty <= 1} onClick={() => setQty(qty - 1)} className="h-10 w-10 rounded-full border border-line text-xl disabled:opacity-30">
+        <div className="space-y-6 px-5 pt-6">
+          <div className="flex items-center justify-between rounded-[14px] bg-canvas px-4 py-2.5">
+            <span className="text-[17px]">Quantity{item.unit === "each" ? "" : ` (${item.unit})`}</span>
+            <div className="flex items-center gap-3">
+              <button type="button" aria-label="Less" disabled={!!neg || qty <= 1} onClick={() => setQty(qty - 1)} className="grid h-8 w-8 place-items-center rounded-full bg-card text-[20px] shadow-sm disabled:opacity-30">
                 −
               </button>
-              <span className="font-sign tnum w-8 text-center text-2xl font-bold">{qty}</span>
-              <button type="button" aria-label="More" disabled={!!neg || qty >= Math.min(10, item.available)} onClick={() => setQty(qty + 1)} className="h-10 w-10 rounded-full border border-line text-xl disabled:opacity-30">
+              <span className="tnum w-6 text-center text-[17px] font-semibold">{qty}</span>
+              <button type="button" aria-label="More" disabled={!!neg || qty >= Math.min(10, item.available)} onClick={() => setQty(qty + 1)} className="grid h-8 w-8 place-items-center rounded-full bg-card text-[20px] shadow-sm disabled:opacity-30">
                 +
               </button>
             </div>
           </div>
 
-          <button type="button" disabled={busy} onClick={buyAtListed} className="w-full rounded-full bg-leaf py-4 text-lg font-bold text-white disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={buyAtListed} className="w-full rounded-[14px] bg-blue py-4 text-[17px] font-semibold text-white hover:bg-blue-hover disabled:opacity-50">
             Buy {qty > 1 ? `${qty} ` : ""}for {usd(item.listPriceCents * qty)}
           </button>
 
-          <section className="rounded-3xl bg-surface p-4">
-            <h2 className="font-sign text-2xl font-bold">Ask or make an offer</h2>
-            <p className="text-sm text-ink-2">The stall’s assistant answers from what the owner told it.</p>
-            <div className="mt-3 space-y-2">
+          <section>
+            <h2 className="text-[22px] font-semibold">Ask or make an offer</h2>
+            <p className="text-[15px] text-label-2">The stall’s assistant answers from what the owner told it.</p>
+            <div className="mt-4 space-y-2">
               {thread.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "buyer" ? "justify-end" : ""}`}>
-                  <p className={`max-w-[85%] rounded-3xl px-3.5 py-2 ${m.role === "buyer" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-leaf-soft"}`}>{m.text}</p>
+                <div key={i} className={`rise flex ${m.role === "buyer" ? "justify-end" : ""}`}>
+                  <p className={`max-w-[80%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${m.role === "buyer" ? "rounded-br-[6px] bg-blue text-white" : "rounded-bl-[6px] bg-[#e9e9eb]"}`}>{m.text}</p>
                 </div>
               ))}
             </div>
             {chat.length === 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {["Is it fresh?", "Any flaws?", "Where is it from?"].map((q) => (
-                  <button key={q} type="button" onClick={() => ask(q)} className="rounded-full border border-line px-3 py-1.5 text-sm">
+                  <button key={q} type="button" onClick={() => ask(q)} className="rounded-full bg-canvas px-3.5 py-1.5 text-[15px] text-link">
                     {q}
                   </button>
                 ))}
               </div>
             )}
             <form
-              className="mt-3 flex gap-2"
+              className="mt-3 flex items-center gap-2 rounded-full bg-canvas py-1 pl-4 pr-1"
               onSubmit={(e) => {
                 e.preventDefault();
                 ask(question);
               }}
             >
-              <input className="min-w-0 flex-1 rounded-full border border-line bg-paper px-4 py-2.5" placeholder="Ask anything" value={question} onChange={(e) => setQuestion(e.target.value)} aria-label="Ask the assistant" />
-              <button type="submit" disabled={!question.trim() || busy} className="rounded-full border border-leaf px-4 font-bold text-leaf disabled:opacity-40">
+              <input className="min-w-0 flex-1 bg-transparent py-2 text-[17px] outline-none placeholder:text-label-3" placeholder="Ask anything" value={question} onChange={(e) => setQuestion(e.target.value)} aria-label="Ask the assistant" />
+              <button type="submit" disabled={!question.trim() || busy} className="rounded-full px-3 py-2 text-[15px] font-semibold text-link disabled:text-label-3">
                 Ask
               </button>
             </form>
             {item.negotiable && (!neg || (neg.status === "OPEN" && !neg.sellerCounterIsFinal)) && (
               <form
-                className="mt-2 flex gap-2"
+                className="mt-2 flex items-center gap-2 rounded-full bg-canvas py-1 pl-4 pr-1"
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (offer) makeOffer();
                 }}
               >
-                <div className="flex min-w-0 flex-1 items-center rounded-full border border-line bg-paper px-4">
-                  <span className="text-ink-2">$</span>
-                  <input type="number" step="0.05" inputMode="decimal" className="min-w-0 flex-1 bg-transparent px-1 py-2.5 outline-none" placeholder={`Your offer${per}`} value={offer} onChange={(e) => setOffer(e.target.value)} aria-label="Your offer per unit" />
-                </div>
-                <button type="submit" disabled={!offer || busy} className="rounded-full bg-sticker px-4 font-bold text-ink disabled:opacity-40">
+                <span className="text-[17px] text-label-2">$</span>
+                <input type="number" step="0.05" inputMode="decimal" className="min-w-0 flex-1 bg-transparent py-2 text-[17px] outline-none placeholder:text-label-3" placeholder={`Your offer${per}`} value={offer} onChange={(e) => setOffer(e.target.value)} aria-label="Your offer per unit" />
+                <button type="submit" disabled={!offer || busy} className="rounded-full bg-label px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-30">
                   Offer
                 </button>
               </form>
             )}
             {neg?.status === "OPEN" && neg.sellerCounterCents !== null && (
-              <button type="button" disabled={busy} onClick={acceptCounter} className="mt-3 w-full rounded-full bg-leaf py-3 font-bold text-white">
-                Take {usd(neg.sellerCounterCents)}
+              <button type="button" disabled={busy} onClick={acceptCounter} className="mt-3 w-full rounded-[14px] bg-blue py-3.5 text-[17px] font-semibold text-white">
+                Accept {usd(neg.sellerCounterCents)}
                 {per}
               </button>
             )}
-            {neg && (neg.status === "CLOSED" || neg.status === "EXPIRED") && <p className="mt-2 text-ink-2">No deal this time. You can still buy at the listed price.</p>}
+            {neg && (neg.status === "CLOSED" || neg.status === "EXPIRED") && <p className="mt-3 text-[15px] text-label-2">No deal this time. You can still buy at the listed price.</p>}
           </section>
-          <p className="text-center text-xs text-muted">Everyone gets the same answers at the same moment. The owner’s lowest price is never shown.</p>
+          <p className="text-center text-[12px] text-label-3">Everyone gets the same answers at the same moment. The owner’s lowest price is never shown.</p>
         </div>
       )}
 
       {order && (
-        <section className="mx-4 mt-5 rounded-3xl bg-surface p-5">
+        <section className="mx-5 mt-6 rounded-[22px] bg-canvas p-6">
           {order.order.status === "PAID" ? (
-            <div className="space-y-2 text-center">
-              <div className="font-sign text-5xl font-extrabold text-leaf">Paid {usd(order.order.total_cents)}</div>
+            <div className="space-y-3 text-center">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-green-fill text-[28px] text-white">✓</div>
+              <div className="display tnum text-[34px]">Paid {usd(order.order.total_cents)}</div>
               <SourceBadge source={order.order.payment_source} />
-              {order.order.payment_source === "MOCK_CHECKOUT" && <p className="text-sm text-warn">Practice payment: no money moved.</p>}
-              <p className="text-ink-2">Show this screen at the stall.</p>
+              {order.order.payment_source === "MOCK_CHECKOUT" && <p className="text-[13px] text-label-2">Practice payment: no money moved.</p>}
+              <p className="text-[15px] text-label-2">Show this screen at the stall.</p>
             </div>
           ) : order.order.status === "AWAITING_APPROVAL" || order.order.status === "CREATED" ? (
             <div className="space-y-3">
-              <h2 className="font-sign text-3xl font-bold">Pay {usd(order.order.total_cents)}</h2>
-              <p className="text-sm text-ink-2">This price is held for you for 5 minutes.</p>
+              <h2 className="display tnum text-[28px]">Pay {usd(order.order.total_cents)}</h2>
+              <p className="text-[15px] text-label-2">This price is held for you for 5 minutes.</p>
               <Checkout orderId={order.order.id} onDone={onPaid} />
             </div>
           ) : (
-            <p className="text-tomato">Not paid ({order.order.status.toLowerCase()}). Nothing was charged.</p>
+            <p className="text-red">Not paid ({order.order.status.toLowerCase()}). Nothing was charged.</p>
           )}
         </section>
       )}

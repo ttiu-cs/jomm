@@ -23,7 +23,7 @@ How it works:
 - **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a labeled MOCK without keys). Stock is decremented exactly once after a verified capture.
 
 ## Design
-Market-stall visual language: products are kraft hang tags (the torn-off strip holds the owner's private lowest price), prices are set in Barlow Condensed like market signage, body text in Lexend for reading ease, leaf green for trust, sticker yellow for the main action, tomato for "sell today", PayPal blue only around payment. Without a camera, **Try it with a demo fruit stand** (or closet) shows an illustrated stall drawn in SVG (`src/components/DemoScene.tsx`) that pans to the item being discussed, and offers the next line as a "Tap to say" button. Tag photos are cropped from that scene.
+Apple-style (after apple.com and the iOS Human Interface Guidelines): system font (SF Pro on Apple devices, Inter elsewhere), #1d1d1f on white / #f5f5f7, one blue (#0071e3) for actions, iOS system colors only for status, large tight headlines, frosted nav and tab bars, grouped inset lists. Real photography from Pexels (free license, see `public/photos/CREDITS.md`). Without a camera, **Use the sample fruit stand** (or closet) shows real photos that switch to the item being discussed, and offers the next line as a "Tap to say" button; the product photo is cropped from that photo.
 
 ## Quick start
 Requires Node 20+ (tested on 22).

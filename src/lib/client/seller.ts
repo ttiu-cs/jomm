@@ -15,6 +15,7 @@ export interface SellerData {
     sold: number;
     condition: string | null;
     facts: string[];
+    photo?: string | null;
   }[];
   negotiations: { id: string; status: string; qty: number; name: string; unit: string; agreed_price_cents: number | null; published_cents: number; last_message: string | null; created_at: string }[];
   sales: { id: string; status: string; payment_source: string; total_cents: number; qty: number; name: string; unit: string; origin: string; capture_id: string | null; verified: number | null; paid_at: string | null }[];

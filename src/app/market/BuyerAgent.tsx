@@ -6,8 +6,9 @@ import { parseBuyerRequest } from "@/lib/buyer/request";
 import { SourceBadge } from "@/components/ui";
 import { SiteFooter, SiteHeader } from "@/components/shells";
 import { Checkout, type OrderView } from "@/components/Checkout";
-import { HangTag } from "@/components/HangTag";
-import { IconCart, IconLock, IconStore } from "@/components/icons";
+import { ItemCard } from "@/components/ItemCard";
+import { photoFor } from "@/lib/client/demoPhotos";
+import { IconCart, IconCheck, IconLock, IconStore } from "@/components/icons";
 
 interface CatalogItem {
   shopId: string;
@@ -130,57 +131,59 @@ export default function BuyerAgent() {
   return (
     <div>
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 pb-10 pt-8">
-        <h1 className="font-sign text-5xl font-extrabold leading-none text-leaf sm:text-6xl">Send a buyer agent shopping</h1>
-        <p className="mt-3 max-w-2xl text-lg text-ink-2">Say what you want and what you’ll spend. It finds a stall, asks the stall’s assistant, haggles, and comes back for your OK before paying with PayPal.</p>
+      <main className="mx-auto max-w-[1024px] px-5 pb-16 pt-12">
+        <div className="text-center">
+          <h1 className="display text-[44px] leading-tight sm:text-[56px]">Send a buyer agent shopping.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[19px] text-label-2">Say what you want and what you’ll spend. It finds a stall, asks the stall’s assistant, haggles, and comes back for your OK before paying with PayPal.</p>
+        </div>
 
         <form
-          className="mt-6 flex flex-col gap-2 rounded-3xl bg-surface p-2 shadow-[0_1px_0_var(--line)] sm:flex-row"
+          className="mx-auto mt-8 flex max-w-2xl items-center gap-2 rounded-full bg-fill p-1.5 pl-5"
           onSubmit={(e) => {
             e.preventDefault();
             go();
           }}
         >
-          <input aria-label="What do you want to buy?" className="min-w-0 flex-1 rounded-2xl bg-transparent px-4 py-3 text-xl outline-none" value={request} onChange={(e) => setRequest(e.target.value)} />
-          <button type="submit" disabled={running} className="flex items-center justify-center gap-2 rounded-2xl bg-leaf px-6 py-3 text-lg font-bold text-white disabled:opacity-50">
-            <IconCart /> {running ? "Shopping…" : "Go shopping"}
+          <input aria-label="What do you want to buy?" className="min-w-0 flex-1 bg-transparent py-2 text-[17px] outline-none" value={request} onChange={(e) => setRequest(e.target.value)} />
+          <button type="submit" disabled={running} className="flex shrink-0 items-center gap-1.5 rounded-full bg-blue px-5 py-2.5 text-[15px] font-medium text-white hover:bg-blue-hover disabled:opacity-50">
+            <IconCart size={18} /> {running ? "Shopping…" : "Shop"}
           </button>
         </form>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
           {EXAMPLES.map((s) => (
-            <button key={s} type="button" onClick={() => setRequest(s)} className={`rounded-full border px-3 py-1.5 text-sm ${request === s ? "border-leaf bg-leaf-soft text-leaf" : "border-line bg-surface text-ink-2"}`}>
+            <button key={s} type="button" onClick={() => setRequest(s)} className={`rounded-full px-3.5 py-1.5 text-[14px] ${request === s ? "bg-label text-white" : "bg-canvas text-label-2 hover:text-label"}`}>
               {s}
             </button>
           ))}
         </div>
-        {err && <p className="mt-4 rounded-xl border border-tomato/40 bg-tomato/5 px-3 py-2 text-tomato">{err}</p>}
+        {err && <p className="mx-auto mt-4 max-w-2xl rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-          <section aria-label="Conversation" className="rounded-3xl bg-surface p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between text-sm font-bold">
-              <span className="flex items-center gap-2 text-leaf">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-white">
-                  <IconStore size={18} />
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
+          <section aria-label="Conversation" className="rounded-[28px] bg-canvas p-4 sm:p-6">
+            <div className="mb-4 flex items-center justify-between text-[13px] text-label-2">
+              <span className="flex items-center gap-2">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-label text-white">
+                  <IconStore size={15} />
                 </span>
-                {chosen ? `${chosen.shopName}’s assistant` : "Stall assistant"}
+                {chosen ? `${chosen.shopName} assistant` : "Stall assistant"}
               </span>
-              <span className="flex items-center gap-2 text-ink">
+              <span className="flex items-center gap-2">
                 Your buyer agent
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-white">
-                  <IconCart size={18} />
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-blue text-white">
+                  <IconCart size={15} />
                 </span>
               </span>
             </div>
-            <div className="min-h-[280px] space-y-2.5">
-              {thread.length === 0 && <p className="pt-16 text-center text-ink-2">Pick an example above, or write your own, then press Go shopping.</p>}
+            <div className="min-h-[300px] space-y-2">
+              {thread.length === 0 && <p className="pt-20 text-center text-[17px] text-label-3">Choose an example or write your own, then tap Shop.</p>}
               {thread.map((l, i) =>
                 l.who === "note" ? (
-                  <p key={i} className="tag-in py-1 text-center text-sm text-ink-2">
+                  <p key={i} className="rise py-1.5 text-center text-[12px] font-medium text-label-3">
                     {l.text}
                   </p>
                 ) : (
-                  <div key={i} className={`tag-in flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
-                    <p className={`max-w-[82%] rounded-3xl px-4 py-2.5 leading-snug ${l.who === "buyer" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-leaf-soft text-ink"}`}>{l.text}</p>
+                  <div key={i} className={`rise flex ${l.who === "buyer" ? "justify-end" : "justify-start"}`}>
+                    <p className={`max-w-[78%] rounded-[20px] px-4 py-2.5 text-[16px] leading-snug ${l.who === "buyer" ? "rounded-br-[6px] bg-blue text-white" : "rounded-bl-[6px] bg-[#e9e9eb] text-label"}`}>{l.text}</p>
                   </div>
                 ),
               )}
@@ -189,60 +192,61 @@ export default function BuyerAgent() {
           </section>
 
           <aside className="space-y-5">
-            {chosen && <HangTag t={{ name: chosen.name, unit: chosen.unit, quantity: chosen.available, listPriceCents: chosen.listPriceCents, floorPriceCents: null, sellBy: null, facts: chosen.facts, condition: chosen.condition }} showPrivate={false} />}
+            {chosen && <ItemCard t={{ name: chosen.name, unit: chosen.unit, quantity: chosen.available, listPriceCents: chosen.listPriceCents, floorPriceCents: null, sellBy: null, facts: chosen.facts, condition: chosen.condition, photo: photoFor("fruit", chosen.name)?.src ?? photoFor("closet", chosen.name)?.src ?? null }} showPrivate={false} />}
 
             {order && (
-              <section className="rounded-3xl bg-surface p-5 shadow-[0_1px_0_var(--line)]" aria-label="Payment">
+              <section className="rounded-[28px] bg-card p-6 shadow-[0_2px_16px_rgba(0,0,0,0.08)]" aria-label="Payment">
                 {paid ? (
-                  <div className="space-y-2">
-                    <div className="font-sign text-4xl font-extrabold text-leaf">Paid {usd(order.order.total_cents)}</div>
+                  <div className="space-y-3 text-center">
+                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-green-fill text-white">
+                      <IconCheck size={30} />
+                    </div>
+                    <div className="display tnum text-[34px]">Paid {usd(order.order.total_cents)}</div>
                     <SourceBadge source={order.order.payment_source} />
-                    {order.order.payment_source === "MOCK_CHECKOUT" && <p className="text-sm text-warn">Practice payment: no money moved and PayPal wasn’t called.</p>}
+                    {order.order.payment_source === "MOCK_CHECKOUT" && <p className="text-[13px] text-label-2">Practice payment: no money moved and PayPal wasn’t called.</p>}
                     {chosen && (
-                      <Link className="inline-block font-bold text-leaf underline underline-offset-2" href={`/seller/${chosen.shopId}/deals`}>
-                        See it on the stall’s phone
+                      <Link className="block text-[15px] text-link" href={`/seller/${chosen.shopId}/deals`}>
+                        See it on the stall’s phone ›
                       </Link>
                     )}
                   </div>
                 ) : order.order.status === "AWAITING_APPROVAL" || order.order.status === "CREATED" ? (
-                  <div className="space-y-3">
-                    <div className="text-sm text-ink-2">Your agent agreed on</div>
-                    <div className="font-sign tnum text-5xl font-extrabold leading-none">
-                      {usd(order.order.total_cents)}
-                      <span className="ml-2 text-lg font-semibold text-ink-2">
-                        {neg ? `${neg.qty} × ${usd(neg.agreedPriceCents)}${per}` : ""}
-                      </span>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-[15px] text-label-2">Your agent agreed on</div>
+                      <div className="display tnum text-[44px] leading-none">{usd(order.order.total_cents)}</div>
+                      <div className="mt-1 text-[15px] text-label-2">{neg ? `${neg.qty} × ${usd(neg.agreedPriceCents)}${per}, held for 5 minutes` : ""}</div>
                     </div>
-                    <p className="text-sm text-ink-2">Held for 5 minutes. Your agent can’t pay on its own: you approve below.</p>
                     <Checkout orderId={order.order.id} onDone={onPaid} />
+                    <p className="text-[13px] text-label-3">Your agent can’t pay on its own. You approve every payment.</p>
                   </div>
                 ) : (
-                  <p className="text-tomato">Not paid ({order.order.status.toLowerCase()}). Nothing was charged.</p>
+                  <p className="text-red">Not paid ({order.order.status.toLowerCase()}). Nothing was charged.</p>
                 )}
               </section>
             )}
 
             {seller && chosen && (
-              <details className="rounded-3xl border border-line bg-paper p-5">
-                <summary className="flex cursor-pointer items-center gap-2 font-bold">
-                  <IconLock size={18} /> Behind the counter (demo only)
+              <details className="rounded-[22px] bg-canvas p-5">
+                <summary className="flex cursor-pointer items-center gap-2 text-[15px] font-semibold">
+                  <IconLock size={16} /> Behind the counter <span className="font-normal text-label-2">(demo only)</span>
                 </summary>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <div className="text-xs text-ink-2">Listed</div>
-                    <div className="font-sign text-2xl font-bold">{usd(seller.publishedCents)}</div>
+                    <div className="text-[12px] text-label-2">Listed</div>
+                    <div className="tnum text-[22px] font-semibold">{usd(seller.publishedCents)}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-ink-2">Owner’s lowest</div>
-                    <div className="font-sign text-2xl font-bold">{usd(seller.floorCents)}</div>
+                    <div className="text-[12px] text-label-2">Owner’s lowest</div>
+                    <div className="tnum text-[22px] font-semibold">{usd(seller.floorCents)}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-ink-2">Will go to</div>
-                    <div className="font-sign text-2xl font-bold text-leaf">{usd(seller.walkAwayCents)}</div>
+                    <div className="text-[12px] text-label-2">Will go to</div>
+                    <div className="tnum text-[22px] font-semibold text-blue">{usd(seller.walkAwayCents)}</div>
                   </div>
                 </div>
-                <p className="mt-3 text-sm text-ink-2">{seller.reason}</p>
-                <p className="mt-2 text-xs text-muted">Shown here so you can see why the assistant answered as it did. Buyer agents never receive this.</p>
+                <p className="mt-3 text-[14px] text-label-2">{seller.reason}</p>
+                <p className="mt-2 text-[12px] text-label-3">Shown so you can see why the assistant answered as it did. Buyer agents never receive this.</p>
               </details>
             )}
           </aside>
