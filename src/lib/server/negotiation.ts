@@ -78,9 +78,10 @@ export function getKnowledge(db: DB, productId: string): Knowledge | null {
 }
 
 const hasRules = (k: Knowledge | null) => !!k && Object.values(k.rules ?? {}).some((v) => v !== undefined && v !== null);
-/** Owners who taught selling rules get a longer, reasoned haggle (4 offers); others the short one (3). */
+/** Owners who taught selling rules get a longer, reasoned haggle (5 offers); others the short one (3). */
+export const RULES_MAX_OFFERS = 5;
 export function maxOffersFor(db: DB, productId: string) {
-  return hasRules(getKnowledge(db, productId)) ? 4 : MAX_BUYER_OFFERS;
+  return hasRules(getKnowledge(db, productId)) ? RULES_MAX_OFFERS : MAX_BUYER_OFFERS;
 }
 
 /** Hour of day at the stall (fractional), in the stall's own time zone. */
@@ -204,11 +205,11 @@ function rulesStrategy(ctx: ProductContext, k: Knowledge, unit: string, qty: num
       expectedDemandAtPublished: 0,
       regime: pressure > 0.6 ? "SURPLUS" : pressure > 0.3 ? "BALANCED" : "SCARCE",
     },
-    schedule: [0.3, 0.6, 0.85, 1.0],
+    schedule: [0.25, 0.5, 0.7, 0.85, 1.0],
     step: 5,
     knowledge: k,
     unit,
-    maxOffers: 4,
+    maxOffers: RULES_MAX_OFFERS,
     listForQty,
     bulkApplied: bulk,
     pressure,
@@ -327,16 +328,45 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
             : "they’re worth it, promise";
     return `${bulk}${fmt(price)}${per}${total} is truly my best. ${capitalize(why)}.`;
   }
-  // COUNTER: a different reason each round, the way a stall owner talks.
-  if (round <= 1) return `${cheaperThanMarket ? `${market}, so this is already a good deal. ` : said}${bulk}I can do ${fmt(price)}${per}${total}.`;
-  if (round === 2) {
-    if (closing) return `${closing}, so ${fmt(price)}${per}${total}.`;
-    if (r.demand === "high") return `These usually sell out, but for you: ${fmt(price)}${per}${total}.`;
-    if (market && !cheaperThanMarket) return `${market}, and mine are fresher. ${fmt(price)}${per}${total}?`;
-    return `Let’s meet in the middle: ${fmt(price)}${per}${total}.`;
+  // COUNTER: each round brings up a different thing Rosa taught, never the same one twice.
+  const levers = counterLevers(st, qty, price);
+  const lever = levers[(round - 1) % Math.max(1, levers.length)] ?? "";
+  const ask = `${fmt(price)}${per}${total}`;
+  if (round <= 1) return `${lever ? `${lever} ` : said}${bulk}I can do ${ask}.`;
+  if (round === st.maxOffers - 1) return `${lever ? `${lever} ` : ""}Alright, ${ask}. That’s getting close to my limit.`;
+  return `${lever ? `${lever} ` : ""}${round === 2 ? "Let’s meet in the middle:" : "Okay,"} ${ask}.`;
+}
+
+/**
+ * The reasons a stall owner gives while haggling, in the order they'd come up, built only from
+ * what the owner taught (never the floor or the agent's walk-away).
+ */
+function counterLevers(st: Strategy, qty: number, price: number): string[] {
+  const k = st.knowledge!;
+  const r = k.rules;
+  const per = perSpoken(st.unit);
+  const selling = k.facts.filter((f) => !/\b(soft|stain|flaw|worn|bruis|scratch|tear|dent|old)/i.test(f));
+  const out: string[] = [];
+  const isNew = r.marketSource === "channel3" || r.marketNote === "new ones online";
+  if (typeof r.marketCents === "number") {
+    const where = isNew ? "New ones sell for about" : `${capitalize(r.marketNote ?? "Other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"}`;
+    out.push(
+      st.w.publishedCents < r.marketCents * 0.95
+        ? `${where} ${fmt(r.marketCents)}${isNew ? " online" : per}, so this is already a good deal.`
+        : `${where} ${fmt(r.marketCents)}${isNew ? " online" : per}, but mine are worth it${selling[0] ? `: ${selling[0].charAt(0).toLowerCase() + selling[0].slice(1).replace(/[.!]$/, "")}` : ""}.`,
+    );
   }
-  if (r.demand === "slow") return `It’s been a slow week, so okay: ${fmt(price)}${per}${total}.`;
-  return `Alright, ${fmt(price)}${per}${total}. That’s close to my limit.`;
+  if (r.bulk && qty < r.bulk.minQty) {
+    const bp = Math.ceil((price * (1 - r.bulk.pctOff / 100)) / 5) * 5;
+    out.push(`If you take ${r.bulk.minQty} ${unitsSpoken(r.bulk.minQty, st.unit)}, I’ll knock ${r.bulk.pctOff}% off, so ${fmt(bp)}${per}.`);
+  }
+  if (r.demand === "high") out.push("These usually sell out, so I can’t move much.");
+  if (k.sell_by === "today" && typeof r.closeHour === "number") out.push(`We close at ${hourLabel(r.closeHour)} and I’d like these gone today.`);
+  if (r.leftover === "waste" && k.sell_by !== "no_rush") out.push("I’d rather they go home with you than go to waste.");
+  if (r.leftover === "use") out.push("Anything left I turn into jam, so I’m not desperate.");
+  if (r.demand === "slow") out.push("It’s been a slow week, I’ll admit.");
+  if (selling[1]) out.push(`${selling[1].replace(/[.!]$/, "")}.`);
+  return out;
 }
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -475,12 +505,14 @@ export function startNegotiation(db: DB, productId: string, offerCents: number, 
   return buyerView(db, id);
 }
 
-export function makeOffer(db: DB, id: string, offerCents: number, now = new Date()) {
+export function makeOffer(db: DB, id: string, offerCents: number, now = new Date(), newQty?: number) {
   let n = expireIfStale(db, getNeg(db, id), now);
   if (n.status !== "OPEN") throw new DomainError("NEGOTIATION_CLOSED", `Negotiation is ${n.status}.`, 409);
   if (n.final_counter || n.buyer_offers >= maxOffersFor(db, n.product_id)) throw new DomainError("NO_OFFERS_LEFT", "The seller made a final offer. Accept it or walk away.", 409);
   validateOffer(offerCents, n.published_cents);
+  if (newQty !== undefined && (!Number.isInteger(newQty) || newQty < 1 || newQty > MAX_NEGOTIATION_QTY)) throw new DomainError("INVALID_QTY", `Quantity must be 1–${MAX_NEGOTIATION_QTY}.`, 422);
   db.transaction(() => {
+    if (newQty !== undefined && newQty !== n.qty) db.prepare("UPDATE negotiations SET qty=? WHERE id=?").run(newQty, id);
     n = getNeg(db, id);
     respond(db, n, offerCents, now);
   }).immediate();

@@ -118,7 +118,7 @@ export function parseIntent(text: string): Intent {
   const priority: Priority = /cheap|bargain|lowest|deal|budget|not a cent/i.test(t) ? "cheapest" : /best|sweetest|quality|freshest|premium/i.test(t) ? "quality" : "balanced";
   const adjective = t.match(/\b(sweet(?:est)?|fresh(?:est)?|ripe|crisp|juicy)\b/i)?.[1]?.toLowerCase().replace(/est$/, "");
   const purpose = t.match(PURPOSE)?.[0]?.toLowerCase();
-  const question = adjective ? `Are they ${adjective === "sweet" || adjective === "fresh" ? adjective : adjective}?` : purpose ? `Are they good for ${purpose}?` : null;
+  const question = adjective ? `Are they ${adjective === "sweet" || adjective === "fresh" ? adjective : adjective}?` : purpose ? `Are they good for ${/^(party|kid|gift|snack)$/.test(purpose) ? `a ${purpose}` : purpose}?` : null;
   const want = t
     .replace(/\b\w+['’]\w+\b/g, " ")
     .replace(/\$\s*\d+(?:\.\d{1,2})?/g, " ")

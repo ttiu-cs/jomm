@@ -206,7 +206,12 @@ export async function sellerChat(db: DB, productId: string, message: string, con
   }
   // Rules: a friendly line that fits the most common small talk.
   const tip = pub.facts.find((f) => !/\b(soft|stain|flaw|scratch|worn)\b/i.test(f));
-  const reply = /\b(pick|choose|best ones|select|ripe)\b/i.test(m)
+  const bits: string[] = [];
+  if (/\b(deal|discount|more|bulk|extra)\b/i.test(m)) bits.push(pub.bulkDeal ? `Yes: ${pub.bulkDeal}.` : "No bulk deal on these, sorry, the price is already fair.");
+  if (/\b(close|closing|open until|pick(?:\s|-)?up|come by|when)\b/i.test(m)) bits.push(pub.closesAt ? `We’re here until ${pub.closesAt}.` : "We’re here all day.");
+  const reply = bits.length
+    ? bits.join(" ")
+    : /\b(choose|best ones|select|pick out|ripe)\b/i.test(m)
     ? `Of course, I’ll pick out the best ones for you.${tip ? ` ${tip.replace(/[.!]?$/, ".")}` : ""} Thanks for coming by!`
     : /\b(thank|thanks|cheers|great|perfect)\b/i.test(m)
       ? `Thank you! ${pub.sellsFast ? "Good timing, these go fast." : "Enjoy them, and come back soon."}`

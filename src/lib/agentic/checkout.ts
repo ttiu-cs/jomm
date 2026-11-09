@@ -54,6 +54,7 @@ export function sessionView(db: DB, id: string) {
     negotiation: {
       status: v.status,
       offers_left: v.offersLeft,
+      offers_used: v.offersUsed,
       seller_counter_per_unit: v.sellerCounterCents,
       seller_counter_is_final: v.sellerCounterIsFinal,
       agreed_per_unit: v.agreedPriceCents,
@@ -85,10 +86,10 @@ export function createSession(
   return sessionView(db, v.id);
 }
 
-export function updateSession(db: DB, id: string, body: { negotiation?: { offer_per_unit?: number; accept_counter?: boolean } }) {
+export function updateSession(db: DB, id: string, body: { negotiation?: { offer_per_unit?: number; accept_counter?: boolean; quantity?: number } }) {
   const n = body.negotiation ?? {};
   if (n.accept_counter) acceptCounter(db, id);
-  else if (n.offer_per_unit !== undefined) makeOffer(db, id, Number(n.offer_per_unit));
+  else if (n.offer_per_unit !== undefined) makeOffer(db, id, Number(n.offer_per_unit), new Date(), n.quantity === undefined ? undefined : Number(n.quantity));
   else throw new DomainError("VALIDATION", "Send negotiation.offer_per_unit or negotiation.accept_counter.", 422);
   return sessionView(db, id);
 }

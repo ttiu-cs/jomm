@@ -105,8 +105,9 @@ const STALL_TOOLS: ChatCompletionTool[] = [
     },
     ["sku", "quantity"],
   ),
-  fn("propose_price", "Make another per-unit offer in the open session (max 3 offers in total).", {
+  fn("propose_price", "Make another per-unit offer in the open session (the session shows offers_left). You may change the quantity, e.g. to take the stall's bulk deal, if the total stays within budget.", {
     offer_per_unit_usd: { type: "number" },
+    quantity: { type: "integer", minimum: 1, maximum: 10, description: "Optional new quantity" },
     message: { type: "string", description: "What you say, quoting the offer price" },
   }, ["offer_per_unit_usd"]),
   fn("accept_seller_counter", "Accept the stall's current counteroffer.", {}),
@@ -178,11 +179,12 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       if (!ctx.sessionId) return { error: "Open a checkout session first." };
       const offer = Math.round(Number(args.offer_per_unit_usd) * 100);
       const cur = sessionView(db, ctx.sessionId);
-      const qty = cur.line_items[0].item.quantity;
+      const newQty = args.quantity === undefined || args.quantity === null ? undefined : Math.round(Number(args.quantity));
+      const qty = newQty ?? cur.line_items[0].item.quantity;
       if (overBudget(ctx, offer, qty)) return { error: `Refused by the shopper's mandate: over the max total ${usd(ctx.mandate.max_total_cents)}.` };
       const counter = cur.negotiation.seller_counter_per_unit;
       if (counter !== null && offer >= counter) return { error: `Your offer ${usd(offer)} is not below the stall's counter ${usd(counter)}. Use accept_seller_counter instead.` };
-      const req = { negotiation: { offer_per_unit: offer } };
+      const req = { negotiation: { offer_per_unit: offer, ...(newQty !== undefined ? { quantity: newQty } : {}) } };
       updateSession(db, ctx.sessionId, req);
       applyBuyerWords(db, ctx.sessionId, args.message as string | undefined, offer);
       await voiceLastSellerLine(db, ctx.sessionId);
@@ -197,6 +199,9 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       const cur = sessionView(db, ctx.sessionId);
       const counter = cur.negotiation.seller_counter_per_unit;
       if (counter === null) return { error: "The stall has not made a counteroffer." };
+      const used = cur.negotiation.offers_used;
+      if (ctx.mandate.priority !== "quality" && !cur.negotiation.seller_counter_is_final && used < 2)
+        return { error: "The shopper wants a good price: respond to the stall's reasons and make at least one more offer before accepting." };
       if (overBudget(ctx, counter, cur.line_items[0].item.quantity)) return { error: `Refused by the shopper's mandate: the counter totals ${usd(counter * cur.line_items[0].item.quantity)}, over the max total ${usd(ctx.mandate.max_total_cents)}. Walk away or propose lower.` };
       const req = { negotiation: { accept_counter: true } };
       updateSession(db, ctx.sessionId, req);
@@ -345,7 +350,7 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
         "3) Greet the stall with chat_with_seller and say what the shopper needs it for.",
         "4) Ask one or two questions that matter for that purpose with ask_seller (the mandate's question first, if any), and react to the answers.",
         "5) Buy mandate.quantity of that item. If priority is quality and the listed total fits the budget, open the session at the listed price (no offer). Otherwise open with an offer: about 65% of list for cheapest, about 85% for balanced, never above the budget per unit.",
-        "6) While the stall counters: if the counter fits the budget and is close to your offer, or is marked final, accept it. Otherwise offer again roughly halfway between your last offer and the counter (max 3 offers in total, each below the counter and within budget). If the final counter is over budget, walk_away.",
+        "6) Haggle like a person, not a calculator. Read each counter's reason (price elsewhere, closing time, bulk deal, demand, waste) and answer it specifically in your offer message, using the shopper's purpose: e.g. 'For smoothies the soft ones are fine, and you said they must go today, could you do $2.40?'. If the stall offers a bulk deal and the bigger total still fits the budget, consider taking it (propose_price with quantity). Each new offer goes up a little toward the counter and stays below it and within budget. For a good-price shopper make at least two offers; accept when the counter fits the budget and the gap is small, or when it's final. If the final counter is over budget, walk_away politely.",
         "7) Once a price is agreed, say something useful with chat_with_seller before checking out (ask them to pick the best ones for the purpose, or thank them, or ask about pickup).",
         "8) Call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
         "Every offer message is one short, friendly sentence to Rosa that quotes the exact offer price, e.g. 'Could you do $1.90 a pound for 3 lb?'.",
@@ -435,6 +440,10 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
     await pause();
     await runStallTool(ctx, "ask_seller", { sku: it.sku, question: q });
   }
+  if (mandate.quantity > 1 || mandate.priority !== "cheapest") {
+    await pause();
+    await runStallTool(ctx, "chat_with_seller", { sku: it.sku, message: "Is there any deal if I take a bit more? And when do you close, in case they pick them up later?" });
+  }
   const list = it.listPriceCents;
   const unitBudget = mandate.max_total_cents ? Math.floor(mandate.max_total_cents / mandate.quantity / 5) * 5 : null;
   const round5 = (c: number) => Math.round(c / 5) * 5;
@@ -455,7 +464,8 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
     const final = s.negotiation.seller_counter_is_final || s.negotiation.offers_left <= 0;
     const fits = unitBudget === null || counter <= unitBudget;
     const close = counter - offer <= Math.max(5, round5(list * 0.03));
-    if (fits && (final || close || (mandate.priority === "balanced" && round >= 2))) await runStallTool(ctx, "accept_seller_counter", {});
+    const enoughRounds = mandate.priority === "quality" || round >= 2;
+    if (fits && enoughRounds && (final || close || (mandate.priority === "balanced" && round >= 3))) await runStallTool(ctx, "accept_seller_counter", {});
     else if (final) await runStallTool(ctx, "walk_away", { reason: "The stall's price is over the shopper's budget." });
     else {
       offer = Math.min(counter - 5, unitBudget ?? Infinity, Math.max(offer + 5, round5((offer + counter) / 2)));
