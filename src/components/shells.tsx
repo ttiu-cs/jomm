@@ -30,9 +30,6 @@ export function SiteHeader() {
           <Link href="/demo" className={path.startsWith("/demo") ? "font-medium text-label" : "text-label-2 hover:text-label"}>
             Demo
           </Link>
-          <Link href="/market" className={`hidden sm:inline ${path.startsWith("/market") ? "text-label" : "text-label-2 hover:text-label"}`}>
-            Buyer agent
-          </Link>
           <Link href="/seller" className="rounded-full bg-brand px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-brand-hover">
             Start selling
           </Link>
