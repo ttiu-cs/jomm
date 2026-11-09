@@ -205,7 +205,8 @@ function rulesStrategy(ctx: ProductContext, k: Knowledge, unit: string, qty: num
       expectedDemandAtPublished: 0,
       regime: pressure > 0.6 ? "SURPLUS" : pressure > 0.3 ? "BALANCED" : "SCARCE",
     },
-    schedule: [0.25, 0.5, 0.7, 0.85, 1.0],
+    // An owner who must sell soon comes down faster than one with no rush.
+    schedule: pressure >= 0.6 ? [0.45, 0.8, 1, 1, 1] : pressure >= 0.35 ? [0.3, 0.6, 0.85, 1, 1] : [0.25, 0.5, 0.7, 0.85, 1.0],
     step: 5,
     knowledge: k,
     unit,
@@ -475,7 +476,10 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   let target = k >= st.maxOffers ? w.walkAwayCents : Math.max(w.walkAwayCents, roundUp(base - (base - w.walkAwayCents) * sched[k - 1]));
   if (n.last_counter_cents !== null) target = Math.min(target, n.last_counter_cents);
   target = Math.min(target, pub);
-  if (offerCents >= target) {
+  // Eager to sell (e.g. "these must go today"): from the second offer on, any price at or above the
+  // owner's lowest for today is a yes.
+  const eager = (st.pressure ?? 0) >= 0.6 && k >= 2 && offerCents >= w.walkAwayCents;
+  if (offerCents >= target || eager) {
     addMsg(db, n.id, "seller", "ACCEPT", offerCents, line("ACCEPT", offerCents), now);
     agree(db, getNeg(db, n.id), offerCents, now);
     return;
