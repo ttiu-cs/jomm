@@ -73,8 +73,10 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
               setBusy(false);
             }
           },
-          onCancel: async () => {
-            await api(`/api/orders/${orderId}/cancel`, {}).catch(() => {});
+          // Closing the PayPal window isn't a "no": keep the order payable (until the price hold
+          // expires) so the shopper can open PayPal again, e.g. after finding their login.
+          onCancel: () => {
+            setErr("PayPal window closed. Nothing was charged. Tap the PayPal button to try again.");
             refresh().catch(() => {});
           },
           onError: (e: unknown) => setErr(`PayPal error: ${e instanceof Error ? e.message : String(e)}`),

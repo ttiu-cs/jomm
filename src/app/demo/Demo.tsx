@@ -120,7 +120,10 @@ export default function Demo() {
     (key: number) => async (o: OrderView) => {
       const paid = o.order.status === "PAID";
       const sandbox = o.order.payment_source === "PAYPAL_SANDBOX";
-      const pp: Trace[] = sandbox
+      if (!paid && ["CREATED", "AWAITING_APPROVAL"].includes(o.order.status)) return; // still open: shopper can retry
+      const pp: Trace[] = !paid
+        ? [{ method: "—", path: "PayPal payment not completed", concept: `Order ${o.order.status.toLowerCase()}`, result: o.order.failure_reason ?? "Nothing was charged.", paypal: true }]
+        : sandbox
         ? [
             { method: "POST", path: "PayPal /v2/checkout/orders", concept: "PayPal Orders v2 · create (server-side, amount from the agreed quote)", result: `PayPal order ${o.payment?.provider_order_id ?? ""}`, paypal: true },
             { method: "—", path: "Shopper approves in PayPal", concept: "Human in the loop: agents can’t pay on their own", result: "Approved", paypal: true },

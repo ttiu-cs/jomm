@@ -68,9 +68,41 @@ class AnthropicProvider implements LlmProvider {
   }
 }
 
+/** OpenAI chat completions, used when only OPENAI_API_KEY is set (same contract as above). */
+class OpenAIProvider implements LlmProvider {
+  name = "openai";
+  private model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+  private async run(system: string, user: string, json: boolean): Promise<string | null> {
+    try {
+      const { default: OpenAI } = await import("openai");
+      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const res = await client.chat.completions.create(
+        { model: this.model, messages: [{ role: "system", content: system }, { role: "user", content: user }], ...(json ? { response_format: { type: "json_object" as const } } : {}) },
+        { timeout: 20_000 },
+      );
+      return res.choices[0]?.message?.content ?? null;
+    } catch (err) {
+      console.warn("[llm] OpenAI request failed", err instanceof Error ? err.message.slice(0, 120) : err);
+      return null;
+    }
+  }
+  async completeJson(system: string, user: string) {
+    const text = await this.run(system, user, true);
+    if (!text) return null;
+    try {
+      return JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] ?? "null");
+    } catch {
+      return null;
+    }
+  }
+  completeText(system: string, user: string) {
+    return this.run(system, user, false);
+  }
+}
+
 let cached: LlmProvider | null | undefined;
 export function getLlm(): LlmProvider | null {
   if (cached !== undefined) return cached;
-  cached = process.env.ANTHROPIC_API_KEY ? new AnthropicProvider() : null;
+  cached = process.env.ANTHROPIC_API_KEY ? new AnthropicProvider() : process.env.OPENAI_API_KEY ? new OpenAIProvider() : null;
   return cached;
 }
