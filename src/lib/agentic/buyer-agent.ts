@@ -53,6 +53,7 @@ interface Ctx {
   sessionId: string | null;
   spoken: number;
   finished: null | "approve" | "walked";
+  asked?: number;
 }
 
 function emitNewLines(ctx: Ctx, s: ReturnType<typeof sessionView>) {
@@ -112,6 +113,8 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       return { items };
     }
     case "ask_seller": {
+      ctx.asked = (ctx.asked ?? 0) + 1;
+      if (ctx.asked > 2) return { error: "You've asked enough. Make your offer now." };
       const sku = String(args.sku ?? "");
       const question = String(args.question ?? "").slice(0, 200);
       const p = db.prepare("SELECT id FROM products WHERE sku=? AND store_id=?").get(sku, ctx.shopId) as { id: string } | undefined;
@@ -129,6 +132,7 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       const offer = args.offer_per_unit_usd === undefined || args.offer_per_unit_usd === null ? undefined : Math.round(Number(args.offer_per_unit_usd) * 100);
       const listed = listCatalog(db, undefined, ctx.shopId).find((i) => i.sku === sku);
       if (!listed) return { error: `Unknown sku ${sku}` };
+      if (offer === undefined && ctx.mandate.priority !== "quality") return { error: "The shopper wants a good price: open with an offer (offer_per_unit_usd) instead of paying the listed price." };
       if (overBudget(ctx, offer ?? listed.listPriceCents, qty)) return { error: `Refused by the shopper's mandate: ${qty} × ${usd(offer ?? listed.listPriceCents)} is over the max total ${usd(ctx.mandate.max_total_cents)}.` };
       const body = { items: [{ id: sku, quantity: qty }], ...(offer === undefined ? {} : { negotiation: { offer_per_unit: offer } }), buyer: { agent: "buyer-agent" } };
       const s0 = createSession(db, body);
@@ -258,7 +262,14 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
       {
         role: "system",
         content:
-          'Extract a shopping mandate from the shopper\'s sentence. Return JSON {"want": short description of the product and purpose, "quantity": integer 1-10 (pounds, boxes or items), "max_total_usd": number or null if no budget, "priority": "cheapest" | "quality" | "balanced", "questions": up to 2 short questions the agent should ask the seller to check the shopper\'s purpose}.',
+          [
+          "Turn the shopper's sentence into a shopping mandate for their buying agent at a fruit stall. Return JSON:",
+          '{"want": what to buy in a few plain words, keeping colour, taste and purpose (e.g. "red fruit", "peaches for jam", "sweet apples for a lunchbox"),',
+          '"quantity": integer 1-10 in pounds or boxes (use the number the shopper gave; if none, 1),',
+          '"max_total_usd": the total budget as a number, or null if none was given,',
+          '"priority": "cheapest" if they mention price, cheap or a budget; "quality" if they say quality matters more than price; otherwise "balanced",',
+          '"questions": 0 or 1 question the agent will ask the seller about the product itself, to check it suits the purpose (e.g. "Are they ripe enough for jam?"). Never a question about what the shopper wants.}',
+        ].join(" "),
       },
       { role: "user", content: text },
     ],
@@ -276,11 +287,15 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
     {
       role: "system",
       content: [
-        "You are a shopper's buying agent visiting a small fruit stall run by Rosa. Act for the shopper, within their mandate.",
-        "Steps: read the product feed; pick the item that best fits the shopper's purpose (use the owner's words); ask the seller your questions; then buy.",
-        "Pricing: if priority is quality and the listed price fits the budget, buy at the listed price. Otherwise open with a fair offer below list, then at most two more offers, each below the stall's counter. Accept a counter that fits the budget; walk away if the final price is over budget.",
-        "Speak to the stall briefly and warmly, like a friendly regular. Every offer message must quote the exact offer price.",
-        "Never exceed max_total. You cannot pay: after the price is agreed, call complete_checkout and then tell the shopper, in one short sentence, to approve in PayPal.",
+        "You are a shopper's buying agent at Rosa's fruit stall. You buy FOR the shopper, from Rosa's agent. You already know what the shopper wants (the mandate); never ask the stall what you are looking for.",
+        "Follow these steps exactly:",
+        "1) Call read_product_feed once.",
+        "2) Pick ONE item that best matches the mandate's want (colour, taste, purpose), using the item titles and the owner's words. Tell the shopper which one and why in one short sentence.",
+        "3) If the mandate has a question, ask it once with ask_seller about that item. Ask nothing else.",
+        "4) Buy mandate.quantity of that item. If priority is quality and the listed total fits the budget, open the session at the listed price (no offer). Otherwise open with an offer: about 65% of list for cheapest, about 85% for balanced, never above the budget per unit.",
+        "5) While the stall counters: if the counter fits the budget and is close to your offer, or is marked final, accept it. Otherwise offer again roughly halfway between your last offer and the counter (max 3 offers in total, each below the counter and within budget). If the final counter is over budget, walk_away.",
+        "6) When the session is ready_for_payment, call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
+        "Every offer message is one short, friendly sentence to Rosa that quotes the exact offer price, e.g. 'Could you do $1.90 a pound for 3 lb?'.",
         "PayPal Agent Toolkit tools (like get_order) talk to PayPal directly; use them only for an existing PayPal order id.",
         "Between tool calls, keep any text for the shopper to one short sentence.",
       ].join(" "),

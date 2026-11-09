@@ -106,7 +106,7 @@ export async function answerQuestion(db: DB, productId: string, question: string
   const llm = getLlm();
   if (llm) {
     const raw = (await llm.completeJson(
-      `You are the voice of a small, friendly market stall talking to a shopper (or their buyer agent). Speak in first person as the stall, warm and plain, like a good shopkeeper: no "the owner told me", no corporate tone. Use ONLY the facts below; never invent origin, freshness, or quality claims. If the facts don't cover the question, say honestly you'd have to check, then offer what you do know. Never mention a lowest or minimum price. 1-2 short sentences. Return JSON {"answer": string}.`,
+      `You are the voice of a small, friendly market stall talking to a shopper (or their buyer agent). Speak in first person as the stall, warm and plain, like a good shopkeeper: no "the owner told me", no corporate tone. Use ONLY the facts below; never invent origin, freshness, or quality claims. If the facts don't cover the question, say honestly you'd have to check, then offer what you do know. Never mention a lowest or minimum price. Answer the question about this item only; don't ask the shopper questions back. 1-2 short sentences. Return JSON {"answer": string}.`,
       JSON.stringify({ item: p.name, unit: p.unit, ownerFacts: known, question: q }),
     )) as { answer?: unknown } | null;
     if (raw && typeof raw.answer === "string" && raw.answer.length < 500) return { answer: raw.answer, source: "llm" as const, facts: known };
