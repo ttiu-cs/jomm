@@ -7,18 +7,14 @@ import { IconCamera, IconChat, IconHome, IconTag } from "./icons";
 export const BRAND = "Jomm.";
 
 /**
- * The Jomm. wordmark. The "o" is one ring split on a 25° diagonal: the dark half is the shopper's
- * agent, the orange half the stall's agent, meeting in a deal. Its stroke matches the letters; the
- * full stop is a brand-colour dot.
+ * The Jomm. wordmark: the two round shapes, the "o" and the full stop, are drawn as circles in the
+ * brand colour (a ring and a dot), the rest is set in the system font.
  */
 export function Wordmark({ size = 22, className = "" }: { size?: number; className?: string }) {
   return (
     <span className={`inline-flex items-baseline font-bold leading-none tracking-[-0.04em] text-label ${className}`} style={{ fontSize: size }} aria-label="Jomm.">
       <span aria-hidden>J</span>
-      <svg aria-hidden viewBox="0 0 100 100" className="mx-[0.03em] inline-block" style={{ width: "0.6em", height: "0.6em", transform: "translateY(0.02em)" }}>
-        <path d="M65.85 16.01 A37.5 37.5 0 0 1 34.15 83.99" fill="none" stroke="var(--brand)" strokeWidth="25"/>
-        <path d="M34.15 83.99 A37.5 37.5 0 0 1 65.85 16.01" fill="none" stroke="currentColor" strokeWidth="25"/>
-      </svg>
+      <span aria-hidden className="mx-[0.02em] inline-block rounded-full border-brand" style={{ width: "0.6em", height: "0.6em", borderWidth: "0.15em", transform: "translateY(0.02em)" }} />
       <span aria-hidden>mm</span>
       <span aria-hidden className="ml-[0.05em] inline-block rounded-full bg-brand" style={{ width: "0.24em", height: "0.24em" }} />
     </span>

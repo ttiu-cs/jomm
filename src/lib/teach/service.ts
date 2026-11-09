@@ -95,7 +95,7 @@ export function getSession(db: DB, id: string) {
     source: string;
     created_at: string;
   }[];
-  return { id: s.id, shopId: s.store_id, shopName: s.shop_name, status: s.status, focusItemId: s.focus_item_id, items, messages };
+  return { id: s.id, shopId: s.store_id, shopName: s.shop_name, status: s.status, focusItemId: s.focus_item_id, items, messages, channel3: channel3Configured() };
 }
 
 const LlmTurn = z.object({

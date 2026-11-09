@@ -218,7 +218,7 @@ const total = (s: Session) => s.totals.find((t) => t.type === "total")?.amount ?
 
 function Steps({ taught, anyRun, paid }: { taught: boolean; anyRun: boolean; paid: boolean }) {
   const steps = [
-    { t: "Rosa teaches her agent", done: taught },
+    { t: "Rosa (shop owner) teaches her agent", done: taught },
     { t: "Shoppers’ agents arrive", done: anyRun },
     { t: "PayPal pays Rosa", done: paid },
   ];
@@ -361,6 +361,7 @@ function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () =>
           {visible.map((m, k) =>
             m.role === "owner" ? (
               <p key={`${m.scene}-${k}-${m.text}`} className="rise ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[15px] leading-snug text-white">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-white/70">Rosa · Shop owner</span>
                 {m.text}
               </p>
             ) : (
@@ -368,7 +369,10 @@ function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () =>
                 <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-label text-white">
                   <IconStore size={11} />
                 </span>
-                {m.text}
+                <span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-label-3">Rosa’s agent (AI)</span>
+                  {m.text}
+                </span>
               </p>
             ),
           )}
@@ -530,7 +534,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
             <IconStore size={16} />
           </span>
           <span className="truncate">
-            <b className="block text-label">Rosa’s agent</b>sells for Rosa
+            <b className="block text-label">Rosa’s agent (AI)</b>sells for Rosa, the shop owner
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2 text-right">

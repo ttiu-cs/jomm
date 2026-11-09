@@ -66,6 +66,7 @@ interface Session {
   items: Item[];
   messages: { role: "owner" | "agent"; text: string; had_image: number; source: string }[];
   reply?: string;
+  channel3?: boolean;
 }
 
 interface SpeechRec {
@@ -338,9 +339,26 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
         <div className="grain relative h-[58vh] min-h-[360px] overflow-hidden bg-black lg:aspect-[4/5] lg:h-auto lg:rounded-[32px]">
           {source.kind === "camera" && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
           {clip && <video ref={clipRef} key={clip} src={clip} poster={clipPoster} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />}
+          {source.kind === "video" && source.scene === "closet" && (
+            <div className="absolute inset-x-4 top-16 z-10 flex justify-center">
+              {focusItem?.rules?.lookup ? (
+                <span key={focusItem.id} className="rise frosted flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] text-label shadow">
+                  <span className="rounded bg-label px-1.5 py-0.5 text-[10px] font-bold text-white">Channel3</span>
+                  New online ${Math.round(focusItem.rules.lookup.lowCents / 100)}–${Math.round(focusItem.rules.lookup.highCents / 100)} · fair resale ${Math.round(focusItem.rules.lookup.suggestedLowCents / 100)}–$
+                  {Math.round(focusItem.rules.lookup.suggestedHighCents / 100)}
+                </span>
+              ) : sending && session.channel3 ? (
+                <span className="frosted flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] text-label shadow">
+                  <span className="rounded bg-label px-1.5 py-0.5 text-[10px] font-bold text-white">Channel3</span> Looking up new prices online…
+                </span>
+              ) : session.channel3 === false ? (
+                <span className="frosted-dark rounded-full px-3.5 py-1.5 text-[12px] text-white/90">Channel3 not connected (CHANNEL3_API_KEY) · Mina tells the price herself</span>
+              ) : null}
+            </div>
+          )}
           {source.kind === "video" && caption && (
             <p key={caption} className="rise absolute inset-x-4 bottom-[132px] z-10 ml-auto w-fit max-w-[88%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[16px] leading-snug text-white shadow-lg">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/70">{source.scene === "closet" ? MINA.owner : ROSA.owner}</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/70">{source.scene === "closet" ? `${MINA.owner} · Closet seller` : `${ROSA.owner} · Shop owner`}</span>
               {caption}
             </p>
           )}
@@ -358,27 +376,34 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                   <p className="hand text-[30px] text-[#ffd9a8]">Morning! What are we selling today?</p>
                   <h2 className="display mt-1 text-[30px] leading-tight">Show me your stall.</h2>
                   <p className="mt-2 text-[17px] text-white/80">Walk around with the camera on and talk, like you’re training a new helper. Your assistant asks until it knows enough to haggle for you.</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSource({ kind: "video", scene: "fruit" });
-                      setPlaying(true);
-                    }}
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-[17px] font-semibold text-label"
-                  >
-                    ▶ Play the sample video
-                  </button>
-                  <p className="mt-2 text-[13px] text-white/70">Rosa teaches her fruit stall’s assistant, with sound. For this demo, instead of your camera.</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSource({ kind: "video", scene: "closet" });
-                      setPlaying(true);
-                    }}
-                    className="frosted-dark mt-3 w-full rounded-full py-3 text-[16px] font-medium text-white"
-                  >
-                    ▶ Sample closet video · 5 items, prices via Channel3
-                  </button>
+                  <p className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-white/70">Watch a sample (instead of your camera)</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2.5 text-left">
+                    {([
+                      { scene: "fruit", photo: "/photos/apples-box.jpg", who: "Rosa · Shop owner", what: "Fruit stall, 3 crates", extra: "Prices elsewhere, closing time, bulk deals" },
+                      { scene: "closet", photo: "/photos/coat-on-hook.jpg", who: "Mina · Closet seller", what: "Closet, 5 items", extra: "New prices looked up on Channel3" },
+                    ] as const).map((o) => (
+                      <button
+                        key={o.scene}
+                        type="button"
+                        onClick={() => {
+                          setSource({ kind: "video", scene: o.scene });
+                          setPlaying(true);
+                        }}
+                        className="group overflow-hidden rounded-[18px] bg-white text-label shadow-lg transition hover:-translate-y-0.5"
+                      >
+                        <span className="relative block h-24 overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={o.photo} alt="" className="warm-photo h-full w-full object-cover" />
+                          <span className="absolute inset-0 grid place-items-center bg-black/25 text-[22px] text-white">▶</span>
+                        </span>
+                        <span className="block px-3 pb-3 pt-2">
+                          <span className="block text-[15px] font-semibold leading-tight">{o.what}</span>
+                          <span className="block text-[12px] text-label-2">{o.who}</span>
+                          <span className="mt-1 block text-[11px] leading-snug text-label-3">{o.extra}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                   <button type="button" onClick={startCamera} className="mt-4 inline-flex items-center gap-1.5 text-[15px] text-white/80 hover:text-white">
                     <IconCamera size={16} /> Or use my camera (needs https)
                   </button>
@@ -410,7 +435,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
               </span>
               <div className="min-w-0">
                 <div className="flex items-center justify-between text-[13px] font-semibold">
-                  <span>Assistant</span>
+                  <span>{source.kind === "video" ? `${source.scene === "closet" ? MINA.owner : ROSA.owner}’s agent (AI)` : "Assistant"}</span>
                   <span className="font-normal text-label-2">{sending ? "Thinking…" : "now"}</span>
                 </div>
                 <p className="text-[15px] leading-snug">{lastAgent}</p>
