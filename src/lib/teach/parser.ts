@@ -22,6 +22,9 @@ export interface SellingRules {
   bulk?: { minQty: number; pctOff: number } | false | null;
   /** What happens to unsold stock. */
   leftover?: "waste" | "use" | "keep" | null;
+  /** Where the price elsewhere came from: the owner, or a Channel3 lookup of new prices online. */
+  marketSource?: "owner" | "channel3";
+  lookup?: { source: "channel3"; query: string; count: number; lowCents: number; medianCents: number; highCents: number; suggestedLowCents: number; suggestedHighCents: number; examples: { title: string; priceCents: number; domain: string }[] };
 }
 
 export interface DraftFields {
@@ -76,6 +79,9 @@ export function extractRules(t: string): { rules: SellingRules; marketAmount: nu
     if (/\b(compost|throw (?:them |it )?(?:away|out)|toss|bin|waste|trash|garbage)\b/i.test(t)) rules.leftover = "waste";
     else if (/\b(jam|juice|bake|pie|preserve|freeze|smoothie|turn (?:them|it) into|make)\b/i.test(t)) rules.leftover = "use";
     else if (/\b(keep|last|store|tomorrow)\b/i.test(t)) rules.leftover = "keep";
+  }
+  if (/\b(donate|give (?:it|them) away|charity|goodwill)\b/i.test(t) && /\b(if|doesn'?t sell|don'?t sell|unsold|otherwise)\b/i.test(t)) {
+    rules.leftover = "waste";
   }
   return { rules, marketAmount };
 }
@@ -202,24 +208,31 @@ const per = (unit: string) => (unit === "each" ? "each" : `per ${unit}`);
 /** The next question the seller agent asks about the item in focus. */
 export function nextQuestion(item: DraftFields | null): string {
   if (!item) return "Show me the first item and tell me what it is. For example: “These are Fuji apples, about 30 lb.”";
-  if (item.quantity === null) return `How many ${item.unit === "each" ? "" : item.unit + " of "}${item.name} do you have?`;
-  if (item.listPriceCents === null) return `What price should I ask for ${item.name}, ${per(item.unit)}?`;
+  if (item.quantity === null) return item.unit === "each" ? "How many do you have?" : `How many ${item.unit} of ${item.name} do you have?`;
+  if (item.listPriceCents === null)
+    return item.rules?.lookup
+      ? `What price should I ask? Somewhere around ${fmt(item.rules.lookup.suggestedLowCents)}–${fmt(item.rules.lookup.suggestedHighCents)} would be fair.`
+      : `What price should I ask for ${item.name}, ${per(item.unit)}?`;
   if (item.floorPriceCents === null) return `What’s the lowest you’d accept ${per(item.unit)}? I will never go below it.`;
   if (item.facts.length === 0 && !item.condition) return `What should buyers know about ${item.name}? Taste, size, condition, any flaws?`;
-  if (item.sellBy === null) return `Do these need to sell today, this week, or is there no rush?`;
+  if (item.sellBy === null) return item.quantity === 1 ? "Does it need to sell today, this week, or is there no rush?" : "Do these need to sell today, this week, or is there no rush?";
   const next = nextRule(item);
   if (next) return RULE_QUESTION[next](item);
   const c = checklist(item);
-  return `Got it: ${item.name}, ${item.quantity} ${item.unit}, ${fmt(item.listPriceCents)} ${per(item.unit)}, never below ${fmt(item.floorPriceCents)}. ${c.filter((x) => x.done).length} of ${c.length} things I need to haggle well. Show me the next item, or tap “Open my shop” when you’re done.`;
+  const what = item.unit === "each" ? `${item.quantity} for sale, ${fmt(item.listPriceCents)}` : `${item.quantity} ${item.unit}, ${fmt(item.listPriceCents)} ${per(item.unit)}`;
+  return `Got it: ${item.name}, ${what}, never below ${fmt(item.floorPriceCents)}. ${c.filter((x) => x.done).length} of ${c.length} things I need to haggle well. Show me the next item, or tap “Open my shop” when you’re done.`;
 }
 
 export type RuleKey = "closeHour" | "marketCents" | "bulk" | "leftover" | "demand";
 const RULE_QUESTION: Record<RuleKey, (i: DraftFields) => string> = {
   closeHour: () => "What time do you close today? I’ll pace my discounts so they’re gone by then.",
-  marketCents: (i) => `What do shoppers pay for ${i.name.toLowerCase()} elsewhere, like at the supermarket? It helps me know how firm to be.`,
+  marketCents: (i) =>
+    i.unit === "each"
+      ? "What does a new one cost elsewhere? It helps me know how firm to be."
+      : `What do shoppers pay for ${i.name.toLowerCase()} elsewhere, like at the supermarket? It helps me know how firm to be.`,
   bulk: (i) => `Any deal for bigger orders? For example, 10% off for 5 ${i.unit === "each" ? "or more" : (i.unit === "box" ? "boxes" : i.unit) + " or more"}.`,
-  leftover: () => "If some are left at closing, what happens to them?",
-  demand: () => "How fast do these usually sell?",
+  leftover: (i) => (i.quantity === 1 ? "If it doesn't sell, what happens to it?" : "If some are left at closing, what happens to them?"),
+  demand: (i) => (i.quantity === 1 ? "How fast does something like this usually sell?" : "How fast do these usually sell?"),
 };
 
 /** The next selling rule worth asking about, in conversation order (undefined = not asked yet). */
@@ -227,7 +240,7 @@ export function nextRule(item: DraftFields): RuleKey | null {
   const r = item.rules ?? {};
   if (item.sellBy === "today" && r.closeHour === undefined) return "closeHour";
   if (r.marketCents === undefined) return "marketCents";
-  if (r.bulk === undefined) return "bulk";
+  if (r.bulk === undefined && item.quantity !== 1) return "bulk"; // no volume deal for a one-off item
   if (item.sellBy !== "no_rush" && r.leftover === undefined) return "leftover";
   if (r.demand === undefined) return "demand";
   return null;
@@ -245,7 +258,7 @@ export function checklist(item: DraftFields): { key: string; label: string; done
     { key: "sellBy", label: "Sell by", done: item.sellBy !== null },
     ...(item.sellBy === "today" ? [rule("closeHour", "Closing time")] : []),
     rule("marketCents", "Price elsewhere"),
-    { key: "bulk", label: "Bulk deal", done: r.bulk !== undefined && r.bulk !== null, skipped: r.bulk === null },
+    ...(item.quantity !== 1 ? [{ key: "bulk", label: "Bulk deal", done: r.bulk !== undefined && r.bulk !== null, skipped: r.bulk === null }] : []),
     ...(item.sellBy !== "no_rush" ? [rule("leftover", "If unsold")] : []),
     rule("demand", "How fast it sells"),
   ];

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/client/format";
-import { EXAMPLE_SCRIPTS } from "@/lib/teach/examples";
+import { EXAMPLE_SCRIPTS, scriptLine } from "@/lib/teach/examples";
 import { SCENES, photoFor, photoToDataUrl, type SceneKind } from "@/lib/client/demoPhotos";
 import { ItemCard } from "@/components/ItemCard";
 import { IconCamera, IconMic, IconSend, IconStop, IconStore } from "@/components/icons";
@@ -34,7 +34,15 @@ interface Item {
   sellBy: "today" | "this_week" | "no_rush" | null;
   facts: string[];
   photo: string | null;
-  rules?: { closeHour?: number | null; marketCents?: number | null; marketNote?: string | null; demand?: string | null; bulk?: { minQty: number; pctOff: number } | false | null; leftover?: string | null };
+  rules?: {
+    closeHour?: number | null;
+    marketCents?: number | null;
+    marketNote?: string | null;
+    demand?: string | null;
+    bulk?: { minQty: number; pctOff: number } | false | null;
+    leftover?: string | null;
+    lookup?: { count: number; lowCents: number; highCents: number; suggestedLowCents: number; suggestedHighCents: number; examples: { title: string; priceCents: number; domain: string }[] };
+  };
   checklist?: { key: string; label: string; done: boolean; skipped?: boolean }[];
 }
 interface Session {
@@ -122,7 +130,14 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   const nextLine = useMemo(() => {
     if (source.kind !== "demo") return null;
     const said = new Set(session.messages.filter((m) => m.role === "owner").map((m) => m.text));
-    return EXAMPLE_SCRIPTS[source.scene].lines.find((l) => !said.has(l)) ?? null;
+    const lastReply = [...session.messages].reverse().find((m) => m.role === "agent")?.text ?? null;
+    const lines = EXAMPLE_SCRIPTS[source.scene].lines;
+    const lastSaid = lines.reduce((acc, l, i) => (said.has(l.replace(/^\?market:/, "")) ? i : acc), -1);
+    for (const raw of lines.slice(lastSaid + 1)) {
+      const l = scriptLine(raw, lastReply);
+      if (l && !said.has(l)) return l;
+    }
+    return null;
   }, [source, session.messages]);
 
   const startCamera = async () => {
@@ -185,7 +200,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
     setSending(true);
     setErr(null);
     try {
-      const s = await api<Session>(`/api/teach/sessions/${session.id}/turn`, { text: t, image: await frame(t), scripted: source.kind === "video" });
+      const s = await api<Session>(`/api/teach/sessions/${session.id}/turn`, { text: t, image: await frame(t), scripted: source.kind === "video" || source.kind === "demo" });
       setSession(s);
       setText("");
       if (s.reply && source.kind !== "video") say(s.reply);
@@ -323,6 +338,9 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                     ▶ Play the sample video
                   </button>
                   <p className="mt-2 text-[13px] text-white/70">Rosa teaches her fruit stall’s assistant, with sound. For this demo, instead of your camera.</p>
+                  <button type="button" onClick={() => setSource({ kind: "demo", scene: "closet" })} className="frosted-dark mt-3 w-full rounded-full py-3 text-[16px] font-medium text-white">
+                    Sample closet · prices looked up with Channel3
+                  </button>
                   <button type="button" onClick={startCamera} className="mt-4 inline-flex items-center gap-1.5 text-[15px] text-white/80 hover:text-white">
                     <IconCamera size={16} /> Or use my camera (needs https)
                   </button>
@@ -447,6 +465,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
               ) : (
                 <button type="button" onClick={() => setEditing(it.id)} className="block w-full text-left">
                   <ItemCard t={it} active={session.focusItemId === it.id} showSteps={!it.checklist} />
+                  {it.rules?.lookup && <LookupNote l={it.rules.lookup} />}
                   {it.checklist && <Checklist items={it.checklist} />}
                 </button>
               )}
@@ -482,6 +501,23 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
         )}
       </section>
     </main>
+  );
+}
+
+/** The Channel3 price lookup the assistant did for a second-hand item. */
+function LookupNote({ l }: { l: NonNullable<NonNullable<Item["rules"]>["lookup"]> }) {
+  const $ = (c: number) => `$${Math.round(c / 100)}`;
+  return (
+    <div className="mt-1.5 rounded-[14px] bg-card px-3 py-2 text-[12px]">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">Looked up with Channel3</span>
+        <span className="text-label-3">{l.count} listings</span>
+      </div>
+      <div className="mt-0.5 text-label-2">
+        New online: <b className="tnum text-label">{$(l.lowCents)}–{$(l.highCents)}</b> · Fair resale: <b className="tnum text-label">{$(l.suggestedLowCents)}–{$(l.suggestedHighCents)}</b>
+      </div>
+      <div className="mt-0.5 truncate text-label-3">{l.examples.map((e) => `${e.domain} ${$(e.priceCents)}`).join(" · ")}</div>
+    </div>
   );
 }
 

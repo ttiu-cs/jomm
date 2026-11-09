@@ -10,6 +10,7 @@ import { getLlm } from "../agent/llm";
 import { DEFAULT_COSTS, DEFAULT_DEMAND_MODEL, DEFAULT_POLICY } from "../pricing/scenario";
 import { emit } from "../server/events";
 import { DomainError, audit, newId } from "../server/util";
+import { channel3Configured, lookupNewPrice, resaleRange } from "../market/channel3";
 import { checklist, interpretUtterance, nextQuestion, nextRule, type DraftFields, type Interpretation, type SellBy, type SellingRules } from "./parser";
 
 export interface DraftItem extends DraftFields {
@@ -211,6 +212,25 @@ export async function teachTurn(db: DB, sessionId: string, input: { text: string
     target = interp.newItemName ? "new" : "focus";
   }
 
+  // Second-hand goods: look up what the item sells for new online (Channel3) and suggest a resale
+  // range, so the owner only has to confirm a price. Produce (sold by lb/box) is never looked up.
+  let lookupNote = "";
+  if (interp.newItemName && (interp.set.unit ?? "each") === "each" && channel3Configured()) {
+    const lk = await lookupNewPrice(interp.newItemName);
+    if (lk) {
+      const rr = resaleRange(lk.medianCents, interp.set.condition ?? null);
+      interp = {
+        ...interp,
+        set: {
+          ...interp.set,
+          rules: { ...(interp.set.rules ?? {}), marketCents: lk.medianCents, marketNote: "new ones online", marketSource: "channel3", lookup: { ...lk, suggestedLowCents: rr.lowCents, suggestedHighCents: rr.highCents } },
+        },
+      };
+      const usd0 = (c: number) => `$${(c / 100).toFixed(c % 100 ? 2 : 0)}`;
+      lookupNote = `I looked it up on Channel3: a new ${interp.newItemName} sells for ${usd0(lk.lowCents)}–${usd0(lk.highCents)} online (${lk.count} listings). ${rr.label.charAt(0).toUpperCase() + rr.label.slice(1)}, a fair resale price is about ${usd0(rr.lowCents)}–${usd0(rr.highCents)}. `;
+    }
+  }
+
   let focusId: string | null = null;
   db.transaction(() => {
     db.prepare("INSERT INTO teach_messages (session_id, role, text, had_image, source, created_at) VALUES (?,?,?,?,?,?)").run(sessionId, "owner", text, image ? 1 : 0, source, now.toISOString());
@@ -218,6 +238,7 @@ export async function teachTurn(db: DB, sessionId: string, input: { text: string
     const after = getSession(db, sessionId);
     const f = after.items.find((x) => x.id === focusId) ?? null;
     if (!reply) reply = f || interp!.newItemName ? nextQuestion(f) : `I didn’t catch which item that is. Point the camera at it and say what it is, e.g. “These are Fuji apples.”`;
+    reply = lookupNote + reply;
     db.prepare("INSERT INTO teach_messages (session_id, role, text, had_image, source, created_at) VALUES (?,?,?,?,?,?)").run(sessionId, "agent", reply, 0, source, now.toISOString());
   })();
   return { ...getSession(db, sessionId), reply, source };

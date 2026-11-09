@@ -14,11 +14,26 @@ export const EXAMPLE_SCRIPTS: Record<"fruit" | "closet", { shopName: string; lin
   },
   closet: {
     shopName: "Mina's Closet",
+    // "?market:" lines are only said if the agent asks for the price elsewhere, i.e. when it
+    // couldn't look the item up on Channel3 (no CHANNEL3_API_KEY).
     lines: [
-      "This is a wool coat, worn twice, size M.",
-      "Just one. $64, at least $47.50. No rush.",
-      "Next is denim jacket, size S, small stain on the left cuff.",
-      "One left. $27.50, lowest $16. I'd like it gone this week.",
+      "This is a Madewell wool coat, worn twice, size M.",
+      "Just one. Let's ask $115, but no less than $85.",
+      "No rush.",
+      "?market:New ones go for about $350 online.",
+      "Coats go fast once it gets cold.",
+      "Next is a Levi's trucker jacket, size S, small stain on the left cuff.",
+      "One left. $19, lowest $14. I'd like it gone this week.",
+      "?market:New ones are about $85 online.",
+      "If it doesn't sell, I'll donate it.",
+      "Denim sells okay.",
     ],
   },
 };
+
+const ASKS_MARKET = /elsewhere|supermarket|pay for/i;
+/** The text to say for a script line, or null if it's a conditional line the agent didn't ask for. */
+export function scriptLine(line: string, lastAgentReply: string | null): string | null {
+  if (!line.startsWith("?market:")) return line;
+  return lastAgentReply && ASKS_MARKET.test(lastAgentReply) ? line.slice("?market:".length) : null;
+}

@@ -1,5 +1,6 @@
 import { handle, db, readJson } from "@/lib/server/http";
 import { createShopSession, EXAMPLE_SCRIPTS, teachTurn } from "@/lib/teach/service";
+import { scriptLine } from "@/lib/teach/examples";
 import { DomainError } from "@/lib/server/util";
 // Rehearsal / stage fallback: replays a scripted owner walk-through through the normal turn logic.
 export const POST = handle(async (req: Request) => {
@@ -9,6 +10,13 @@ export const POST = handle(async (req: Request) => {
   const d = db();
   const s = createShopSession(d, sc.shopName);
   let last = s;
-  for (const line of sc.lines) last = await teachTurn(d, s.id, { text: line });
+  let reply: string | null = null;
+  for (const raw of sc.lines) {
+    const line = scriptLine(raw, reply);
+    if (!line) continue;
+    const t = await teachTurn(d, s.id, { text: line }, new Date(), { rulesOnly: true });
+    reply = t.reply;
+    last = t;
+  }
   return last;
 });

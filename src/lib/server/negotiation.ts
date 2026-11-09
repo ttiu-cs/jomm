@@ -256,7 +256,8 @@ function taughtReason(st: Strategy): string {
   if (!st.w.available) return "Sold out.";
   if (st.why) {
     const parts = st.why.map((w) => `${w.factor}${w.effect ? ` (${w.effect > 0 ? "+" : "−"}${Math.round(Math.abs(w.effect) * 100)})` : ""}`);
-    return `Will go down to ${fmt(st.w.walkAwayCents)} per ${st.unit} (your lowest is ${fmt(k.floor_cents)}). Willingness ${Math.round((st.pressure ?? 0) * 100)}%: ${parts.join(" · ")}.`;
+    const per = st.unit === "each" ? "" : ` per ${st.unit}`;
+    return `Will go down to ${fmt(st.w.walkAwayCents)}${per} (your lowest is ${fmt(k.floor_cents)}). Willingness ${Math.round((st.pressure ?? 0) * 100)}%: ${parts.join(" · ")}.`;
   }
   return `The owner ${SELL_BY_TEXT[k.sell_by]} and set a floor of ${fmt(k.floor_cents)} per ${st.unit}. With ${st.w.stock} ${st.unit} left, I can go down to ${fmt(st.w.walkAwayCents)}.`;
 }
@@ -304,12 +305,26 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
   const selling = k.facts.filter((f) => !/\b(soft|stain|flaw|worn|bruis|scratch|tear|dent|old)/i.test(f));
   const said = selling[0] ? `${selling[0].replace(/[.!]$/, "")}. ` : "";
   const cheaperThanMarket = typeof r.marketCents === "number" && st.w.publishedCents < r.marketCents * 0.95;
-  const market = typeof r.marketCents === "number" ? `${capitalize(r.marketNote ?? "other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"} ${fmt(r.marketCents)}${per}` : "";
+  const market =
+    typeof r.marketCents !== "number"
+      ? ""
+      : r.marketSource === "channel3"
+        ? `New ones sell for about ${fmt(r.marketCents)} online`
+        : `${capitalize(r.marketNote ?? "other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"} ${fmt(r.marketCents)}${per}`;
   const closing = k.sell_by === "today" && typeof r.closeHour === "number" ? `We close at ${hourLabel(r.closeHour)} and I’d like these gone today` : "";
   if (kind === "ACCEPT") return `${bulk}You’ve got a deal: ${fmt(price)}${per}${total}. I’ll hold them for you for 5 minutes.`;
   if (kind === "REJECT") return `Sorry, I can’t go under ${fmt(price)}${per}.`;
   if (kind === "FINAL") {
-    const why = r.leftover === "waste" && k.sell_by !== "no_rush" ? "I’d rather you have them than see them go to waste" : r.demand === "high" ? "these always sell out" : cheaperThanMarket ? `that’s still well under ${r.marketNote ?? "other shops"}` : "they’re worth it, promise";
+    const why =
+      r.leftover === "waste" && k.sell_by !== "no_rush"
+        ? "I’d rather you have them than see them go to waste"
+        : cheaperThanMarket
+          ? r.marketSource === "channel3"
+            ? `new ones sell for about ${fmt(r.marketCents!)} online, so it’s already a steal`
+            : `that’s still well under ${r.marketNote ?? "other shops"}`
+          : r.demand === "high"
+            ? "these always sell out"
+            : "they’re worth it, promise";
     return `${bulk}${fmt(price)}${per}${total} is truly my best. ${capitalize(why)}.`;
   }
   // COUNTER: a different reason each round, the way a stall owner talks.
