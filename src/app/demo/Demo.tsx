@@ -153,8 +153,8 @@ export default function Demo() {
       <main className="mx-auto max-w-[1240px] px-5 pb-20 pt-10">
         <header className="text-center">
           <p className="hand text-[26px]">A Tuesday at {ROSA.shopName}</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Rosa taught her own agent in one morning. Now it sells for her.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">No forms, no pricing tools. Rosa filmed her stall and talked, and her agent learned her prices, her lowest, and her reasons. When a shopper’s agent comes in, hers haggles the way Rosa would, and PayPal pays her.</p>
+          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Even a three-crate fruit stall can sell to AI agents, and get paid with PayPal.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa has no website and no tech team. She filmed her stall and talked, and that was enough to build her own selling agent. Now when a shopper’s AI agent comes looking, hers answers, haggles the way she would, and takes payment through PayPal on the spot.</p>
         </header>
 
         <Steps taught={taught} anyRun={runs.length > 0} paid={runs.some((r) => r.outcome === "paid")} />
