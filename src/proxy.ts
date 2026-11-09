@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * deploying publicly). Shopper storefront, quote/order/PayPal routes and the token-authenticated
  * agent API stay public.
  */
-const MERCHANT_PATHS = [/^\/merchant/, /^\/lab/, /^\/api\/state/, /^\/api\/pricing\//, /^\/api\/simulations\//, /^\/api\/seller\//, /^\/api\/orders\/[^/]+\/reconcile/];
+const MERCHANT_PATHS = [/^\/merchant/, /^\/teach/, /^\/seller/, /^\/api\/teach\//, /^\/api\/shops\/[^/]+\/seller/, /^\/lab/, /^\/api\/state/, /^\/api\/pricing\//, /^\/api\/simulations\//, /^\/api\/seller\//, /^\/api\/orders\/[^/]+\/reconcile/];
 
 export function proxy(req: NextRequest) {
   const cred = process.env.MERCHANT_BASIC_AUTH;
@@ -15,4 +15,4 @@ export function proxy(req: NextRequest) {
   return new NextResponse("Merchant authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Retail Pricing OS merchant"' } });
 }
 
-export const config = { matcher: ["/merchant/:path*", "/lab/:path*", "/api/:path*"] };
+export const config = { matcher: ["/merchant/:path*", "/lab/:path*", "/teach/:path*", "/seller/:path*", "/api/:path*"] };

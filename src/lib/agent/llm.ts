@@ -8,7 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export interface LlmProvider {
   name: string;
-  completeJson(system: string, user: string): Promise<unknown | null>;
+  completeJson(system: string, user: string, imageJpegBase64?: string): Promise<unknown | null>;
   completeText(system: string, user: string): Promise<string | null>;
 }
 
@@ -17,7 +17,7 @@ class AnthropicProvider implements LlmProvider {
   private client = new Anthropic();
   private model = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 
-  private async run(system: string, user: string): Promise<string | null> {
+  private async run(system: string, user: string, imageJpegBase64?: string): Promise<string | null> {
     try {
       const res = await this.client.beta.messages.create(
         {
@@ -27,7 +27,17 @@ class AnthropicProvider implements LlmProvider {
           fallbacks: "default",
           output_config: { effort: "low" },
           system,
-          messages: [{ role: "user", content: user }],
+          messages: [
+            {
+              role: "user",
+              content: imageJpegBase64
+                ? [
+                    { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageJpegBase64 } },
+                    { type: "text", text: user },
+                  ]
+                : user,
+            },
+          ],
         },
         { timeout: 20_000 },
       );
@@ -41,8 +51,8 @@ class AnthropicProvider implements LlmProvider {
     }
   }
 
-  async completeJson(system: string, user: string) {
-    const text = await this.run(system, user);
+  async completeJson(system: string, user: string, imageJpegBase64?: string) {
+    const text = await this.run(system, user, imageJpegBase64);
     if (!text) return null;
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;

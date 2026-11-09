@@ -17,7 +17,7 @@ import { emit } from "./events";
 import { DomainError, audit, centsToValue, newId, valueToCents } from "./util";
 
 export const QUOTE_TTL_SECONDS = Number(process.env.QUOTE_TTL_SECONDS || 300);
-export const MAX_QTY = 5;
+export const MAX_QTY = 10;
 
 export interface QuoteRow {
   id: string;
@@ -163,7 +163,7 @@ export function finalizePaid(
       .run(now.toISOString(), now.toISOString(), orderId);
     if (ok.changes !== 1) throw new DomainError("ORDER_NOT_PAYABLE", `Order is ${o.status}.`, 409);
     const q = getQuote(db, o.quote_id);
-    const batch = db.prepare("SELECT id FROM inventory_batches WHERE product_id=? AND sim_day=? ORDER BY created_at DESC LIMIT 1").get(o.product_id, q.sim_day) as { id: string };
+    const batch = db.prepare("SELECT id FROM inventory_batches WHERE product_id=? AND sim_day=? ORDER BY created_at DESC, rowid DESC LIMIT 1").get(o.product_id, q.sim_day) as { id: string };
     const sim = db.prepare("SELECT sim_day, current_hour FROM sim_state WHERE product_id=?").get(o.product_id) as { sim_day: number; current_hour: number };
     const hour = sim.sim_day === q.sim_day ? sim.current_hour : q.sim_hour;
     db.prepare(

@@ -50,12 +50,14 @@ export function Btn({
   kind = "default",
   disabled,
   title,
+  type = "button",
 }: {
   children: ReactNode;
   onClick?: () => void;
   kind?: "primary" | "default" | "danger";
   disabled?: boolean;
   title?: string;
+  type?: "button" | "submit";
 }) {
   const cls =
     kind === "primary"
@@ -65,7 +67,7 @@ export function Btn({
         : "border border-line bg-surface text-ink hover:bg-surface-2";
   return (
     <button
-      type="button"
+      type={type}
       title={title}
       disabled={disabled}
       onClick={onClick}
@@ -86,13 +88,15 @@ export function Code({ children }: { children: ReactNode }) {
   return <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[11px] text-ink-2">{children}</code>;
 }
 
-export function TopNav({ active }: { active: "merchant" | "shop" | "lab" | "agent" | "home" }) {
+export function TopNav({ active }: { active: "merchant" | "shop" | "lab" | "agent" | "home" | "teach" | "market" | "salad" }) {
   const items = [
-    ["home", "/", "Demo"],
+    ["home", "/", "Home"],
+    ["teach", "/teach", "1 · Teach"],
+    ["market", "/market", "2 · Buyer agent"],
+    ["salad", "/demo/salad", "Pricing engine"],
     ["merchant", "/merchant", "Command Center"],
-    ["shop", "/shop", "Storefront"],
-    ["lab", "/lab", "Pricing Lab"],
-    ["agent", "/agent", "Agent API"],
+    ["lab", "/lab", "Lab"],
+    ["agent", "/agent", "API"],
   ] as const;
   return (
     <header className="border-b border-line bg-surface">

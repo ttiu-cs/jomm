@@ -17,6 +17,8 @@ export function openDb(file: string): DB {
   // Lightweight migrations for databases created by earlier versions.
   const cols = (db.prepare("PRAGMA table_info(price_quotes)").all() as { name: string }[]).map((c) => c.name);
   if (!cols.includes("origin")) db.exec("ALTER TABLE price_quotes ADD COLUMN origin TEXT NOT NULL DEFAULT 'PUBLISHED'");
+  const negCols = (db.prepare("PRAGMA table_info(negotiations)").all() as { name: string }[]).map((c) => c.name);
+  if (!negCols.includes("qty")) db.exec("ALTER TABLE negotiations ADD COLUMN qty INTEGER NOT NULL DEFAULT 1");
   return db;
 }
 

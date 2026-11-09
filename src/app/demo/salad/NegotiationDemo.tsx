@@ -133,7 +133,7 @@ export default function NegotiationDemo() {
 
   return (
     <div>
-      <TopNav active="home" />
+      <TopNav active="salad" />
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
         <div>
           <p className="text-sm font-semibold text-s1">Pricing Intelligence for Every Seller Agent</p>

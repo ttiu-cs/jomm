@@ -2,17 +2,20 @@
 
 **Pricing Intelligence for Every Seller Agent.** Every buyer agent knows how to find the best price. Every seller agent should know how to set one.
 
-**Demo in one sentence:** a buyer AI asks for a discount, the seller AI answers with math, and PayPal takes the payment. Before lunch with 40 salads left, the seller holds at $7. Near closing with 30 left, the same $5 budget gets a deal.
+**Seller agents for the smallest sellers.** Turn on the camera, walk through your shop and talk. Your AI seller agent asks questions like a new employee (how many, what price, the lowest you'd take, what buyers should know), builds SKUs, stock and prices from your answers, then sells to buyer agents within your limits and gets paid through PayPal.
 
-Under the hood, a pricing engine decides, publishes, quotes and transacts retail prices from cost, demand, inventory and remaining sellable time. The showcase is one freshly made salad: 100 units, $3.20 sunk production cost, sold 09:00–20:00.
-
-| Screen | Path |
+| Step | Path |
 |---|---|
-| **Negotiation demo (start here)** | `/` |
-| Merchant Command Center | `/merchant` |
-| Mobile Storefront (PayPal) | `/shop` |
-| Pricing Lab (fixed vs adaptive, synthetic) | `/lab` |
-| Seller-agent API console | `/agent` |
+| **1 · Teach by talking (camera conversation)** | `/teach` |
+| **2 · A buyer agent shops, asks, negotiates, pays** | `/market` |
+| Seller dashboard + QR shelf labels | `/seller/{shopId}` |
+| Item page (what a QR label opens) | `/s/{shopId}/{sku}` |
+| Pricing engine demos (salad negotiation, hourly command center, lab, agent API) | `/demo/salad`, `/merchant`, `/lab`, `/agent` |
+
+How it works:
+- **Teaching:** each turn sends the owner's words plus the current camera frame. With `ANTHROPIC_API_KEY`, Claude reads both; without it, a deterministic parser handles it (English, some Korean). Prices, quantities and floors only ever come from what the owner said, and the owner can tap any card to correct it.
+- **Selling:** the seller agent answers questions only from the owner's facts. It negotiates per unit (max 3 buyer offers) and never goes below the owner's private floor. How far it goes depends on urgency: "today" means it may concede down to the floor, "this week" 70% of the gap, "no rush" 40%.
+- **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a labeled MOCK without keys). Stock is decremented exactly once after a verified capture.
 
 ## Quick start
 Requires Node 20+ (tested on 22).
@@ -52,7 +55,7 @@ npm run seed -- --cold-start
 The cold-start seed skips synthetic history, so confidence starts at "low" and decisions require approval.
 
 ## What is real vs synthetic
-- **Real:** buyer↔seller negotiation (seller walk-away price from the engine, never shown to buyers), pricing engine (finite-horizon DP + guardrails + reason codes), versioned prices and policies, price-locked quotes with stock reservation, PayPal Sandbox Orders v2 create/capture/verify, signature-verified webhooks, exactly-once inventory, audit log, agent auth.
+- **Real:** camera-conversation teaching → live products (SKU, stock, price, private floor), agent-readable catalog (`GET /api/catalog`), seller Q&A, buyer↔seller negotiation (seller walk-away price from the engine, never shown to buyers), pricing engine (finite-horizon DP + guardrails + reason codes), versioned prices and policies, price-locked quotes with stock reservation, PayPal Sandbox Orders v2 create/capture/verify, signature-verified webhooks, exactly-once inventory, audit log, agent auth.
 - **Synthetic (labeled in the UI):** walk-in demand from the time machine, 7 days of seeded exposure history, every Pricing Lab number.
 - **Mock (labeled):** checkout when PayPal credentials are absent.
 - **Not built:** POS/ESL/ERP connectors, multi-store UI, real demand learning, refunds, live money.

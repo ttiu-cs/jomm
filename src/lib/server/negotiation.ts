@@ -16,6 +16,7 @@ import { emit } from "./events";
 import { DomainError, audit, newId } from "./util";
 
 export const MAX_BUYER_OFFERS = 3;
+export const MAX_NEGOTIATION_QTY = 10;
 const CONCESSION = [0.35, 0.7, 1.0]; // share of (published − walk-away) conceded at buyer offer 1, 2, 3
 const TTL_MS = 10 * 60 * 1000;
 
@@ -33,6 +34,7 @@ export interface NegotiationRow {
   buyer_offers: number;
   last_counter_cents: number | null;
   final_counter: number;
+  qty: number;
   agreed_price_cents: number | null;
   quote_id: string | null;
   published_cents: number;
@@ -54,8 +56,64 @@ export interface NegotiationMessage {
 export function sellerNegotiationView(db: DB, productId: string, now = new Date()) {
   expireStaleQuotes(db, now);
   const ctx = getContext(db, productId, now);
-  const w = computeWalkAway(ctx);
-  return { ...w, reason: sellerReason(ctx, w), storeOpen: ctx.storeOpen, closeHour: ctx.product.closeHour, maxDiscountBps: ctx.policy.maxNegotiationDiscountBps };
+  const st = computeStrategy(db, ctx);
+  const reason = st.knowledge ? taughtReason(st) : sellerReason(ctx, st.w);
+  return { ...st.w, reason, storeOpen: ctx.storeOpen, closeHour: ctx.product.closeHour, maxDiscountBps: ctx.policy.maxNegotiationDiscountBps, sellBy: st.knowledge?.sell_by ?? null, unit: st.unit };
+}
+
+export interface Knowledge {
+  floor_cents: number;
+  sell_by: "today" | "this_week" | "no_rush";
+  condition: string | null;
+  facts: string[];
+}
+
+export function getKnowledge(db: DB, productId: string): Knowledge | null {
+  const k = db.prepare("SELECT floor_cents, sell_by, condition, facts_json FROM product_knowledge WHERE product_id=?").get(productId) as
+    | { floor_cents: number; sell_by: Knowledge["sell_by"]; condition: string | null; facts_json: string }
+    | undefined;
+  return k ? { floor_cents: k.floor_cents, sell_by: k.sell_by, condition: k.condition, facts: JSON.parse(k.facts_json) } : null;
+}
+
+/** Owner-taught urgency: how much of the gap between listed price and owner floor the agent may give up. */
+const TAUGHT_MAX_CONCESSION: Record<Knowledge["sell_by"], number> = { today: 1.0, this_week: 0.7, no_rush: 0.4 };
+const TAUGHT_SCHEDULE: Record<Knowledge["sell_by"], number[]> = { today: [0.5, 0.85, 1.0], this_week: [0.4, 0.75, 1.0], no_rush: [0.35, 0.7, 1.0] };
+
+interface Strategy {
+  w: WalkAwayResult;
+  schedule: number[];
+  step: number; // price rounding step for counters
+  knowledge: Knowledge | null;
+  unit: string;
+}
+
+function computeStrategy(db: DB, ctx: ProductContext): Strategy {
+  const k = getKnowledge(db, ctx.product.id);
+  const unit = (db.prepare("SELECT unit FROM products WHERE id=?").get(ctx.product.id) as { unit: string }).unit;
+  if (!k) return { w: computeWalkAway(ctx), schedule: CONCESSION, step: 25, knowledge: null, unit };
+  if (!ctx.published) throw new DomainError("NO_PRICE", "No published price.", 409);
+  const list = ctx.published.priceCents;
+  const floor = Math.min(list, k.floor_cents);
+  const walk = Math.round(list - (list - floor) * TAUGHT_MAX_CONCESSION[k.sell_by]);
+  const stock = ctx.storeOpen ? ctx.stock.available : 0;
+  return {
+    w: {
+      available: stock > 0,
+      stock,
+      hour: ctx.sim.current_hour,
+      hoursRemaining: 24,
+      publishedCents: list,
+      marginalValueCents: 0,
+      walkAwayCents: walk,
+      floorCents: floor,
+      expectedDemandAtPublished: 0,
+      regime: k.sell_by === "today" ? "SURPLUS" : k.sell_by === "this_week" ? "BALANCED" : "SCARCE",
+    },
+    schedule: TAUGHT_SCHEDULE[k.sell_by],
+    step: 5,
+    knowledge: k,
+    unit,
+  };
 }
 
 function computeWalkAway(ctx: ProductContext): WalkAwayResult {
@@ -91,6 +149,25 @@ function sellerReason(ctx: ProductContext, w: WalkAwayResult): string {
   return `${left} with about ${Math.round(w.expectedDemandAtPublished)} expected sales. Small discounts only.`;
 }
 
+const SELL_BY_TEXT: Record<Knowledge["sell_by"], string> = { today: "needs to sell today", this_week: "should sell this week", no_rush: "isn't in a hurry" };
+
+function taughtReason(st: Strategy): string {
+  const k = st.knowledge!;
+  if (!st.w.available) return "Sold out.";
+  return `The owner ${SELL_BY_TEXT[k.sell_by]} and set a floor of ${fmt(k.floor_cents)} per ${st.unit}. With ${st.w.stock} ${st.unit} left, I can go down to ${fmt(st.w.walkAwayCents)}.`;
+}
+
+function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number): string {
+  const k = st.knowledge!;
+  const fact = k.facts[0] ? `${k.facts[0].replace(/[.!]$/, "")}. ` : "";
+  const per = st.unit === "each" ? "" : ` per ${st.unit}`;
+  const total = qty > 1 ? ` (${fmt(price * qty)} for ${qty} ${st.unit})` : "";
+  if (kind === "ACCEPT") return `Deal at ${fmt(price)}${per}${total}. I'm locking that price for you for 5 minutes.`;
+  if (kind === "COUNTER") return `${fact}I can do ${fmt(price)}${per}${total}.`;
+  if (kind === "FINAL") return `${k.sell_by === "today" ? "I'd like these gone today, so " : ""}${fmt(price)}${per} is my best price${total}.`;
+  return `I can't go lower than ${fmt(price)}${per}.`;
+}
+
 function sellerLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, w: WalkAwayResult): string {
   const why =
     w.regime === "SCARCE"
@@ -122,9 +199,12 @@ export function buyerView(db: DB, id: string) {
   const quote = n.quote_id
     ? ((db.prepare("SELECT id, unit_price_cents, total_cents, expires_at, status FROM price_quotes WHERE id=?").get(n.quote_id) as QuoteSummary | undefined) ?? null)
     : null;
+  const unit = (db.prepare("SELECT unit FROM products WHERE id=?").get(n.product_id) as { unit: string } | undefined)?.unit ?? "each";
   return {
     id: n.id,
     status: n.status,
+    qty: n.qty,
+    unit,
     listedPriceCents: n.published_cents,
     offersUsed: n.buyer_offers,
     offersLeft: n.final_counter ? 0 : MAX_BUYER_OFFERS - n.buyer_offers,
@@ -146,9 +226,9 @@ function expireIfStale(db: DB, n: NegotiationRow, now: Date): NegotiationRow {
 }
 
 function agree(db: DB, n: NegotiationRow, price: number, now: Date) {
-  const quote = createQuote(db, n.product_id, 1, now, { unitPriceCents: price, origin: "NEGOTIATION" });
+  const quote = createQuote(db, n.product_id, n.qty, now, { unitPriceCents: price, origin: "NEGOTIATION" });
   db.prepare("UPDATE negotiations SET status='AGREED', agreed_price_cents=?, quote_id=?, updated_at=? WHERE id=?").run(price, quote.id, now.toISOString(), n.id);
-  audit(db, `buyer-agent:${n.buyer_label}`, "negotiation.agreed", "negotiation", n.id, { price, published: n.published_cents, quoteId: quote.id }, now);
+  audit(db, `buyer-agent:${n.buyer_label}`, "negotiation.agreed", "negotiation", n.id, { price, qty: n.qty, published: n.published_cents, quoteId: quote.id }, now);
 }
 
 function validateOffer(offerCents: number, published: number) {
@@ -157,38 +237,45 @@ function validateOffer(offerCents: number, published: number) {
 
 function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   const ctx = getContext(db, n.product_id, now);
-  const w = computeWalkAway(ctx);
+  const st = computeStrategy(db, ctx);
+  const w = st.w;
   const k = n.buyer_offers + 1;
+  const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) => (st.knowledge ? taughtLine(kind, price, st, n.qty) : sellerLine(kind, price, w));
+  const roundUp = (c: number) => Math.ceil(c / st.step) * st.step;
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
-  addMsg(db, n.id, "buyer", "OFFER", offerCents, `I'd like one ${ctx.product.name} for ${fmt(offerCents)}.`, now);
+  const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${st.unit} of ${ctx.product.name}` : `one ${ctx.product.name}`;
+  const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : ` per ${st.unit}`;
+  addMsg(db, n.id, "buyer", "OFFER", offerCents, `I'd like ${qtyText} for ${fmt(offerCents)}${perText}.`, now);
 
-  if (!w.available) {
+  if (!w.available || w.stock < n.qty) {
     db.prepare("UPDATE negotiations SET status='CLOSED' WHERE id=?").run(n.id);
-    addMsg(db, n.id, "seller", "REJECT", null, ctx.storeOpen ? "Sorry, we're sold out." : "Sorry, we're closed for today.", now);
+    addMsg(db, n.id, "seller", "REJECT", null, !ctx.storeOpen ? "Sorry, we're closed for today." : w.stock > 0 ? `Sorry, I only have ${w.stock} ${st.unit} left.` : "Sorry, we're sold out.", now);
     return;
   }
   const pub = w.publishedCents;
   if (offerCents >= pub) {
-    addMsg(db, n.id, "seller", "ACCEPT", pub, `That's at or above our listed price. Deal at ${fmt(pub)}.`, now);
+    addMsg(db, n.id, "seller", "ACCEPT", pub, `That's at or above our listed price. Deal at ${fmt(pub)}${perText}.`, now);
     agree(db, getNeg(db, n.id), pub, now);
     return;
   }
-  // Concede a fixed share of the gap each round; never below walk-away, never above the last counter.
-  let target = k >= MAX_BUYER_OFFERS ? w.walkAwayCents : Math.max(w.walkAwayCents, ceil25(pub - (pub - w.walkAwayCents) * CONCESSION[k - 1]));
+  // Concede a share of the gap each round; never below walk-away, never above the last counter.
+  const sched = st.schedule;
+  let target = k >= MAX_BUYER_OFFERS ? w.walkAwayCents : Math.max(w.walkAwayCents, roundUp(pub - (pub - w.walkAwayCents) * sched[k - 1]));
   if (n.last_counter_cents !== null) target = Math.min(target, n.last_counter_cents);
   target = Math.min(target, pub);
   if (offerCents >= target) {
-    addMsg(db, n.id, "seller", "ACCEPT", offerCents, sellerLine("ACCEPT", offerCents, w), now);
+    addMsg(db, n.id, "seller", "ACCEPT", offerCents, line("ACCEPT", offerCents), now);
     agree(db, getNeg(db, n.id), offerCents, now);
     return;
   }
   const final = k >= MAX_BUYER_OFFERS || target === w.walkAwayCents;
   const counter = final ? Math.min(pub, Math.max(target, w.walkAwayCents)) : target;
   db.prepare("UPDATE negotiations SET last_counter_cents=?, final_counter=? WHERE id=?").run(counter, final ? 1 : 0, n.id);
-  addMsg(db, n.id, "seller", final ? "FINAL" : "COUNTER", counter, sellerLine(final ? "FINAL" : "COUNTER", counter, w), now);
+  addMsg(db, n.id, "seller", final ? "FINAL" : "COUNTER", counter, line(final ? "FINAL" : "COUNTER", counter), now);
 }
 
-export function startNegotiation(db: DB, productId: string, offerCents: number, buyerLabel = "demo-buyer-agent", now = new Date()) {
+export function startNegotiation(db: DB, productId: string, offerCents: number, buyerLabel = "demo-buyer-agent", now = new Date(), qty = 1) {
+  if (!Number.isInteger(qty) || qty < 1 || qty > MAX_NEGOTIATION_QTY) throw new DomainError("INVALID_QTY", `Quantity must be 1–${MAX_NEGOTIATION_QTY}.`, 422);
   expireStaleQuotes(db, now);
   const ctx = getContext(db, productId, now);
   if (!ctx.published) throw new DomainError("NO_PRICE", "No published price.", 409);
@@ -197,9 +284,9 @@ export function startNegotiation(db: DB, productId: string, offerCents: number, 
   const label = buyerLabel.replace(/[^\w.-]/g, "").slice(0, 40) || "buyer-agent";
   db.transaction(() => {
     db.prepare(
-      `INSERT INTO negotiations (id, product_id, sim_day, sim_hour, buyer_label, status, published_cents, walk_away_cents, created_at, updated_at, expires_at)
-       VALUES (?,?,?,?,?,'OPEN',?,?,?,?,?)`,
-    ).run(id, productId, ctx.sim.sim_day, ctx.sim.current_hour, label, ctx.published!.priceCents, ctx.published!.priceCents, now.toISOString(), now.toISOString(), new Date(now.getTime() + TTL_MS).toISOString());
+      `INSERT INTO negotiations (id, product_id, sim_day, sim_hour, buyer_label, status, published_cents, walk_away_cents, created_at, updated_at, expires_at, qty)
+       VALUES (?,?,?,?,?,'OPEN',?,?,?,?,?,?)`,
+    ).run(id, productId, ctx.sim.sim_day, ctx.sim.current_hour, label, ctx.published!.priceCents, ctx.published!.priceCents, now.toISOString(), now.toISOString(), new Date(now.getTime() + TTL_MS).toISOString(), qty);
     respond(db, getNeg(db, id), offerCents, now);
   }).immediate();
   emit("negotiation", productId, { id });
@@ -225,7 +312,7 @@ export function acceptCounter(db: DB, id: string, now = new Date()) {
   if (n.last_counter_cents === null) throw new DomainError("NO_COUNTER", "There is no seller counteroffer to accept.", 409);
   db.transaction(() => {
     addMsg(db, id, "buyer", "ACCEPT", n.last_counter_cents, `Accepted at ${fmt(n.last_counter_cents!)}.`, now);
-    addMsg(db, id, "seller", "ACCEPT", n.last_counter_cents, `Deal at ${fmt(n.last_counter_cents!)}. I'm locking that price for you for 5 minutes.`, now);
+    addMsg(db, id, "seller", "ACCEPT", n.last_counter_cents, `Deal at ${fmt(n.last_counter_cents!)}${n.qty > 1 ? ` each (${fmt(n.last_counter_cents! * n.qty)} total)` : ""}. I'm locking that price for you for 5 minutes.`, now);
     agree(db, n, n.last_counter_cents!, now);
   }).immediate();
   emit("negotiation", n.product_id, { id });

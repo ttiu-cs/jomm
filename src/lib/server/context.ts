@@ -109,7 +109,7 @@ export function getContext(db: DB, productId: string, now = new Date()): Product
   const pol = db.prepare("SELECT version, policy_json FROM pricing_policies WHERE product_id=? AND active=1").get(productId) as { version: number; policy_json: string };
   const sim = db.prepare("SELECT * FROM sim_state WHERE product_id=?").get(productId) as SimStateRow;
   const batch = db
-    .prepare("SELECT id, qty_produced, sell_by_hour, status FROM inventory_batches WHERE product_id=? AND sim_day=? ORDER BY created_at DESC LIMIT 1")
+    .prepare("SELECT id, qty_produced, sell_by_hour, status FROM inventory_batches WHERE product_id=? AND sim_day=? ORDER BY created_at DESC, rowid DESC LIMIT 1")
     .get(productId, sim.sim_day) as { id: string; qty_produced: number; sell_by_hour: number; status: string } | undefined;
   const pub = db.prepare("SELECT * FROM published_prices WHERE product_id=? ORDER BY version DESC LIMIT 1").get(productId) as
     | { id: string; price_cents: number; version: number; effective_at: string; sim_day: number; sim_hour: number; actor: string }

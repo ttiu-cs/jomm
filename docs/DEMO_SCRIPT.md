@@ -1,21 +1,25 @@
 # 3-minute demo script
 
-**One-line story:** A buyer AI asks for a discount. The seller AI answers with math, and PayPal takes the payment.
+**One line:** Show your shop to the camera and talk. Your AI seller agent learns, sells to buyer agents within your limits, and gets paid through PayPal.
 
-**Setup.** Start the app and open `/` (the Demo page) full screen. With PayPal Sandbox keys, do one checkout beforehand so the Sandbox login is warm. Keep a backup recording of the PayPal step. Never present a MOCK payment as PayPal.
+**Positioning:** Buyer agents are starting to shop for people. Large sellers can plug into agentic commerce; a fruit stand or a closet seller has no catalog and no developer. This lets the smallest sellers take part by talking.
 
-| Time | Do | Say |
-|---|---|---|
-| 0:00–0:20 | Show the headline | "Buyer agents are learning to haggle. Seller agents need to know their lowest price, and why. That's Retail Pricing OS." |
-| 0:20–0:50 | Click **Before lunch** (11:00, 40 left, $7.00). Budget $5, first offer $4 → **Start negotiation** | "The buyer agent offers $4. The seller expects about 85 lunch buyers for 40 salads, so every salad sells at full price. It holds at $7 and the buyer walks away." Point at the private view: lowest price = $7.00. |
-| 0:50–1:30 | Click **Near closing** (18:00, 30 left). Same budget → **Start negotiation** | "Same salad, same listed price, same buyer. Now only about 12 sales are expected before closing, and leftovers go in the bin. The seller's lowest price drops to $4.55. It counters $6.25, then $5.50, and settles at $5.00." |
-| 1:30–2:10 | **Pay** with PayPal Sandbox | "The agreed $5 is locked on the server for 5 minutes. A person approves in PayPal; the buyer agent can't pay alone. The server verifies the capture amount with PayPal." |
-| 2:10–2:30 | Point at the private view: stock 30 → 29 | "The verified sale updates stock, and the seller's next answer uses it." |
-| 2:30–3:00 | Optional: flash `/merchant` and `/lab` | "Behind this: hourly pricing, merchant guardrails (floor, max discount, approval) and a simulator. The lowest price comes from an optimizer, not an LLM. Any agent can plug in through the API." |
+## Setup
+- Start the app. Open `/teach` on a phone (camera needs https or localhost) or a laptop, and `/market` in a second window.
+- With PayPal Sandbox keys, run one checkout beforehand so the Sandbox login is warm. Keep a backup recording of the PayPal step. Never present a MOCK payment as PayPal.
+- Stage fallback: **Fruit stand example** on `/teach` replays the same walk-through through the same conversation logic.
 
-**Key facts to say correctly**
-- The buyer never sees the seller's lowest price. Every buyer gets the same answer at the same moment (no personal pricing).
-- The lowest price = opportunity cost of one salad (stock, time left, forecast demand, waste cost), adjusted for buyers who would have paid full price anyway, capped by the merchant's max discount (35%).
-- Demand numbers are a synthetic forecast; payments are PayPal Sandbox (test money).
+## Script
+| Time | Screen | Do | Say |
+|---|---|---|---|
+| 0:00–0:20 | Home | Show the 3 steps | "Buyer agents will shop for us. The smallest sellers have no way to sell to them. Until now." |
+| 0:20–1:10 | `/teach` | Camera on. Point at apples: "These are Fuji apples, about 30 lb. Really sweet this year." Agent asks for price → "$3 a pound, no less than $2.40." → "No rush." Next item: peaches "have to go today, $4, lowest $2." | "It asks like a new employee would: how many, what price, the lowest I'd take, what buyers should know. Cards, SKUs and stock fill in as I talk. The lowest price stays private." |
+| 1:10–1:25 | `/teach` → Open my shop → dashboard | Show SKUs and QR shelf labels | "One tap, and the shop is live: SKUs, stock, prices, and QR labels for walk-in shoppers." |
+| 1:25–2:20 | `/market` | "2 lb of sweet apples, max $6 total" → Send buyer agent | "The buyer agent finds the shop and asks 'Are they sweet?' My agent answers with what I said. They negotiate. Because I said no rush, my agent stops at $2.76, not my $2.40 floor. Peaches I said must go today, so it would go all the way down." |
+| 2:20–2:45 | `/market` → PayPal | Approve in PayPal Sandbox | "A person approves; the buyer agent can't pay alone. The server verifies the capture with PayPal, then stock drops." |
+| 2:45–3:00 | Seller dashboard | Show the deal and the payment | "The sale shows up on my dashboard with the PayPal capture. Fruit stand today, a closet tomorrow, same way." |
 
-**If something breaks.** Click the scenario card again to reset. If PayPal is unreachable, switch to the backup recording and say so.
+## Say correctly
+- The agent doesn't train a model; it remembers what the owner taught and sells from it.
+- Without an AI key, the conversation runs on a built-in rule-based parser. With `ANTHROPIC_API_KEY`, Claude also reads the camera frame. Prices and limits only ever come from what the owner said.
+- Payments are PayPal Sandbox (test money). Seller onboarding to each owner's own PayPal account (Partner Referrals) and PayPal Agent Ready / Store Sync are integration design, not live in this build.

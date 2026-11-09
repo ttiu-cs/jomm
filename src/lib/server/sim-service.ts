@@ -28,28 +28,19 @@ export interface SeedOptions {
 export function seedDemo(db: DB, opts: SeedOptions = {}, now = new Date()) {
   const iso = now.toISOString();
   const tx = db.transaction(() => {
-    for (const t of [
-      "audit_events",
-      "negotiation_messages",
-      "negotiations",
-      "webhook_events",
-      "inventory_movements",
-      "payment_attempts",
-      "orders",
-      "price_quotes",
-      "published_prices",
-      "price_decisions",
-      "hour_outcomes",
-      "exposure_events",
-      "sim_state",
-      "pricing_policies",
-      "inventory_batches",
-      "cost_snapshots",
-      "products",
-      "stores",
-      "merchants",
-    ])
-      db.prepare(`DELETE FROM ${t}`).run();
+    // Reset only the salad demo's rows; taught shops and their sales are left untouched.
+    const P = DEMO.productId;
+    const del = (sql: string, ...args: unknown[]) => db.prepare(sql).run(...args);
+    del("DELETE FROM negotiation_messages WHERE negotiation_id IN (SELECT id FROM negotiations WHERE product_id=?)", P);
+    del("DELETE FROM negotiations WHERE product_id=?", P);
+    del("DELETE FROM inventory_movements WHERE product_id=?", P);
+    del("DELETE FROM payment_attempts WHERE order_id IN (SELECT id FROM orders WHERE product_id=?)", P);
+    del("DELETE FROM orders WHERE product_id=?", P);
+    for (const t of ["price_quotes", "published_prices", "price_decisions", "hour_outcomes", "exposure_events", "sim_state", "pricing_policies", "inventory_batches", "cost_snapshots"])
+      del(`DELETE FROM ${t} WHERE product_id=?`, P);
+    del("DELETE FROM products WHERE id=?", P);
+    del("DELETE FROM stores WHERE id=?", DEMO.storeId);
+    del("DELETE FROM merchants WHERE id=?", DEMO.merchantId);
 
     db.prepare("INSERT INTO merchants (id, name, created_at) VALUES (?,?,?)").run(DEMO.merchantId, "Green Bowl Kitchen (demo merchant)", iso);
     db.prepare("INSERT INTO stores (id, merchant_id, name, timezone, open_hour, close_hour) VALUES (?,?,?,?,?,?)").run(
