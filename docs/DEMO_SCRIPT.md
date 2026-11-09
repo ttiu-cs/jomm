@@ -2,7 +2,7 @@
 
 **One line:** Shoppers’ AI agents come to a small stall. The stall’s own agent sells to each one the owner’s way, and PayPal pays the owner.
 
-**Positioning:** Shopping is moving to AI agents, and PayPal is building the rails (Agent Ready, Store Sync, Orders v2). Big merchants will plug in. A fruit stand has no catalog and no developer. Stallkeeper puts the smallest seller on those rails by talking.
+**Positioning:** Shopping is moving to AI agents, and PayPal is building the rails (Agent Ready, Store Sync, Orders v2). Big merchants will plug in. A fruit stand has no catalog and no developer. Jomm. puts the smallest seller on those rails by talking.
 
 ## Setup
 - Start the app and open `/demo` on a laptop (projector) at 1440 px wide or more.

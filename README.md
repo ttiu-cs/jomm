@@ -1,8 +1,8 @@
-# Stallkeeper (working name; repo: retail-pricing-os)
+# Jomm. (repo: retail-pricing-os)
 
 **Shoppers’ AI agents come to a small stall. The stall’s own agent sells to each one the owner’s way. PayPal pays the owner.**
 
-The smallest sellers (a fruit stand, a closet resale) shouldn’t fall behind when shopping moves to AI agents. Stallkeeper gives a stall owner a seller agent that speaks the agent-commerce interfaces PayPal supports, so any buyer agent can find the stall, ask questions, propose a price, and check out with PayPal, while the owner’s lowest prices stay private.
+The smallest sellers (a fruit stand, a closet resale) shouldn’t fall behind when shopping moves to AI agents. Jomm. gives a stall owner a seller agent that speaks the agent-commerce interfaces PayPal supports, so any buyer agent can find the stall, ask questions, propose a price, and check out with PayPal, while the owner’s lowest prices stay private.
 
 ## The demo: `/demo`
 One page, three acts, about two minutes:

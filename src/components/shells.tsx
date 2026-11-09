@@ -4,17 +4,27 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { IconCamera, IconChat, IconHome, IconTag } from "./icons";
 
-export const BRAND = "Stallkeeper";
+export const BRAND = "Jomm.";
+
+/**
+ * The Jomm. wordmark: the two round shapes, the "o" and the full stop, are drawn as circles in the
+ * brand colour (a ring and a dot), the rest is set in the system font.
+ */
+export function Wordmark({ size = 22, className = "" }: { size?: number; className?: string }) {
+  return (
+    <span className={`inline-flex items-baseline font-bold leading-none tracking-[-0.04em] text-label ${className}`} style={{ fontSize: size }} aria-label="Jomm.">
+      <span aria-hidden>J</span>
+      <span aria-hidden className="mx-[0.02em] inline-block rounded-full border-brand" style={{ width: "0.6em", height: "0.6em", borderWidth: "0.15em", transform: "translateY(0.02em)" }} />
+      <span aria-hidden>mm</span>
+      <span aria-hidden className="ml-[0.05em] inline-block rounded-full bg-brand" style={{ width: "0.24em", height: "0.24em" }} />
+    </span>
+  );
+}
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-1.5 text-[17px] font-semibold tracking-tight text-label">
-      <svg width="20" height="20" viewBox="0 0 26 26" aria-hidden>
-        <path d="M2 9 5 3h16l3 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
-        <path d="M2 9h22v2.5a3.7 3.7 0 0 1-7.3 0 3.7 3.7 0 0 1-7.4 0 3.7 3.7 0 0 1-7.3 0Z" fill="currentColor" />
-        <path d="M4 14v9h18v-9" fill="none" stroke="currentColor" strokeWidth="2.2" />
-      </svg>
-      {BRAND}
+    <Link href="/" className="flex items-center" aria-label="Jomm. home">
+      <Wordmark size={21} />
     </Link>
   );
 }

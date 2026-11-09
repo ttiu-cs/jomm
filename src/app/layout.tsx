@@ -4,7 +4,7 @@ import "@fontsource/caveat/600.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Stallkeeper: an AI shop assistant you teach by talking",
+  title: "Jomm. · an AI shop assistant you teach by talking",
   description: "Show your stall to the camera and talk. Your AI shop assistant learns your stock, negotiates with buyer agents and gets paid through PayPal.",
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#ffffff" };

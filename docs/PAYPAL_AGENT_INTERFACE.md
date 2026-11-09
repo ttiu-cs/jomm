@@ -7,7 +7,7 @@ How a buyer agent finds Rosa’s stall, talks to her seller agent, and pays with
 - **Store Sync**: publishes a merchant’s catalog, inventory and fulfillment data to AI shopping surfaces.
 - **Agent Toolkit / MCP server**: lets agents call PayPal APIs (orders, invoices, shipment tracking and more) as tools.
 
-Stallkeeper is built so a small stall can show up in that world: a product feed agents can read, checkout sessions in the ACP shape with PayPal as the payment provider, and payment through PayPal Orders v2.
+Jomm. is built so a small stall can show up in that world: a product feed agents can read, checkout sessions in the ACP shape with PayPal as the payment provider, and payment through PayPal Orders v2.
 
 ## The buyer agent
 The shopper types what they want (“4 lb peaches for jam, under $10”). Their buyer agent runs on the server (`POST /api/buyer-agent/run`, streamed as NDJSON):
@@ -22,7 +22,7 @@ Why the toolkit doesn’t create or capture the order: the server’s own Orders
 
 ## Flow
 ```
-buyer agent                         Stallkeeper (Rosa's seller agent)              PayPal
+buyer agent                         Jomm. (Rosa's seller agent)              PayPal
     | GET  /api/agentic/feed?shop=  ->  items, prices, owner's words (no floors)
     | POST /api/shops/{s}/items/{sku}/ask -> answer from Rosa's facts
     | POST /api/agentic/checkout_sessions {items, negotiation.offer_per_unit}
