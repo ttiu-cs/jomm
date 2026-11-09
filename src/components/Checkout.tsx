@@ -15,15 +15,23 @@ export interface OrderView {
   payment: { provider_order_id: string | null; capture_id: string | null; verified: number } | null;
 }
 
+// One SDK script per page. Loading it twice (e.g. React dev mode runs effects twice) re-initializes
+// PayPal's component system and destroys buttons already rendered ("zoid destroyed all components").
+let sdkLoading: Promise<void> | null = null;
 function loadPayPalSdk(clientId: string): Promise<void> {
   if (window.paypal) return Promise.resolve();
-  return new Promise((resolve, reject) => {
+  if (sdkLoading) return sdkLoading;
+  sdkLoading = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");
     s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture&components=buttons`;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Could not load the PayPal SDK (network?)"));
+    s.onerror = () => {
+      sdkLoading = null;
+      reject(new Error("Could not load the PayPal SDK (network?)"));
+    };
     document.head.appendChild(s);
   });
+  return sdkLoading;
 }
 
 /** PayPal Sandbox buttons for a server-created order, or a clearly labeled MOCK when no credentials. */
@@ -83,7 +91,9 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
         });
         return buttons.render(el);
       })
-      .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
+      .catch((e) => {
+        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
+      });
     return () => {
       cancelled = true;
       buttons?.close?.().catch(() => {});
