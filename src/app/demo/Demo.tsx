@@ -78,7 +78,7 @@ export default function Demo() {
     if (!setup || busy || !t) return;
     const persona = PERSONAS.find((p) => p.says === t);
     const key = Date.now();
-    setRuns((rs) => [...rs, { key, who: persona?.name ?? "You", emoji: persona?.emoji ?? "🛒", says: t, mode: null, mandate: null, lines: [], trace: [], session: null, outcome: "running", orderId: null }]);
+    setRuns((rs) => [...rs, { key, who: persona?.name ?? "Shopper", emoji: persona?.emoji ?? "🛒", says: t, mode: null, mandate: null, lines: [], trace: [], session: null, outcome: "running", orderId: null }]);
     setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     try {
       const res = await fetch("/api/buyer-agent/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ intent: t, shopId: setup.shopId }) });
@@ -136,7 +136,7 @@ export default function Demo() {
       if (!paid) return;
       // The buyer agent double-checks the payment with PayPal itself (PayPal Agent Toolkit get_order).
       const c = await api<{ checked: boolean; message: string; trace: Trace }>("/api/buyer-agent/confirm", { orderId: o.order.id }).catch(() => null);
-      if (c) patch(key, (r) => ({ trace: [...r.trace, c.trace], lines: [...r.lines, { who: "note", text: c.checked ? `Your agent checked with PayPal: ${c.message}` : c.message }] }));
+      if (c) patch(key, (r) => ({ trace: [...r.trace, c.trace], lines: [...r.lines, { who: "note", text: c.checked ? `The shopper’s agent checked with PayPal: ${c.message}` : c.message }] }));
     },
     [patch],
   );
@@ -147,8 +147,8 @@ export default function Demo() {
       <main className="mx-auto max-w-[1240px] px-5 pb-20 pt-10">
         <header className="text-center">
           <p className="hand text-[26px]">A Tuesday at {ROSA.shopName}</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Tell your agent what to buy. Rosa gets paid.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa taught her stall’s agent this morning. Now you send a shopping agent with your own goal. The two agents make the deal, and PayPal pays Rosa.</p>
+          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">A shopper tells their agent what to buy. Rosa gets paid.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa taught her stall’s agent this morning. Now a shopper sends their shopping agent with their own goal. The two agents make the deal, and PayPal pays Rosa.</p>
         </header>
 
         <Steps taught={taught} anyRun={runs.length > 0} paid={runs.some((r) => r.outcome === "paid")} />
@@ -158,14 +158,14 @@ export default function Demo() {
         <TeachPlayback data={setup} onDone={markTaught} />
 
         {/* Act 2: the shopper's intent */}
-        <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Your agent">
-          <h2 className="text-center text-[28px] font-semibold sm:text-[34px]">2. What should your agent buy?</h2>
+        <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Shopper’s agent">
+          <h2 className="text-center text-[28px] font-semibold sm:text-[34px]">2. What should the shopper’s agent buy?</h2>
           {setup && (
             <div className="mt-1 flex justify-center">
               <HowRosaTaught data={setup} label="ⓘ What does Rosa’s agent know?" />
             </div>
           )}
-          <p className="text-center text-[17px] text-label-2">Say it the way you’d say it to a friend: what, how much, what for, and your budget.</p>
+          <p className="text-center text-[17px] text-label-2">Type it the way a shopper would say it to a friend: what, how much, what for, and the budget.</p>
           <form
             className="mx-auto mt-6 flex max-w-3xl flex-col gap-2 rounded-[28px] bg-card p-2 shadow-[0_18px_40px_-24px_rgba(60,30,10,0.4)] sm:flex-row sm:items-center sm:rounded-full sm:pl-6"
             onSubmit={(e) => {
@@ -178,10 +178,10 @@ export default function Demo() {
               placeholder="e.g. 4 lb peaches for jam, under $10"
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
-              aria-label="What should your agent buy?"
+              aria-label="What should the shopper’s agent buy?"
             />
             <button type="submit" disabled={busy || !intent.trim() || !setup} className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-[17px] font-semibold text-white hover:bg-brand-hover disabled:opacity-40">
-              <IconCart size={20} /> {busy ? "Shopping…" : "Send my agent"}
+              <IconCart size={20} /> {busy ? "Shopping…" : "Send the shopper’s agent"}
             </button>
           </form>
           <div className="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-2">
@@ -532,7 +532,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
         </span>
         <span className="flex shrink-0 items-center gap-2 text-right">
           <span>
-            <b className="block text-label">{run ? (run.who === "You" ? "Your agent" : `${run.who}’s agent`) : "Shopper’s agent"}</b>buys for {run ? (run.who === "You" ? "you" : run.who) : "a shopper"}
+            <b className="block text-label">{run && run.who !== "Shopper" ? `${run.who}’s agent` : "Shopper’s agent"}</b>buys for {run && run.who !== "Shopper" ? run.who : "the shopper"}
           </span>
           <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-[16px] text-white">{run?.emoji ?? <IconCart size={16} />}</span>
         </span>
@@ -540,7 +540,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
       {!run && <p className="m-auto max-w-[260px] text-center text-[16px] text-label-3">Pick a shopper above. Their agent will talk to Rosa’s agent here.</p>}
       {run && (
         <div className="flex-1 space-y-2">
-          <p className="hand text-[22px]">{run.who === "You" ? "You" : run.who}: “{run.says}”</p>
+          <p className="hand text-[22px]">{run.who}: “{run.says}”</p>
           {run.mode && (
             <p className="text-center text-[11px] font-medium uppercase tracking-wide text-label-3">
               {run.mode.agent === "openai" ? `OpenAI agent · ${run.mode.model}` : "Rule-based agent (no OpenAI key)"} · {run.mode.paypalToolkit ? "PayPal Agent Toolkit on" : "PayPal Agent Toolkit off (no Sandbox keys)"}
@@ -548,7 +548,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
           )}
           {run.mandate && (
             <div className="rise rounded-[16px] border border-line bg-canvas px-4 py-3 text-[14px]">
-              <div className="text-[12px] font-semibold uppercase tracking-wide text-label-3">Your agent’s mandate</div>
+              <div className="text-[12px] font-semibold uppercase tracking-wide text-label-3">Shopper’s mandate</div>
               <div className="mt-1">
                 {run.mandate.quantity} × {run.mandate.want} · {run.mandate.priority === "cheapest" ? "best price" : run.mandate.priority === "quality" ? "best quality" : "good value"} ·{" "}
                 <b>{run.mandate.max_total_cents === null ? "no budget limit" : `never over ${usd(run.mandate.max_total_cents)}`}</b>
@@ -578,7 +578,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
               </div>
               {run.outcome === "approve" ? (
                 <>
-                  <p className="mb-3 mt-1 text-[14px] text-label-2">{run.who === "You" ? "Your" : `${run.who}’s`} agent can’t pay on its own. {run.who === "You" ? "You approve" : `${run.who} approves`} in PayPal:</p>
+                  <p className="mb-3 mt-1 text-[14px] text-label-2">{run.who === "Shopper" ? "The shopper’s" : `${run.who}’s`} agent can’t pay on its own. {run.who === "Shopper" ? "The shopper approves" : `${run.who} approves`} in PayPal:</p>
                   <Checkout orderId={run.orderId} onDone={onPaid} />
                 </>
               ) : (
@@ -660,7 +660,7 @@ function RosaPhone({ shopId, since, runs }: { shopId: string; since: string; run
                         <b className="block">PayPal · You received {usd(s.total_cents)}</b>
                         <span className="text-label-2">
                           {s.qty} {s.unit} {s.name.toLowerCase()}
-                          {r ? ` · ${r.who === "You" ? "a shopper" : r.who}` : ""}
+                          {r ? ` · ${r.who === "Shopper" ? "a shopper" : r.who}` : ""}
                           {s.payment_source === "MOCK_CHECKOUT" ? " · practice" : ""}
                         </span>
                       </span>

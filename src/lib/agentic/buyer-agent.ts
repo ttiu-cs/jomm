@@ -13,9 +13,10 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam, ChatCompletionTool, ChatCompletionMessageFunctionToolCall } from "openai/resources/chat/completions";
 import type { DB } from "../db/client";
-import { listCatalog, answerQuestion } from "../teach/catalog";
+import { listCatalog, answerQuestion, sellerChat } from "../teach/catalog";
 import { cancelSession, completeSession, createSession, sessionView, updateSession } from "./checkout";
 import { getPayPalToolkit } from "./paypal-toolkit";
+import { voiceLastSellerLine } from "../server/voice";
 import { parseIntent, pickForIntent, type Priority } from "../demo/rosa";
 import { DomainError } from "../server/util";
 
@@ -53,11 +54,21 @@ interface Ctx {
   spoken: number;
   finished: null | "approve" | "walked";
   asked?: number;
+  chatted?: number;
+  /** The whole conversation with the stall, so both agents answer in context. */
+  history: { role: "buyer" | "seller"; text: string }[];
 }
 
 function emitNewLines(ctx: Ctx, s: ReturnType<typeof sessionView>) {
-  for (const m of s.conversation.slice(ctx.spoken)) ctx.emit({ type: "say", who: m.role, text: m.text });
+  for (const m of s.conversation.slice(ctx.spoken)) {
+    ctx.emit({ type: "say", who: m.role, text: m.text });
+    ctx.history.push({ role: m.role, text: m.text });
+  }
   ctx.spoken = s.conversation.length;
+}
+function sayLine(ctx: Ctx, who: "buyer" | "seller", text: string) {
+  ctx.emit({ type: "say", who, text });
+  ctx.history.push({ role: who, text });
 }
 
 /** Use the agent's own words for its offer, if they quote exactly the offered price and nothing else. */
@@ -75,7 +86,11 @@ function overBudget(ctx: Ctx, perUnitCents: number, qty: number) {
 
 const STALL_TOOLS: ChatCompletionTool[] = [
   fn("read_product_feed", "Read the stall's product feed: items, prices per unit, stock, and the owner's own words. Lowest prices are never included.", {}),
-  fn("ask_seller", "Ask the stall's agent a question about one item. Answers come only from what the owner said.", {
+  fn("chat_with_seller", "Say something to the stall that isn't a price offer: greet and explain what the shopper needs it for, react to an answer, ask them to pick the best ones, thank them, ask about pickup. The stall replies in context. Up to 4 times.", {
+    sku: { type: "string", description: "The item you're talking about" },
+    message: { type: "string", description: "One or two friendly sentences" },
+  }, ["sku", "message"]),
+  fn("ask_seller", "Ask the stall's agent a question about one item. Answers come only from what the owner said, in the context of your conversation.", {
     sku: { type: "string" },
     question: { type: "string", description: "Short, friendly question" },
   }, ["sku", "question"]),
@@ -111,16 +126,30 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       emit({ type: "trace", trace: { method: "GET", path: "/agentic/feed", concept: "Discovery · product feed (Store Sync style)", result: `${items.length} items, prices and the owner’s words. No lowest prices.`, json: items } });
       return { items };
     }
+    case "chat_with_seller": {
+      ctx.chatted = (ctx.chatted ?? 0) + 1;
+      if (ctx.chatted > 4) return { error: "That's enough chat; move the purchase along." };
+      const sku = String(args.sku ?? "");
+      const message = String(args.message ?? "").slice(0, 240);
+      const p = db.prepare("SELECT id FROM products WHERE sku=? AND store_id=?").get(sku, ctx.shopId) as { id: string } | undefined;
+      if (!p || !message) return { error: `Unknown sku ${sku} or empty message` };
+      if (/\$\s*\d/.test(message)) return { error: "Prices go through the checkout session (open_checkout_session / propose_price), not chat." };
+      sayLine(ctx, "buyer", message);
+      const r = await sellerChat(db, p.id, message, { purpose: ctx.mandate.want, history: ctx.history });
+      sayLine(ctx, "seller", r.reply);
+      emit({ type: "trace", trace: { method: "POST", path: `/shops/…/items/${sku}/chat`, concept: "Conversation with the stall’s agent (no prices)", result: r.source === "llm" ? "Answered in context" : "Answered", json: { message, reply: r.reply } } });
+      return { reply: r.reply };
+    }
     case "ask_seller": {
       ctx.asked = (ctx.asked ?? 0) + 1;
-      if (ctx.asked > 2) return { error: "You've asked enough. Make your offer now." };
+      if (ctx.asked > 3) return { error: "You've asked enough. Make your offer now." };
       const sku = String(args.sku ?? "");
       const question = String(args.question ?? "").slice(0, 200);
       const p = db.prepare("SELECT id FROM products WHERE sku=? AND store_id=?").get(sku, ctx.shopId) as { id: string } | undefined;
       if (!p) return { error: `Unknown sku ${sku}` };
-      emit({ type: "say", who: "buyer", text: question });
-      const a = await answerQuestion(db, p.id, question);
-      emit({ type: "say", who: "seller", text: a.answer });
+      sayLine(ctx, "buyer", question);
+      const a = await answerQuestion(db, p.id, question, { purpose: ctx.mandate.want, history: ctx.history });
+      sayLine(ctx, "seller", a.answer);
       emit({ type: "trace", trace: { method: "POST", path: `/shops/…/items/${sku}/ask`, concept: "Product Q&A · answered from the owner’s own words", result: "Same answer for every agent.", json: { question, answer: a.answer } } });
       return { answer: a.answer };
     }
@@ -137,6 +166,7 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       const body = { items: [{ id: sku, quantity: qty }], ...(offer === undefined ? {} : { negotiation: { offer_per_unit: offer } }), buyer: { agent: "buyer-agent" } };
       const s0 = createSession(db, body);
       if (offer !== undefined) applyBuyerWords(db, s0.id, args.message as string | undefined, offer);
+      await voiceLastSellerLine(db, s0.id);
       const s = sessionView(db, s0.id);
       ctx.sessionId = s.id;
       emitNewLines(ctx, s);
@@ -155,6 +185,7 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       const req = { negotiation: { offer_per_unit: offer } };
       updateSession(db, ctx.sessionId, req);
       applyBuyerWords(db, ctx.sessionId, args.message as string | undefined, offer);
+      await voiceLastSellerLine(db, ctx.sessionId);
       const s = sessionView(db, ctx.sessionId);
       emitNewLines(ctx, s);
       emit({ type: "trace", trace: { method: "POST", path: `/agentic/checkout_sessions/${short(s.id)}`, concept: "Checkout session · update (negotiation extension)", result: summary(s), json: { request: req, response: brief(s) } } });
@@ -168,7 +199,9 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       if (counter === null) return { error: "The stall has not made a counteroffer." };
       if (overBudget(ctx, counter, cur.line_items[0].item.quantity)) return { error: `Refused by the shopper's mandate: the counter totals ${usd(counter * cur.line_items[0].item.quantity)}, over the max total ${usd(ctx.mandate.max_total_cents)}. Walk away or propose lower.` };
       const req = { negotiation: { accept_counter: true } };
-      const s = updateSession(db, ctx.sessionId, req);
+      updateSession(db, ctx.sessionId, req);
+      await voiceLastSellerLine(db, ctx.sessionId);
+      const s = sessionView(db, ctx.sessionId);
       emitNewLines(ctx, s);
       emit({ type: "trace", trace: { method: "POST", path: `/agentic/checkout_sessions/${short(s.id)}`, concept: "Checkout session · update: accept the stall’s counter", result: summary(s), json: { request: req, response: brief(s) } } });
       emit({ type: "session", session: s });
@@ -298,20 +331,23 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
   emit({ type: "mandate", mandate });
 
   // 2) Shop with tools.
-  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null };
+  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null, history: [] };
   const paypalTools = (toolkit?.getTools() ?? []) as unknown as ChatCompletionTool[];
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "system",
       content: [
         "You are a shopper's buying agent at Rosa's fruit stall. You buy FOR the shopper, from Rosa's agent. You already know what the shopper wants (the mandate); never ask the stall what you are looking for.",
-        "Follow these steps exactly:",
+        "Have a real, natural conversation with the stall, like a friendly regular, and keep it connected: every message should follow from what was just said and from the shopper's purpose.",
+        "Follow these steps:",
         "1) Call read_product_feed once.",
         "2) Pick ONE item that best matches the mandate's want (colour, taste, purpose), using the item titles and the owner's words. Tell the shopper which one and why in one short sentence.",
-        "3) If the mandate has a question, ask it once with ask_seller about that item. Ask nothing else.",
-        "4) Buy mandate.quantity of that item. If priority is quality and the listed total fits the budget, open the session at the listed price (no offer). Otherwise open with an offer: about 65% of list for cheapest, about 85% for balanced, never above the budget per unit.",
-        "5) While the stall counters: if the counter fits the budget and is close to your offer, or is marked final, accept it. Otherwise offer again roughly halfway between your last offer and the counter (max 3 offers in total, each below the counter and within budget). If the final counter is over budget, walk_away.",
-        "6) When the session is ready_for_payment, call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
+        "3) Greet the stall with chat_with_seller and say what the shopper needs it for.",
+        "4) Ask one or two questions that matter for that purpose with ask_seller (the mandate's question first, if any), and react to the answers.",
+        "5) Buy mandate.quantity of that item. If priority is quality and the listed total fits the budget, open the session at the listed price (no offer). Otherwise open with an offer: about 65% of list for cheapest, about 85% for balanced, never above the budget per unit.",
+        "6) While the stall counters: if the counter fits the budget and is close to your offer, or is marked final, accept it. Otherwise offer again roughly halfway between your last offer and the counter (max 3 offers in total, each below the counter and within budget). If the final counter is over budget, walk_away.",
+        "7) Once a price is agreed, say something useful with chat_with_seller before checking out (ask them to pick the best ones for the purpose, or thank them, or ask about pickup).",
+        "8) Call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
         "Every offer message is one short, friendly sentence to Rosa that quotes the exact offer price, e.g. 'Could you do $1.90 a pound for 3 lb?'.",
         "PayPal Agent Toolkit tools (like get_order) talk to PayPal directly; use them only for an existing PayPal order id.",
         "Between tool calls, keep any text for the shopper to one short sentence.",
@@ -381,7 +417,7 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
   const mandate = rulesMandate(text);
   emit({ type: "mode", agent: "rules", paypalToolkit: hasToolkit, note: triedOpenAI ? undefined : "No OPENAI_API_KEY: rule-based buyer agent" });
   emit({ type: "mandate", mandate });
-  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null };
+  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null, history: [] };
   const pause = () => new Promise((r) => setTimeout(r, 650));
   const feed = (await runStallTool(ctx, "read_product_feed", {})) as { items: { sku: string; title: string; unit: string; price_per_unit_usd: number; in_stock: number; owner_says: string[] }[] };
   const items = feed.items.map((i) => ({ productId: i.sku, sku: i.sku, shopId, name: i.title, unit: i.unit, listPriceCents: Math.round(i.price_per_unit_usd * 100), available: i.in_stock, facts: i.owner_says }));
@@ -392,6 +428,9 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
   }
   const it = pick.item;
   emit({ type: "note", text: `Picked ${it.name} at ${usd(it.listPriceCents)}${it.unit === "each" ? "" : `/${it.unit}`}: ${pick.why}.` });
+  await pause();
+  const firstSentence = text.split(/(?<=[.!?])\s+/)[0].replace(/[.!?]+$/, "");
+  await runStallTool(ctx, "chat_with_seller", { sku: it.sku, message: `Hi! I'm shopping for someone who asked for this: “${firstSentence}.”` });
   for (const q of mandate.questions) {
     await pause();
     await runStallTool(ctx, "ask_seller", { sku: it.sku, question: q });
@@ -425,6 +464,8 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
   }
   const s = sessionView(db, ctx.sessionId!);
   if (s.status === "ready_for_payment") {
+    await pause();
+    await runStallTool(ctx, "chat_with_seller", { sku: it.sku, message: "Thanks so much! Could you pick out the best ones?" });
     await pause();
     await runStallTool(ctx, "complete_checkout", {});
     emit({ type: "note", text: "Price agreed. Please approve the payment in PayPal; I can’t pay on my own." });

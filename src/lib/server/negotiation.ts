@@ -312,7 +312,7 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
         ? `New ones sell for about ${fmt(r.marketCents)} online`
         : `${capitalize(r.marketNote ?? "other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"} ${fmt(r.marketCents)}${per}`;
   const closing = k.sell_by === "today" && typeof r.closeHour === "number" ? `We close at ${hourLabel(r.closeHour)} and I’d like these gone today` : "";
-  if (kind === "ACCEPT") return `${bulk}You’ve got a deal: ${fmt(price)}${per}${total}. I’ll hold them for you for 5 minutes.`;
+  if (kind === "ACCEPT") return `${round <= 1 ? bulk : ""}You’ve got a deal: ${fmt(price)}${per}${total}. I’ll hold them for you for 5 minutes.`;
   if (kind === "REJECT") return `Sorry, I can’t go under ${fmt(price)}${per}.`;
   if (kind === "FINAL") {
     const why =
@@ -328,7 +328,7 @@ function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numbe
     return `${bulk}${fmt(price)}${per}${total} is truly my best. ${capitalize(why)}.`;
   }
   // COUNTER: a different reason each round, the way a stall owner talks.
-  if (round <= 1) return `${said}${cheaperThanMarket ? `${market}, so this is already a good deal. ` : ""}${bulk}I can do ${fmt(price)}${per}${total}.`;
+  if (round <= 1) return `${cheaperThanMarket ? `${market}, so this is already a good deal. ` : said}${bulk}I can do ${fmt(price)}${per}${total}.`;
   if (round === 2) {
     if (closing) return `${closing}, so ${fmt(price)}${per}${total}.`;
     if (r.demand === "high") return `These usually sell out, but for you: ${fmt(price)}${per}${total}.`;
@@ -418,7 +418,7 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
   const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${unitsSpoken(n.qty, st.unit)} of ${ctx.product.name.toLowerCase()}` : `the ${ctx.product.name}`;
   const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : perSpoken(st.unit);
-  const buyerLine = offerCents >= w.publishedCents ? `I’ll take ${qtyText} at ${fmt(offerCents)}${perText}, please.` : k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k >= st.maxOffers ? `Last try: ${fmt(offerCents)}${perText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Could you meet me at ${fmt(offerCents)}${perText}?`;
+  const buyerLine = offerCents >= w.publishedCents ? `I’ll take ${qtyText} at ${fmt(offerCents)}${perText}, please.` : k === 1 ? `Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k >= st.maxOffers ? `Last try: ${fmt(offerCents)}${perText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Could you meet me at ${fmt(offerCents)}${perText}?`;
   addMsg(db, n.id, "buyer", "OFFER", offerCents, buyerLine, now);
 
   if (!w.available || w.stock < n.qty) {
@@ -428,8 +428,14 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   }
   const pub = w.publishedCents;
   if (offerCents >= pub) {
-    addMsg(db, n.id, "seller", "ACCEPT", pub, `That’s our listed price, so yes! ${fmt(pub)}${perText}. I’ll hold them for 5 minutes.`, now);
-    agree(db, getNeg(db, n.id), pub, now);
+    // The owner's bulk deal applies even when the buyer doesn't haggle.
+    const bulkPrice = st.listForQty && st.listForQty < pub ? st.listForQty : null;
+    const price = bulkPrice ?? pub;
+    const text = bulkPrice
+      ? `Happy to! And since you’re taking ${n.qty} ${unitsSpoken(n.qty, st.unit)}, my ${st.bulkApplied!.pctOff}% bulk discount applies: ${fmt(price)}${perText}${totalSpoken(price, n.qty, st.unit)}. I’ll hold them for 5 minutes.`
+      : `That’s our listed price, so yes! ${fmt(pub)}${perText}${totalSpoken(pub, n.qty, st.unit)}. I’ll hold them for 5 minutes.`;
+    addMsg(db, n.id, "seller", "ACCEPT", price, text, now);
+    agree(db, getNeg(db, n.id), price, now);
     return;
   }
   // Concede a share of the gap each round; never below walk-away, never above the last counter.

@@ -96,7 +96,12 @@ const sentence = (s: string) => (s.replace(/\.\./g, ".").trim().replace(/[.!]?$/
 const lowerFirst = (s: string) => (/^(I|I’m|I'm)\b/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
 
 /** The seller agent answers a buyer question using only what the owner taught it. */
-export async function answerQuestion(db: DB, productId: string, question: string) {
+export interface ChatContext {
+  purpose?: string;
+  history?: { role: "buyer" | "seller"; text: string }[];
+}
+
+export async function answerQuestion(db: DB, productId: string, question: string, context: ChatContext = {}) {
   const k = getKnowledge(db, productId);
   if (!k) throw new DomainError("NOT_FOUND", "This item has no seller agent.", 404);
   const q = question.trim().slice(0, 300);
@@ -106,8 +111,8 @@ export async function answerQuestion(db: DB, productId: string, question: string
   const llm = getLlm();
   if (llm) {
     const raw = (await llm.completeJson(
-      `You are the voice of a small, friendly market stall talking to a shopper (or their buyer agent). Speak in first person as the stall, warm and plain, like a good shopkeeper: no "the owner told me", no corporate tone. Use ONLY the facts below; never invent origin, freshness, or quality claims. If the facts don't cover the question, say honestly you'd have to check, then offer what you do know. Never mention a lowest or minimum price. Answer the question about this item only; don't ask the shopper questions back. 1-2 short sentences. Return JSON {"answer": string}.`,
-      JSON.stringify({ item: p.name, unit: p.unit, ownerFacts: known, question: q }),
+      `You are the voice of a small, friendly market stall talking to a shopper's buying agent. Speak in first person as the stall, warm and plain, like a good shopkeeper: no "the owner told me", no corporate tone. Use ONLY the facts below; never invent origin, freshness, or quality claims. Keep the conversation so far and the shopper's purpose in mind, and connect your answer to it when the facts allow (e.g. a tip for how they'll use it). If the facts don't cover the question, say honestly you'd have to check, then offer what you do know. Never mention a lowest or minimum price. Don't ask questions back. 1-3 short sentences. Return JSON {"answer": string}.`,
+      JSON.stringify({ item: p.name, unit: p.unit, ownerFacts: known, shopperPurpose: context.purpose ?? null, conversationSoFar: (context.history ?? []).slice(-8), question: q }),
     )) as { answer?: unknown } | null;
     if (raw && typeof raw.answer === "string" && raw.answer.length < 500) return { answer: raw.answer, source: "llm" as const, facts: known };
   }
@@ -173,4 +178,42 @@ export function shopPage(db: DB, shopId: string) {
   const shop = db.prepare("SELECT id, name FROM stores WHERE id=?").get(shopId) as { id: string; name: string } | undefined;
   if (!shop) throw new DomainError("NOT_FOUND", "Shop not found", 404);
   return { shop, items: listCatalog(db, undefined, shopId) };
+}
+
+/**
+ * Small talk with the stall (greetings, thanks, pickup, which ones to pick). Never about price:
+ * prices only move through the checkout session. Public facts only; the floor is never given.
+ */
+export async function sellerChat(db: DB, productId: string, message: string, context: ChatContext = {}) {
+  const k = getKnowledge(db, productId);
+  if (!k) throw new DomainError("NOT_FOUND", "This item has no seller agent.", 404);
+  const m = message.trim().slice(0, 300);
+  const p = db.prepare("SELECT name, unit FROM products WHERE id=?").get(productId) as { name: string; unit: string };
+  const r = k.rules ?? {};
+  const pub = {
+    facts: [...k.facts, ...(k.condition ? [k.condition] : [])],
+    closesAt: typeof r.closeHour === "number" ? `${((r.closeHour + 11) % 12) + 1} pm` : null,
+    bulkDeal: r.bulk ? `${r.bulk.pctOff}% off ${r.bulk.minQty}+ ${p.unit}` : null,
+    sellsFast: r.demand === "high",
+  };
+  const llm = getLlm();
+  if (llm) {
+    const raw = (await llm.completeJson(
+      `You are the voice of a small, friendly market stall chatting with a shopper's buying agent while they shop for "${p.name}". Reply like a warm, quick shopkeeper in 1-2 short sentences, first person, connected to what was just said and the shopper's purpose. You may use only these public facts. Never discuss or change prices, discounts beyond the stated bulk deal, or any lowest price: if asked about price, say you'll sort the price in the checkout. Return JSON {"reply": string}.`,
+      JSON.stringify({ item: p.name, publicFacts: pub, shopperPurpose: context.purpose ?? null, conversationSoFar: (context.history ?? []).slice(-8), shopperAgentSays: m }),
+    )) as { reply?: unknown } | null;
+    if (raw && typeof raw.reply === "string" && raw.reply.length < 400 && !/\$\d/.test(raw.reply)) return { reply: raw.reply, source: "llm" as const };
+  }
+  // Rules: a friendly line that fits the most common small talk.
+  const tip = pub.facts.find((f) => !/\b(soft|stain|flaw|scratch|worn)\b/i.test(f));
+  const reply = /\b(pick|choose|best ones|select|ripe)\b/i.test(m)
+    ? `Of course, I’ll pick out the best ones for you.${tip ? ` ${tip.replace(/[.!]?$/, ".")}` : ""} Thanks for coming by!`
+    : /\b(thank|thanks|cheers|great|perfect)\b/i.test(m)
+      ? `Thank you! ${pub.sellsFast ? "Good timing, these go fast." : "Enjoy them, and come back soon."}`
+      : /\b(pickup|pick up|close|open|when)\b/i.test(m)
+        ? pub.closesAt
+          ? `We’re here until ${pub.closesAt}, so any time before then.`
+          : "We’re here all day, come by whenever suits you."
+        : `Welcome! You’re in the right spot${tip ? `: ${tip.charAt(0).toLowerCase() + tip.slice(1).replace(/[.!]?$/, ".")}` : "."} What would you like to know?`;
+  return { reply, source: "rules" as const };
 }
