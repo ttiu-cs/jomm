@@ -366,7 +366,7 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
         "8) Call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
         "Every offer message is one short, friendly sentence to Rosa that quotes the exact offer price, e.g. 'Could you do $1.90 a pound for 3 lb?'.",
         "PayPal Agent Toolkit tools (like get_order) talk to PayPal directly; use them only for an existing PayPal order id.",
-        "Between tool calls, keep any text for the shopper to one short sentence.",
+        "Between tool calls, keep any text for the shopper to one short sentence, and always call the next tool in the same reply. Only stop after complete_checkout or walk_away.",
       ].join(" "),
     },
     { role: "user", content: `Shopper said: "${text}"\nMandate: ${JSON.stringify(mandate)}` },
@@ -387,7 +387,7 @@ async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatC
   const { emit } = ctx;
   // Note: chat completions rejects reasoning_effort together with function tools on some models, so it isn't sent here.
   let nudges = 0;
-  for (let step = 0; step < 20 && !ctx.finished; step++) {
+  for (let step = 0; step < 24 && !ctx.finished; step++) {
     const r = await client.chat.completions.create({ model, messages, tools: [...STALL_TOOLS, ...paypalTools], parallel_tool_calls: false });
     const msg = r.choices[0]?.message;
     if (!msg) break;
@@ -397,15 +397,17 @@ async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatC
     if (!calls.length) {
       // Models sometimes narrate the next step ("please approve in PayPal") without calling the tool.
       const open = ctx.sessionId ? sessionView(ctx.db, ctx.sessionId).status : null;
-      if (open && open !== "canceled" && nudges < 2) {
+      const nudge =
+        open === "ready_for_payment"
+          ? "The price is agreed but checkout isn't done. Call complete_checkout now."
+          : open === "not_ready_for_payment"
+            ? "The deal is still open. Call accept_seller_counter if the counter fits the mandate, otherwise propose_price or walk_away. Don't just describe it."
+            : open === null
+              ? "Keep going with tools: you haven't opened a checkout session yet. Do the next step now (chat_with_seller, ask_seller, then open_checkout_session with an offer)."
+              : null;
+      if (nudge && nudges < 4) {
         nudges++;
-        messages.push({
-          role: "user",
-          content:
-            open === "ready_for_payment"
-              ? "The price is agreed but checkout isn't done. Call complete_checkout now."
-              : "The deal is still open. Call accept_seller_counter if the counter fits the mandate, otherwise propose_price or walk_away. Don't just describe it.",
-        });
+        messages.push({ role: "user", content: nudge });
         continue;
       }
       break;
