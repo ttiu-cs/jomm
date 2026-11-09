@@ -79,8 +79,8 @@ export const PERSONAS: Persona[] = [
     id: "maya",
     name: "Maya",
     emoji: "🥤",
-    says: "Fruit for smoothies this week. 3 lb, cheapest you can find, $8 max.",
-    intent: { want: "fruit smoothies", qty: 3, budgetCents: 800, priority: "cheapest", question: "Are they ripe enough for smoothies?" },
+    says: "Fruit for smoothies this week. 3 lb, cheapest you can find, $9 max.",
+    intent: { want: "fruit smoothies", qty: 3, budgetCents: 900, priority: "cheapest", question: "Are they ripe enough for smoothies?" },
   },
   {
     id: "leo",

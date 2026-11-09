@@ -223,6 +223,14 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       }
       const cur = sessionView(db, ctx.sessionId);
       if (cur.status === "canceled") return { error: "Already walked away from this one." };
+      // Don't give up while the stall is still moving: it hasn't named a final price and offers are left.
+      const n = cur.negotiation;
+      if (cur.status === "not_ready_for_payment" && n.seller_counter_per_unit !== null && !n.seller_counter_is_final && n.offers_left > 0) {
+        const qty = cur.line_items[0].item.quantity;
+        const cap = ctx.mandate.max_total_cents === null ? null : Math.floor(ctx.mandate.max_total_cents / qty);
+        const suggest = cap === null ? n.seller_counter_per_unit - 5 : Math.min(cap, n.seller_counter_per_unit - 5);
+        return { error: `Not yet: the stall hasn't said this is its final price and you have ${n.offers_left} offer(s) left. Reply to its reason and propose_price at most ${usd(suggest)} per unit (inside the budget) before walking away.` };
+      }
       const s = cancelSession(db, ctx.sessionId);
       emitNewLines(ctx, s);
       emit({ type: "trace", trace: { method: "POST", path: `/agentic/checkout_sessions/${short(s.id)}/cancel`, concept: "Checkout session · cancel (walks away)", result: "canceled · nothing charged", json: { reason: args.reason } } });
