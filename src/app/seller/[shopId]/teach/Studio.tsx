@@ -150,6 +150,11 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
       c.getContext("2d")!.drawImage(cv, 0, 0, c.width, c.height);
       return c.toDataURL("image/jpeg", 0.7);
     }
+    if (source.kind === "video") {
+      // Clip not loaded yet: use the matching still from Rosa's stall.
+      const still = ROSA.scenes[sceneOfLine(session.messages.filter((m) => m.role === "owner").length)]?.photo;
+      return still ? photoToDataUrl(still) : null;
+    }
     if (source.kind === "demo") {
       const p = photoFor(source.scene, utterance) ?? (focusItem ? photoFor(source.scene, focusItem.name) : null);
       return p ? photoToDataUrl(p.src) : null;
@@ -441,7 +446,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                 />
               ) : (
                 <button type="button" onClick={() => setEditing(it.id)} className="block w-full text-left">
-                  <ItemCard t={it} active={session.focusItemId === it.id} />
+                  <ItemCard t={it} active={session.focusItemId === it.id} showSteps={!it.checklist} />
                   {it.checklist && <Checklist items={it.checklist} />}
                 </button>
               )}

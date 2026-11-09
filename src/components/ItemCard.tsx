@@ -29,7 +29,7 @@ export function tagSteps(t: TagData) {
  * A product as an iOS-style card. `showPrivate` adds the owner-only lowest price and the
  * "still needed" checklist; buyer-facing screens leave it off.
  */
-export function ItemCard({ t, active, showPrivate = true, className = "" }: { t: TagData; active?: boolean; showPrivate?: boolean; className?: string }) {
+export function ItemCard({ t, active, showPrivate = true, showSteps = true, className = "" }: { t: TagData; active?: boolean; showPrivate?: boolean; showSteps?: boolean; className?: string }) {
   const steps = tagSteps(t);
   const missing = steps.filter((s) => !s.done);
   const per = t.unit === "each" ? "" : ` / ${t.unit}`;
@@ -66,7 +66,7 @@ export function ItemCard({ t, active, showPrivate = true, className = "" }: { t:
           <span className="tnum font-semibold">{money(t.floorPriceCents) ?? <span className="font-normal text-label-3">Not set</span>}</span>
         </div>
       )}
-      {showPrivate && missing.length > 0 && (
+      {showPrivate && showSteps && missing.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {steps.map((s) => (
             <span key={s.key} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium ${s.done ? "bg-green-fill/15 text-green" : "bg-fill text-label-2"}`}>
