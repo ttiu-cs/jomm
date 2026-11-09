@@ -55,8 +55,11 @@ interface Ctx {
   finished: null | "approve" | "walked";
   asked?: number;
   chatted?: number;
+  /** Items the agent already walked away from (it may try one other item). */
+  tried?: string[];
   /** The whole conversation with the stall, so both agents answer in context. */
   history: { role: "buyer" | "seller"; text: string }[];
+  agent?: "openai" | "rules";
 }
 
 function emitNewLines(ctx: Ctx, s: ReturnType<typeof sessionView>) {
@@ -155,8 +158,9 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
       return { answer: a.answer };
     }
     case "open_checkout_session": {
-      if (ctx.sessionId) return { error: "A session is already open. Use propose_price, accept_seller_counter, walk_away or complete_checkout." };
+      if (ctx.sessionId && sessionView(db, ctx.sessionId).status !== "canceled") return { error: "A session is already open. Use propose_price, accept_seller_counter, walk_away or complete_checkout." };
       const sku = String(args.sku ?? "");
+      if (ctx.tried?.includes(sku)) return { error: "You already walked away from that item. Pick a different one or stop." };
       const qty = Math.round(Number(args.quantity ?? ctx.mandate.quantity));
       const offer = args.offer_per_unit_usd === undefined || args.offer_per_unit_usd === null ? undefined : Math.round(Number(args.offer_per_unit_usd) * 100);
       const listed = listCatalog(db, undefined, ctx.shopId).find((i) => i.sku === sku);
@@ -217,12 +221,19 @@ async function runStallTool(ctx: Ctx, name: string, args: Record<string, unknown
         ctx.finished = "walked";
         return { ok: true };
       }
+      const cur = sessionView(db, ctx.sessionId);
+      if (cur.status === "canceled") return { error: "Already walked away from this one." };
       const s = cancelSession(db, ctx.sessionId);
       emitNewLines(ctx, s);
       emit({ type: "trace", trace: { method: "POST", path: `/agentic/checkout_sessions/${short(s.id)}/cancel`, concept: "Checkout session · cancel (walks away)", result: "canceled · nothing charged", json: { reason: args.reason } } });
       emit({ type: "session", session: s });
-      ctx.finished = "walked";
-      return brief(s);
+      ctx.tried = [...(ctx.tried ?? []), String(s.line_items[0]?.item.id ?? "")];
+      // One second try: another item may have more room (e.g. fruit that must go today).
+      if (ctx.tried.length >= 2 || ctx.agent !== "openai") {
+        ctx.finished = "walked";
+        return brief(s);
+      }
+      return { ...brief(s), next: "If another item could also suit the shopper's purpose, you may try it once: open_checkout_session with that sku. Otherwise stop." };
     }
     case "complete_checkout": {
       if (!ctx.sessionId) return { error: "No session." };
@@ -336,7 +347,7 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
   emit({ type: "mandate", mandate });
 
   // 2) Shop with tools.
-  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null, history: [] };
+  const ctx: Ctx = { db, shopId, mandate, emit, sessionId: null, spoken: 0, finished: null, history: [], agent: "openai" };
   const paypalTools = (toolkit?.getTools() ?? []) as unknown as ChatCompletionTool[];
   const messages: ChatCompletionMessageParam[] = [
     {
@@ -346,11 +357,11 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
         "Have a real, natural conversation with the stall, like a friendly regular, and keep it connected: every message should follow from what was just said and from the shopper's purpose.",
         "Follow these steps:",
         "1) Call read_product_feed once.",
-        "2) Pick ONE item that best matches the mandate's want (colour, taste, purpose), using the item titles and the owner's words. Tell the shopper which one and why in one short sentence.",
+        "2) Pick ONE item that best matches the mandate's want (colour, taste, purpose), using the item titles and the owner's words. On a tight budget, the lowest list price is not always the best bet: prefer an item the owner says must go today, has plenty of, or is fine for this purpose (e.g. soft fruit for smoothies), because the stall has room to come down on those. Tell the shopper which one and why in one short sentence.",
         "3) Greet the stall with chat_with_seller and say what the shopper needs it for.",
         "4) Ask one or two questions that matter for that purpose with ask_seller (the mandate's question first, if any), and react to the answers.",
         "5) Buy mandate.quantity of that item. If priority is quality and the listed total fits the budget, open the session at the listed price (no offer). Otherwise open with an offer: about 65% of list for cheapest, about 85% for balanced, never above the budget per unit.",
-        "6) Haggle like a person, not a calculator. Read each counter's reason (price elsewhere, closing time, bulk deal, demand, waste) and answer it specifically in your offer message, using the shopper's purpose: e.g. 'For smoothies the soft ones are fine, and you said they must go today, could you do $2.40?'. If the stall offers a bulk deal and the bigger total still fits the budget, consider taking it (propose_price with quantity). Each new offer goes up a little toward the counter and stays below it and within budget. For a good-price shopper make at least two offers; accept when the counter fits the budget and the gap is small, or when it's final. If the final counter is over budget, walk_away politely.",
+        "6) Haggle like a person, not a calculator. Read each counter's reason (price elsewhere, closing time, bulk deal, demand, waste) and answer it specifically in your offer message, using the shopper's purpose: e.g. 'For smoothies the soft ones are fine, and you said they must go today, could you do $2.40?'. If the stall offers a bulk deal and the bigger total still fits the budget, consider taking it (propose_price with quantity). Each new offer goes up a little toward the counter and stays below it and within budget. For a good-price shopper make at least two offers; accept when the counter fits the budget and the gap is small, or when it's final. If the final counter is over budget, walk_away politely; then, if another item could also suit the purpose, try that one once with a new open_checkout_session.",
         "7) Once a price is agreed, say something useful with chat_with_seller before checking out (ask them to pick the best ones for the purpose, or thank them, or ask about pickup).",
         "8) Call complete_checkout, then tell the shopper in one sentence to approve the payment in PayPal. You can never pay yourself.",
         "Every offer message is one short, friendly sentence to Rosa that quotes the exact offer price, e.g. 'Could you do $1.90 a pound for 3 lb?'.",

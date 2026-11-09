@@ -9,25 +9,25 @@ export const MINA = {
   hello: "Hi Mina! Show me what you'd like to sell.",
   scenes: [
     {
-      clip: "/videos/mina-coat.mp4",
-      photo: "/photos/coat-on-hook.jpg",
-      lines: [
-        "This is a Madewell wool coat, worn twice, size M.",
-        "Just one. Let's ask $115, but no less than $85.",
-        "No rush.",
-        "?market:New ones go for about $350 online.",
-        "Coats go fast once it gets cold.",
-      ],
-    },
-    {
       clip: "/videos/mina-jacket.mp4",
       photo: "/photos/denim-jacket.jpg",
       lines: [
-        "Next is a Levi's trucker jacket, size S, small stain on the left cuff.",
+        "This is a Levi's trucker jacket, size S, small stain on the left cuff.",
         "One left. $19, lowest $14. I'd like it gone this week.",
         "?market:New ones are about $85 online.",
         "If it doesn't sell, I'll donate it.",
         "Denim sells okay.",
+      ],
+    },
+    {
+      clip: "/videos/mina-coat.mp4",
+      photo: "/photos/coat-on-hook.jpg",
+      lines: [
+        "Next is a Madewell wool coat, worn twice, size M.",
+        "Just one. Let's ask $115, but no less than $85.",
+        "No rush.",
+        "?market:New ones go for about $350 online.",
+        "Coats go fast once it gets cold.",
       ],
     },
     {

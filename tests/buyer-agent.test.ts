@@ -133,6 +133,42 @@ describe("closing the deal when the model stops early", () => {
     expect(order.total_cents).toBeLessThanOrEqual(1700);
   });
 
+  it("walks away from an item that can't fit, then tries another one", async () => {
+    const { shopId } = await setupRosa(db);
+    const events: AgentEvent[] = [];
+    let items: { sku: string; title: string }[] = [];
+    const sku = (re: RegExp) => items.find((x) => re.test(x.title))!.sku;
+    let switched = false;
+    // Adaptive buyer: $8 for 3 lb. Starts on apples (cheapest list price), switches to peaches after walking away.
+    const step = (m: Msg[]) => {
+      const t = lastTool(m);
+      if (t.items) {
+        items = t.items;
+        return { call: { name: "open_checkout_session", args: { sku: sku(/apple/i), quantity: 3, offer_per_unit_usd: 1.9 } } };
+      }
+      if (t.status === "canceled" && !switched) {
+        switched = true;
+        return { call: { name: "open_checkout_session", args: { sku: sku(/peach/i), quantity: 3, offer_per_unit_usd: 1.9 } } };
+      }
+      if (t.status === "ready_for_payment") return { call: { name: "complete_checkout", args: {} } };
+      if (t.status === "in_progress" || t.order) return { content: "Approve in PayPal." };
+      const n = t.negotiation ?? {};
+      const c = n.seller_counter_per_unit;
+      if (c != null && c * 3 <= 800 && n.offers_used >= 2) return { call: { name: "accept_seller_counter", args: {} } };
+      if (n.seller_counter_is_final || n.offers_left <= 0) return { call: { name: "walk_away", args: { reason: "over budget" } } };
+      return { call: { name: "propose_price", args: { offer_per_unit_usd: Math.min(c - 5, 266) / 100 } } };
+    };
+    const { client } = fakeOpenAI(
+      [() => ({ call: { name: "read_product_feed", args: {} } }), ...Array.from({ length: 18 }, () => step)],
+      { want: "fruit for smoothies", quantity: 3, max_total_usd: 8, priority: "cheapest", questions: [] },
+    );
+    await openaiAgent(db, shopId, "Fruit for smoothies this week. 3 lb, cheapest you can find, $8 max.", (e) => events.push(e), client, "gpt-test", null);
+    const done = events.find((e) => e.type === "done") as { outcome: string; orderId?: string };
+    expect(done.outcome).toBe("approve");
+    const order = db.prepare("SELECT total_cents FROM orders WHERE id=?").get(done.orderId) as { total_cents: number };
+    expect(order.total_cents).toBeLessThanOrEqual(800);
+  });
+
   it("every demo persona except the $5 one reaches PayPal", async () => {
     const { PERSONAS } = await import("@/lib/demo/rosa");
     for (const p of PERSONAS) {

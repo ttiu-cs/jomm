@@ -340,17 +340,38 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
           {source.kind === "camera" && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
           {clip && <video ref={clipRef} key={clip} src={clip} poster={clipPoster} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />}
           {source.kind === "video" && source.scene === "closet" && (
-            <div className="absolute inset-x-4 top-16 z-10 flex justify-center">
+            <div className="absolute inset-x-4 top-16 z-20 flex justify-center">
               {focusItem?.rules?.lookup ? (
-                <span key={focusItem.id} className="rise frosted flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] text-label shadow">
-                  <span className="rounded bg-label px-1.5 py-0.5 text-[10px] font-bold text-white">Channel3</span>
-                  New online ${Math.round(focusItem.rules.lookup.lowCents / 100)}–${Math.round(focusItem.rules.lookup.highCents / 100)} · fair resale ${Math.round(focusItem.rules.lookup.suggestedLowCents / 100)}–$
-                  {Math.round(focusItem.rules.lookup.suggestedHighCents / 100)}
-                </span>
+                <div key={focusItem.id} className="c3-pop w-full max-w-[340px] rounded-[22px] bg-white/95 p-3.5 text-label shadow-2xl">
+                  <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wide text-label-2">
+                    <span className="rounded-md bg-label px-2 py-0.5 text-[12px] font-bold normal-case tracking-normal text-white">Channel3</span>
+                    Price check · {focusItem.rules.lookup.count} stores
+                  </div>
+                  <p className="mt-1 truncate text-[15px] font-semibold">{focusItem.name}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-[14px] bg-fill/60 px-3 py-2">
+                      <span className="block text-[11px] text-label-2">New, online</span>
+                      <span className="block text-[22px] font-bold leading-tight">
+                        ${Math.round(focusItem.rules.lookup.lowCents / 100)}–${Math.round(focusItem.rules.lookup.highCents / 100)}
+                      </span>
+                    </div>
+                    <div className="rounded-[14px] bg-brand px-3 py-2 text-white">
+                      <span className="block text-[11px] text-white/80">Fair resale</span>
+                      <span className="block text-[22px] font-bold leading-tight">
+                        ${Math.round(focusItem.rules.lookup.suggestedLowCents / 100)}–${Math.round(focusItem.rules.lookup.suggestedHighCents / 100)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[12px] leading-snug text-label-2">Mina’s agent uses this to hold her price when buyers haggle.</p>
+                </div>
               ) : sending && session.channel3 ? (
-                <span className="frosted flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] text-label shadow">
-                  <span className="rounded bg-label px-1.5 py-0.5 text-[10px] font-bold text-white">Channel3</span> Looking up new prices online…
-                </span>
+                <div className="c3-scan relative w-full max-w-[340px] overflow-hidden rounded-[22px] bg-white/95 p-3.5 text-label shadow-2xl">
+                  <div className="flex items-center gap-2 text-[15px] font-semibold">
+                    <span className="rounded-md bg-label px-2 py-0.5 text-[12px] font-bold text-white">Channel3</span>
+                    Checking prices online…
+                  </div>
+                  <p className="mt-1 text-[12px] text-label-2">Searching stores for the same item, new</p>
+                </div>
               ) : session.channel3 === false ? (
                 <span className="frosted-dark rounded-full px-3.5 py-1.5 text-[12px] text-white/90">Channel3 not connected (CHANNEL3_API_KEY) · Mina tells the price herself</span>
               ) : null}
@@ -380,7 +401,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                   <div className="mt-2 grid grid-cols-2 gap-2.5 text-left">
                     {([
                       { scene: "fruit", photo: "/photos/apples-box.jpg", who: "Rosa · Shop owner", what: "Fruit stall, 3 crates", extra: "Prices elsewhere, closing time, bulk deals" },
-                      { scene: "closet", photo: "/photos/coat-on-hook.jpg", who: "Mina · Closet seller", what: "Closet, 5 items", extra: "New prices looked up on Channel3" },
+                      { scene: "closet", photo: "/photos/denim-jacket.jpg", who: "Mina · Closet seller", what: "Closet, 5 items", extra: "New prices looked up on Channel3" },
                     ] as const).map((o) => (
                       <button
                         key={o.scene}
