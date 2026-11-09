@@ -49,6 +49,8 @@ interface Run {
   outcome: Outcome;
   orderId: string | null;
   error?: string;
+  /** Why there was no deal (from the agent). */
+  why?: string;
 }
 
 // ------------------------------------------------------------------ page
@@ -117,6 +119,7 @@ export default function Demo() {
         outcome: e.outcome === "approve" ? "approve" : e.outcome === "error" ? "error" : "walked",
         orderId: e.orderId ?? null,
         error: e.outcome === "error" ? e.message : undefined,
+        why: e.outcome === "walked" ? e.message : undefined,
         lines: e.outcome === "no_match" && e.message ? [...r.lines, { who: "note", text: e.message }] : r.lines,
       }));
   };
@@ -150,8 +153,8 @@ export default function Demo() {
       <main className="mx-auto max-w-[1240px] px-5 pb-20 pt-10">
         <header className="text-center">
           <p className="hand text-[26px]">A Tuesday at {ROSA.shopName}</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">A shopper tells their agent what to buy. Rosa gets paid.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa taught her stall’s agent this morning. Now a shopper sends their shopping agent with their own goal. The two agents make the deal, and PayPal pays Rosa.</p>
+          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Rosa taught her own agent in one morning. Now it sells for her.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">No forms, no pricing tools. Rosa filmed her stall and talked, and her agent learned her prices, her lowest, and her reasons. When a shopper’s agent comes in, hers haggles the way Rosa would, and PayPal pays her.</p>
         </header>
 
         <Steps taught={taught} anyRun={runs.length > 0} paid={runs.some((r) => r.outcome === "paid")} />
@@ -192,13 +195,14 @@ export default function Demo() {
             {PERSONAS.map((p) => (
               <button key={p.id} type="button" disabled={busy} onClick={() => setIntent(p.says)} className={`rounded-full px-3.5 py-1.5 text-left text-[14px] ${intent === p.says ? "bg-label text-white" : "bg-card text-label-2 hover:text-label"}`}>
                 {p.emoji} {p.says}
+                {p.id === "rex" && <span className="ml-1.5 text-[12px] opacity-70">· shows a no-deal</span>}
               </button>
             ))}
           </div>
         </section>
 
         {/* Act 3: the deal, the interface, and Rosa's phone */}
-        <section ref={boardRef} className="mt-10 scroll-mt-20" aria-label="Deal">
+        <section ref={boardRef} className="mt-10 scroll-mt-24" aria-label="Deal">
           <div className="grid gap-5 lg:grid-cols-[1.05fr_1fr_320px]">
             <Conversation run={active} onPaid={active ? onPaid(active.key) : () => {}} />
             <Interface run={active} />
@@ -575,7 +579,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
             ),
           )}
           {run.outcome === "running" && <p className="text-center text-[12px] text-label-3">…</p>}
-          {run.outcome === "walked" && run.session && <p className="rise rounded-[16px] bg-canvas p-3 text-center text-[15px] text-label-2">No deal. The shopper’s budget was below what Rosa allows, so her agent held the line. Nothing was charged.</p>}
+          {run.outcome === "walked" && run.session && <p className="rise rounded-[16px] bg-canvas p-3 text-center text-[15px] text-label-2">{run.why ?? "No deal this time. Nothing was charged."}</p>}
           {run.outcome === "error" && <p className="rounded-[16px] bg-red/10 p-3 text-[15px] text-red">{run.error}</p>}
           {(run.outcome === "approve" || run.outcome === "paid") && run.orderId && run.session && (
             <div className="rise mt-3 rounded-[20px] bg-canvas p-4">

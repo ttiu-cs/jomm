@@ -24,7 +24,7 @@ export function Wordmark({ size = 22, className = "" }: { size?: number; classNa
 export function Logo() {
   return (
     <Link href="/" className="flex items-center" aria-label="Jomm. home">
-      <Wordmark size={21} />
+      <Wordmark size={27} />
     </Link>
   );
 }
@@ -34,13 +34,13 @@ export function SiteHeader() {
   const path = usePathname();
   return (
     <header className="frosted sticky top-0 z-40 border-b border-black/5">
-      <div className="mx-auto flex h-12 max-w-[1024px] items-center justify-between gap-3 px-5">
+      <div className="mx-auto flex h-16 max-w-[1024px] items-center justify-between gap-3 px-5">
         <Logo />
-        <nav className="flex items-center gap-5 text-[14px]">
+        <nav className="flex items-center gap-6 text-[16px]">
           <Link href="/demo" className={path.startsWith("/demo") ? "font-medium text-label" : "text-label-2 hover:text-label"}>
             Demo
           </Link>
-          <Link href="/seller" className="rounded-full bg-brand px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-brand-hover">
+          <Link href="/seller" className="rounded-full bg-brand px-4 py-2 text-[15px] font-medium text-white hover:bg-brand-hover">
             Start selling
           </Link>
         </nav>
@@ -95,21 +95,21 @@ export function SellerShell({ shopId, shopName, children }: { shopId: string; sh
   return (
     <div className="min-h-screen bg-canvas pb-24 lg:pb-0">
       <header className={`frosted sticky top-0 z-30 border-b border-black/5 print:hidden ${teaching ? "max-lg:hidden" : ""}`}>
-        <div className="mx-auto flex h-12 max-w-[1024px] items-center justify-between gap-3 px-5">
-          <span className="truncate text-[17px] font-semibold">{shopName}</span>
+        <div className="mx-auto flex h-16 max-w-[1024px] items-center justify-between gap-3 px-5">
+          <span className="truncate text-[19px] font-semibold">{shopName}</span>
           <nav className="hidden gap-1 lg:flex">
             {TABS.map(({ key, label }) => (
               <Link
                 key={key}
                 href={base + key}
                 aria-current={active === key ? "page" : undefined}
-                className={`rounded-full px-3 py-1 text-[14px] ${active === key ? "bg-label text-white" : "text-label-2 hover:text-label"}`}
+                className={`rounded-full px-3.5 py-1.5 text-[15px] ${active === key ? "bg-label text-white" : "text-label-2 hover:text-label"}`}
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-4 text-[14px]">
+          <div className="flex items-center gap-4 text-[15px]">
             <Link href={`/shop/${shopId}`} className="text-link hover:underline" title="See your shop the way shoppers and their agents see it">
               View my shop ›
             </Link>

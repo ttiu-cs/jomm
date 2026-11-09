@@ -106,6 +106,46 @@ describe("OpenAI buyer agent (scripted model)", () => {
   });
 });
 
+describe("closing the deal when the model stops early", () => {
+  it("finishes checkout in code when the model only says 'approve in PayPal'", async () => {
+    const { shopId } = await setupRosa(db);
+    const events: AgentEvent[] = [];
+    let sku = "";
+    const quiet = () => ({ content: "Rosa's holding 3 boxes; please approve the PayPal payment." });
+    const { client } = fakeOpenAI(
+      [
+        () => ({ call: { name: "read_product_feed", args: {} } }),
+        (m) => {
+          sku = lastTool(m).items.find((x: { title: string }) => /strawberr/i.test(x.title)).sku;
+          return { call: { name: "open_checkout_session", args: { sku, quantity: 3, offer_per_unit_usd: 4.5, message: "Could you do $4.50 a box?" } } };
+        },
+        () => ({ call: { name: "propose_price", args: { offer_per_unit_usd: 4.9, message: "How about $4.90?" } } }),
+        quiet,
+        quiet,
+        quiet,
+      ],
+      { want: "strawberries for a party", quantity: 3, max_total_usd: 17, priority: "balanced", questions: [] },
+    );
+    await openaiAgent(db, shopId, "Strawberries for a party tonight. 3 boxes, keep it under $17.", (e) => events.push(e), client, "gpt-test", null);
+    const done = events.find((e) => e.type === "done") as { outcome: string; orderId?: string };
+    expect(done.outcome).toBe("approve");
+    const order = db.prepare("SELECT total_cents FROM orders WHERE id=?").get(done.orderId) as { total_cents: number };
+    expect(order.total_cents).toBeLessThanOrEqual(1700);
+  });
+
+  it("every demo persona except the $5 one reaches PayPal", async () => {
+    const { PERSONAS } = await import("@/lib/demo/rosa");
+    for (const p of PERSONAS) {
+      const d = freshDb();
+      const { shopId } = await setupRosa(d);
+      const events: AgentEvent[] = [];
+      await runBuyerAgent(d, shopId, p.says, (e) => events.push(e));
+      const done = events.find((e) => e.type === "done") as { outcome: string; message?: string };
+      expect([p.id, done.outcome]).toEqual([p.id, p.id === "rex" ? "walked" : "approve"]);
+    }
+  }, 60000);
+});
+
 describe("rule-based buyer agent (no OpenAI key)", () => {
   it("stays inside the budget or walks away", async () => {
     const { shopId } = await setupRosa(db);

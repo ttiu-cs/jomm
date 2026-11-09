@@ -362,6 +362,7 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
   ];
   try {
     await toolLoop(ctx, client, model, messages, paypalTools, toolkit);
+    await closeOut(ctx);
   } catch (e) {
     // Don't leave a half-finished deal behind if the model call fails mid-way.
     if (ctx.sessionId && sessionView(db, ctx.sessionId).status === "not_ready_for_payment") cancelSession(db, ctx.sessionId);
@@ -374,14 +375,30 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
 async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatCompletionMessageParam[], paypalTools: ChatCompletionTool[], toolkit: ReturnType<typeof getPayPalToolkit>) {
   const { emit } = ctx;
   // Note: chat completions rejects reasoning_effort together with function tools on some models, so it isn't sent here.
-  for (let step = 0; step < 14 && !ctx.finished; step++) {
+  let nudges = 0;
+  for (let step = 0; step < 20 && !ctx.finished; step++) {
     const r = await client.chat.completions.create({ model, messages, tools: [...STALL_TOOLS, ...paypalTools], parallel_tool_calls: false });
     const msg = r.choices[0]?.message;
     if (!msg) break;
     messages.push(msg as ChatCompletionMessageParam);
     if (msg.content?.trim()) emit({ type: "note", text: msg.content.trim() });
     const calls = (msg.tool_calls ?? []).filter((c): c is ChatCompletionMessageFunctionToolCall => c.type === "function");
-    if (!calls.length) break;
+    if (!calls.length) {
+      // Models sometimes narrate the next step ("please approve in PayPal") without calling the tool.
+      const open = ctx.sessionId ? sessionView(ctx.db, ctx.sessionId).status : null;
+      if (open && open !== "canceled" && nudges < 2) {
+        nudges++;
+        messages.push({
+          role: "user",
+          content:
+            open === "ready_for_payment"
+              ? "The price is agreed but checkout isn't done. Call complete_checkout now."
+              : "The deal is still open. Call accept_seller_counter if the counter fits the mandate, otherwise propose_price or walk_away. Don't just describe it.",
+        });
+        continue;
+      }
+      break;
+    }
     for (const call of calls) {
       let result: unknown;
       if (paypalTools.some((t) => t.type === "function" && t.function.name === call.function.name) && toolkit) {
@@ -406,6 +423,50 @@ async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatC
   }
 }
 
+/** Why there was no deal, in one sentence for the page. */
+function walkReason(ctx: Ctx): string {
+  const s = ctx.sessionId ? sessionView(ctx.db, ctx.sessionId) : null;
+  const counter = s?.negotiation.seller_counter_per_unit ?? null;
+  const qty = s?.line_items[0]?.item.quantity ?? ctx.mandate.quantity;
+  if (counter !== null && ctx.mandate.max_total_cents !== null && counter * qty > ctx.mandate.max_total_cents)
+    return `No deal. Rosa’s lowest was ${usd(counter * qty)}, over the shopper’s ${usd(ctx.mandate.max_total_cents)} budget, so both agents held their line. Nothing was charged.`;
+  return "No deal this time. Nothing was charged.";
+}
+
+/**
+ * If the model stops before closing (it said "approve in PayPal" but never called the tools), finish
+ * the deal in code with the same mandate checks: accept a counter that fits, else one last offer inside
+ * the budget, else walk away. Nothing here can pay; it only gets the order ready for the shopper.
+ */
+async function closeOut(ctx: Ctx) {
+  const { db, mandate } = ctx;
+  for (let i = 0; i < 6 && !ctx.finished && ctx.sessionId; i++) {
+    const s = sessionView(db, ctx.sessionId);
+    if (s.status === "ready_for_payment") {
+      await runStallTool(ctx, "complete_checkout", {});
+      if (ctx.finished === "approve") noteTo(ctx, "Price agreed. Please approve the payment in PayPal; I can’t pay on my own.");
+      return;
+    }
+    if (s.status !== "not_ready_for_payment") return;
+    const counter = s.negotiation.seller_counter_per_unit;
+    if (counter === null) return;
+    const accepted = (await runStallTool(ctx, "accept_seller_counter", {})) as { error?: string };
+    if (!accepted.error) continue;
+    const qty = s.line_items[0].item.quantity;
+    const unitBudget = mandate.max_total_cents === null ? Infinity : Math.floor(mandate.max_total_cents / qty);
+    const final = s.negotiation.seller_counter_is_final || s.negotiation.offers_left <= 0;
+    if (final) {
+      await runStallTool(ctx, "walk_away", { reason: "The stall's lowest price is over the shopper's budget." });
+      return;
+    }
+    const offer = Math.min(counter - 5, unitBudget);
+    if (offer <= 0) return;
+    const r = (await runStallTool(ctx, "propose_price", { offer_per_unit_usd: offer / 100, message: `Could you do ${usd(offer)} and we have a deal?` })) as { error?: string };
+    if (r.error) return;
+  }
+}
+const noteTo = (ctx: Ctx, text: string) => ctx.emit({ type: "note", text });
+
 function finish(ctx: Ctx) {
   const { db, emit } = ctx;
   if (ctx.finished === "approve") {
@@ -413,7 +474,7 @@ function finish(ctx: Ctx) {
     emit({ type: "done", outcome: "approve", sessionId: s.id, orderId: s.order?.id });
   } else if (ctx.finished === "walked" || ctx.sessionId) {
     if (!ctx.finished && ctx.sessionId) cancelSession(db, ctx.sessionId);
-    emit({ type: "done", outcome: "walked", sessionId: ctx.sessionId ?? undefined });
+    emit({ type: "done", outcome: "walked", sessionId: ctx.sessionId ?? undefined, message: walkReason(ctx) });
   } else emit({ type: "done", outcome: "no_match", message: "The agent didn’t find anything to buy here." });
 }
 
@@ -483,6 +544,6 @@ async function rulesAgent(db: DB, shopId: string, text: string, emit: (e: AgentE
     emit({ type: "done", outcome: "approve", sessionId: done.id, orderId: done.order?.id });
   } else {
     if (s.status !== "canceled") await runStallTool(ctx, "walk_away", { reason: "No deal inside the budget." });
-    emit({ type: "done", outcome: "walked", sessionId: s.id });
+    emit({ type: "done", outcome: "walked", sessionId: s.id, message: walkReason(ctx) });
   }
 }
