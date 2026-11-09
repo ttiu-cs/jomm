@@ -76,6 +76,8 @@ describe("OpenAI buyer agent (scripted model)", () => {
     const names = (calls[1].tools as { function: { name: string } }[]).map((t) => t.function.name);
     expect(names).toEqual(expect.arrayContaining(["read_product_feed", "open_checkout_session", "complete_checkout"]));
     expect(names).not.toContain("get_order");
+    // Chat completions rejects reasoning_effort together with function tools on some models.
+    expect((calls[1] as { reasoning_effort?: unknown }).reasoning_effort).toBeUndefined();
   });
 
   it("ignores agent words that quote a different price than the offer", async () => {

@@ -357,7 +357,7 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
             ),
           )}
           {run.outcome === "running" && <p className="text-center text-[12px] text-label-3">…</p>}
-          {run.outcome === "walked" && <p className="rise rounded-[16px] bg-canvas p-3 text-center text-[15px] text-label-2">No deal. The shopper’s budget was below what Rosa allows, so her agent held the line. Nothing was charged.</p>}
+          {run.outcome === "walked" && run.session && <p className="rise rounded-[16px] bg-canvas p-3 text-center text-[15px] text-label-2">No deal. The shopper’s budget was below what Rosa allows, so her agent held the line. Nothing was charged.</p>}
           {run.outcome === "error" && <p className="rounded-[16px] bg-red/10 p-3 text-[15px] text-red">{run.error}</p>}
           {(run.outcome === "approve" || run.outcome === "paid") && run.orderId && run.session && (
             <div className="rise mt-3 rounded-[20px] bg-canvas p-4">
@@ -485,7 +485,7 @@ function RosaPhone({ shopId, since, runs }: { shopId: string; since: string; run
 
 /** Rosa's reaction, chosen from what actually happened (scripted lines for the demo). */
 function rosaSays(r: Run, items: { name: string; sellBy: string }[]): string | null {
-  if (r.outcome === "walked") return "Didn’t go under my price. Good agent.";
+  if (r.outcome === "walked" && r.session) return "Didn’t go under my price. Good agent.";
   if (r.outcome !== "paid" || !r.session) return null;
   const li = r.session.line_items[0];
   const item = items.find((i) => i.name === li.item.title);

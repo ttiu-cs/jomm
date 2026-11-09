@@ -287,8 +287,22 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
     },
     { role: "user", content: `Shopper said: "${text}"\nMandate: ${JSON.stringify(mandate)}` },
   ];
+  try {
+    await toolLoop(ctx, client, model, messages, paypalTools, toolkit);
+  } catch (e) {
+    // Don't leave a half-finished deal behind if the model call fails mid-way.
+    if (ctx.sessionId && sessionView(db, ctx.sessionId).status === "not_ready_for_payment") cancelSession(db, ctx.sessionId);
+    if (ctx.sessionId) ctx.emit({ type: "note", text: "The agent stopped mid-deal; that session was closed. Nothing was charged." });
+    throw e;
+  }
+  finish(ctx);
+}
+
+async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatCompletionMessageParam[], paypalTools: ChatCompletionTool[], toolkit: ReturnType<typeof getPayPalToolkit>) {
+  const { emit } = ctx;
+  // Note: chat completions rejects reasoning_effort together with function tools on some models, so it isn't sent here.
   for (let step = 0; step < 14 && !ctx.finished; step++) {
-    const r = await client.chat.completions.create({ model, ...reasoning, messages, tools: [...STALL_TOOLS, ...paypalTools], parallel_tool_calls: false });
+    const r = await client.chat.completions.create({ model, messages, tools: [...STALL_TOOLS, ...paypalTools], parallel_tool_calls: false });
     const msg = r.choices[0]?.message;
     if (!msg) break;
     messages.push(msg as ChatCompletionMessageParam);
@@ -317,6 +331,10 @@ export async function openaiAgent(db: DB, shopId: string, text: string, emit: (e
       messages.push({ role: "tool", tool_call_id: call.id, content: typeof result === "string" ? result : JSON.stringify(result) });
     }
   }
+}
+
+function finish(ctx: Ctx) {
+  const { db, emit } = ctx;
   if (ctx.finished === "approve") {
     const s = sessionView(db, ctx.sessionId!);
     emit({ type: "done", outcome: "approve", sessionId: s.id, orderId: s.order?.id });
