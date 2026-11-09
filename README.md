@@ -8,7 +8,7 @@ The smallest sellers (a fruit stand, a closet resale) shouldn’t fall behind wh
 One page, three acts, about two minutes:
 
 1. **Rosa teaches her agent** (scripted replay). Rosa points her phone at three crates and talks: what it is, how much, the price, the lowest she’d take, and whether it has to go today. The replay runs her words through the real teaching pipeline and opens her stall. No live camera is needed for the demo.
-2. **Shoppers’ agents arrive.** Pick a shopper, or type your own intent (“4 lb peaches for jam, under $10”). Each agent has a different goal:
+2. **Tell your agent what to buy.** Type an intent (“4 lb peaches for jam, under $10”) or tap an example. A real buyer agent (OpenAI tool calling with the PayPal Agent Toolkit, or a labeled rule-based agent without `OPENAI_API_KEY`) turns it into a budget mandate the server enforces, then shops. The examples:
    | Shopper | Intent | What happens |
    |---|---|---|
    | Maya | Smoothies, cheapest, $8 max | Picks the soft peaches (Rosa said “perfect for smoothies”), haggles; Rosa’s agent gives more because they must go today |

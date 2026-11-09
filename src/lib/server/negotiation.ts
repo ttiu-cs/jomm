@@ -267,7 +267,7 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
   const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${unitsSpoken(n.qty, st.unit)} of ${ctx.product.name.toLowerCase()}` : `the ${ctx.product.name}`;
   const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : perSpoken(st.unit);
-  const buyerLine = k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Last try: ${fmt(offerCents)}${perText}?`;
+  const buyerLine = offerCents >= w.publishedCents ? `I’ll take ${qtyText} at ${fmt(offerCents)}${perText}, please.` : k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Last try: ${fmt(offerCents)}${perText}?`;
   addMsg(db, n.id, "buyer", "OFFER", offerCents, buyerLine, now);
 
   if (!w.available || w.stock < n.qty) {

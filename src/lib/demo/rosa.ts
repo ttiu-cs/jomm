@@ -94,7 +94,9 @@ export function parseIntent(text: string): Intent {
   const purpose = t.match(PURPOSE)?.[0]?.toLowerCase();
   const question = adjective ? `Are they ${adjective === "sweet" || adjective === "fresh" ? adjective : adjective}?` : purpose ? `Are they good for ${purpose}?` : null;
   const want = t
+    .replace(/\b\w+['’]\w+\b/g, " ")
     .replace(/\$\s*\d+(?:\.\d{1,2})?/g, " ")
+    .replace(/\b\d+(?:\.\d+)?\s*(?:lbs?|pounds?|boxes|box|kg)?\b/gi, " ")
     .replace(/\b(i|i’ll|i'll|want|need|for|my|a|the|this|week|tonight|keep|it|under|max|cheapest|you|can|find|price|doesn.?t|matter|quality|does|pay|total|not|cent|more|of|and|to)\b/gi, " ")
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")

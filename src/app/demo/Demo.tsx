@@ -5,7 +5,7 @@ import { useSeller } from "@/lib/client/seller";
 import { Checkout, type OrderView } from "@/components/Checkout";
 import { SiteHeader } from "@/components/shells";
 import { IconCart, IconCheck, IconLock, IconStore } from "@/components/icons";
-import { PERSONAS, ROSA, parseIntent, pickForIntent, type CatalogItemLite, type Intent } from "@/lib/demo/rosa";
+import { PERSONAS, ROSA } from "@/lib/demo/rosa";
 
 // ------------------------------------------------------------------ types
 
@@ -15,29 +15,33 @@ interface Session {
   line_items: { id: string; item: { title: string; unit: string; quantity: number }; base_amount: number; total: number }[];
   totals: { type: string; amount: number }[];
   negotiation: { status: string; offers_left: number; seller_counter_per_unit: number | null; seller_counter_is_final: boolean; agreed_per_unit: number | null };
-  messages: { content: string }[];
-  conversation: { role: "buyer" | "seller"; text: string }[];
   order: { id: string; status: string; payment_source: string; paypal_order_id: string | null; capture_id: string | null } | null;
 }
-interface FeedItem {
-  id: string;
-  product_id: string;
-  shop_id: string;
-  title: string;
-  facts: string[];
-  unit: string;
-  price: { amount: number };
-  quantity_available: number;
+interface Mandate {
+  want: string;
+  quantity: number;
+  max_total_cents: number | null;
+  priority: "cheapest" | "quality" | "balanced";
+  questions: string[];
 }
 type Line = { who: "buyer" | "seller" | "note"; text: string };
 type Trace = { method: string; path: string; concept: string; result: string; paypal?: boolean; json?: unknown };
 type Outcome = "running" | "approve" | "paid" | "walked" | "error";
+type AgentEvent =
+  | { type: "mode"; agent: "openai" | "rules"; model?: string; paypalToolkit: boolean; note?: string }
+  | { type: "mandate"; mandate: Mandate }
+  | { type: "note"; text: string }
+  | { type: "say"; who: "buyer" | "seller"; text: string }
+  | { type: "trace"; trace: Trace }
+  | { type: "session"; session: Session }
+  | { type: "done"; outcome: "approve" | "walked" | "no_match" | "error"; sessionId?: string; orderId?: string; message?: string };
 interface Run {
   key: number;
   who: string;
   emoji: string;
   says: string;
-  intent: Intent;
+  mode: { agent: "openai" | "rules"; model?: string; paypalToolkit: boolean } | null;
+  mandate: Mandate | null;
   lines: Line[];
   trace: Trace[];
   session: Session | null;
@@ -46,19 +50,15 @@ interface Run {
   error?: string;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const round5 = (c: number) => Math.round(c / 5) * 5;
-
 // ------------------------------------------------------------------ page
 
 export default function Demo() {
   const [setup, setSetup] = useState<{ shopId: string; startedAt: string } | null>(null);
   const [taught, setTaught] = useState(false);
   const [runs, setRuns] = useState<Run[]>([]);
-  const [custom, setCustom] = useState("");
+  const [intent, setIntent] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
-  const lastSessionId = useRef<string | null>(null);
   const active = runs[runs.length - 1] ?? null;
   const busy = active?.outcome === "running";
 
@@ -70,116 +70,71 @@ export default function Demo() {
 
   const patch = useCallback((key: number, f: (r: Run) => Partial<Run>) => setRuns((rs) => rs.map((r) => (r.key === key ? { ...r, ...f(r) } : r))), []);
 
-  const start = async (who: string, emoji: string, says: string, intent: Intent) => {
-    if (!setup || busy) return;
+  /** Sends the shopper's sentence to their buyer agent (server-side) and streams what it does. */
+  const send = async (text: string) => {
+    const t = text.trim();
+    if (!setup || busy || !t) return;
+    const persona = PERSONAS.find((p) => p.says === t);
     const key = Date.now();
-    setRuns((rs) => [...rs, { key, who, emoji, says, intent, lines: [], trace: [], session: null, outcome: "running", orderId: null }]);
+    setRuns((rs) => [...rs, { key, who: persona?.name ?? "You", emoji: persona?.emoji ?? "🛒", says: t, mode: null, mandate: null, lines: [], trace: [], session: null, outcome: "running", orderId: null }]);
     setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-    const say = (l: Line) => patch(key, (r) => ({ lines: [...r.lines, l] }));
-    const trace = (t: Trace) => patch(key, (r) => ({ trace: [...r.trace, t] }));
-    const show = (s: Session) => patch(key, () => ({ session: s }));
     try {
-      await runAgent({ shopId: setup.shopId, intent, say, trace, show });
-      const s = await api<Session>(`/api/agentic/checkout_sessions/${lastSessionId.current}`);
-      show(s);
-      patch(key, () => (s.order ? { outcome: "approve", orderId: s.order.id } : { outcome: "walked" }));
+      const res = await fetch("/api/buyer-agent/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ intent: t, shopId: setup.shopId }) });
+      if (!res.body) throw new Error(`HTTP ${res.status}`);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const raw = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (raw) apply(key, JSON.parse(raw) as AgentEvent);
+        }
+      }
     } catch (e) {
       patch(key, () => ({ outcome: "error", error: e instanceof Error ? e.message : String(e) }));
     }
   };
 
-  /** The buyer agent: reads the feed, picks by intent, asks, haggles within budget, completes checkout. */
-  async function runAgent(o: { shopId: string; intent: Intent; say: (l: Line) => void; trace: (t: Trace) => void; show: (s: Session) => void }) {
-    const { intent, say, trace, show } = o;
-    say({ who: "note", text: `Intent: ${intent.priority === "cheapest" ? "best price" : intent.priority === "quality" ? "best quality" : "good value"} · ${intent.qty} × “${intent.want}”${intent.budgetCents ? ` · ${usd(intent.budgetCents)} max` : " · no budget limit"}` });
-    await sleep(500);
-
-    const feed = await api<{ items: FeedItem[] }>(`/api/agentic/feed?shop=${o.shopId}`);
-    trace({ method: "GET", path: "/agentic/feed", concept: "Discovery · product feed (Store Sync style)", result: `${feed.items.length} items, prices and the owner’s words. No lowest prices.`, json: feed.items.map((i) => ({ id: i.id, title: i.title, price: i.price.amount, facts: i.facts })) });
-    const items: CatalogItemLite[] = feed.items.map((i) => ({ productId: i.product_id, sku: i.id, shopId: i.shop_id, name: i.title, unit: i.unit, listPriceCents: i.price.amount, available: i.quantity_available, facts: i.facts }));
-    const pick = pickForIntent(items, intent);
-    await sleep(700);
-    if (!pick) {
-      say({ who: "note", text: "Nothing at this stall fits. The agent moves on." });
-      throw new Error("No matching item");
-    }
-    const it = pick.item;
-    const per = it.unit === "each" ? "" : `/${it.unit}`;
-    say({ who: "note", text: `Picked ${it.name} at ${usd(it.listPriceCents)}${per}: ${pick.why}.` });
-
-    if (intent.question) {
-      await sleep(700);
-      say({ who: "buyer", text: intent.question });
-      const a = await api<{ answer: string }>(`/api/shops/${it.shopId}/items/${encodeURIComponent(it.sku)}/ask`, { question: intent.question });
-      trace({ method: "POST", path: `/shops/…/items/${it.sku}/ask`, concept: "Product Q&A · answered from Rosa’s own words", result: "Same answer for every agent." });
-      await sleep(600);
-      say({ who: "seller", text: a.answer });
-    }
-
-    const list = it.listPriceCents;
-    const unitBudget = intent.budgetCents ? Math.floor(intent.budgetCents / intent.qty / 5) * 5 : null;
-    const fullPrice = intent.priority === "quality" && (unitBudget === null || unitBudget >= list);
-    await sleep(800);
-    const body = { items: [{ id: it.sku, quantity: intent.qty }], ...(fullPrice ? {} : { negotiation: { offer_per_unit: Math.min(round5(list * (intent.priority === "cheapest" ? 0.6 : 0.85)), unitBudget ?? Infinity) } }), buyer: { agent: "demo-buyer-agent" } };
-    let offer = body.negotiation?.offer_per_unit ?? list;
-    let s = await api<Session>("/api/agentic/checkout_sessions", body);
-    lastSessionId.current = s.id;
-    trace({ method: "POST", path: "/agentic/checkout_sessions", concept: fullPrice ? "Checkout session · create at the listed price" : "Checkout session · create + price proposal (negotiation extension)", result: sessionSummary(s), json: { request: body, response: pickSession(s) } });
-    show(s);
-    let round = 1;
-    while (s.negotiation.status === "OPEN") {
-      await sleep(1100);
-      const counter = s.negotiation.seller_counter_per_unit!;
-      const final = s.negotiation.seller_counter_is_final || s.negotiation.offers_left <= 0;
-      const fits = unitBudget === null || counter <= unitBudget;
-      const close = counter - offer <= Math.max(5, round5(list * 0.03));
-      let req: unknown;
-      let path = `/agentic/checkout_sessions/${short(s.id)}`;
-      if (fits && (final || close || (intent.priority === "balanced" && round >= 2))) {
-        req = { negotiation: { accept_counter: true } };
-        s = await api<Session>(`/api/agentic/checkout_sessions/${s.id}`, req);
-      } else if (final) {
-        path += "/cancel";
-        req = {};
-        s = await api<Session>(`/api/agentic/checkout_sessions/${s.id}/cancel`, {});
-      } else {
-        offer = Math.min(counter - 5, unitBudget ?? Infinity, Math.max(offer + 5, round5((offer + counter) / 2)));
-        req = { negotiation: { offer_per_unit: offer } };
-        s = await api<Session>(`/api/agentic/checkout_sessions/${s.id}`, req);
-      }
-      round++;
-      trace({ method: "POST", path, concept: path.endsWith("cancel") ? "Checkout session · cancel (over budget, walks away)" : "Checkout session · update (negotiation extension)", result: sessionSummary(s), json: { request: req, response: pickSession(s) } });
-      show(s);
-    }
-    if (s.status === "ready_for_payment") {
-      await sleep(800);
-      s = await api<Session>(`/api/agentic/checkout_sessions/${s.id}/complete`, {});
-      trace({ method: "POST", path: `/agentic/checkout_sessions/${short(s.id)}/complete`, concept: "Checkout session · complete → order for PayPal", result: `Order ${short(s.order!.id)} · ${usd(total(s))} · waiting for the shopper to approve in PayPal`, json: pickSession(s) });
-      show(s);
-    }
-  }
+  const apply = (key: number, e: AgentEvent) => {
+    if (e.type === "mode") patch(key, () => ({ mode: { agent: e.agent, model: e.model, paypalToolkit: e.paypalToolkit } }));
+    else if (e.type === "mandate") patch(key, () => ({ mandate: e.mandate }));
+    else if (e.type === "note") patch(key, (r) => ({ lines: [...r.lines, { who: "note", text: e.text }] }));
+    else if (e.type === "say") patch(key, (r) => ({ lines: [...r.lines, { who: e.who, text: e.text }] }));
+    else if (e.type === "trace") patch(key, (r) => ({ trace: [...r.trace, e.trace] }));
+    else if (e.type === "session") patch(key, () => ({ session: e.session }));
+    else if (e.type === "done")
+      patch(key, (r) => ({
+        outcome: e.outcome === "approve" ? "approve" : e.outcome === "error" ? "error" : "walked",
+        orderId: e.orderId ?? null,
+        error: e.outcome === "error" ? e.message : undefined,
+        lines: e.outcome === "no_match" && e.message ? [...r.lines, { who: "note", text: e.message }] : r.lines,
+      }));
+  };
 
   const onPaid = useCallback(
-    (key: number) => (o: OrderView) => {
+    (key: number) => async (o: OrderView) => {
       const paid = o.order.status === "PAID";
       const sandbox = o.order.payment_source === "PAYPAL_SANDBOX";
       const pp: Trace[] = sandbox
         ? [
-            { method: "POST", path: "PayPal /v2/checkout/orders", concept: "PayPal Orders v2 · create (server-side)", result: `PayPal order ${o.payment?.provider_order_id ?? ""}`, paypal: true },
+            { method: "POST", path: "PayPal /v2/checkout/orders", concept: "PayPal Orders v2 · create (server-side, amount from the agreed quote)", result: `PayPal order ${o.payment?.provider_order_id ?? ""}`, paypal: true },
             { method: "—", path: "Shopper approves in PayPal", concept: "Human in the loop: agents can’t pay on their own", result: "Approved", paypal: true },
             { method: "POST", path: "PayPal /v2/checkout/orders/{id}/capture", concept: "PayPal Orders v2 · capture, verified by the server", result: paid ? `COMPLETED · capture ${o.payment?.capture_id ?? ""}` : o.order.status, paypal: true },
           ]
         : [{ method: "—", path: "Practice payment", concept: "PayPal Sandbox keys aren’t set on this server, so PayPal wasn’t called", result: paid ? "Marked paid as PRACTICE (no money moved)" : o.order.status, paypal: true }];
       patch(key, (r) => ({ outcome: paid ? "paid" : r.outcome, trace: [...r.trace, ...pp] }));
+      if (!paid) return;
+      // The buyer agent double-checks the payment with PayPal itself (PayPal Agent Toolkit get_order).
+      const c = await api<{ checked: boolean; message: string; trace: Trace }>("/api/buyer-agent/confirm", { orderId: o.order.id }).catch(() => null);
+      if (c) patch(key, (r) => ({ trace: [...r.trace, c.trace], lines: [...r.lines, { who: "note", text: c.checked ? `Your agent checked with PayPal: ${c.message}` : c.message }] }));
     },
     [patch],
   );
-
-  const status = (id: string) => {
-    const r = [...runs].reverse().find((x) => x.who === id);
-    if (!r) return null;
-    return r.outcome === "paid" ? `Paid ${usd(r.session ? total(r.session) : 0)}` : r.outcome === "walked" ? "Walked away" : r.outcome === "approve" ? "Waiting for approval" : r.outcome === "running" ? "Shopping…" : "Error";
-  };
 
   return (
     <div className="bg-canvas">
@@ -187,8 +142,8 @@ export default function Demo() {
       <main className="mx-auto max-w-[1240px] px-5 pb-20 pt-10">
         <header className="text-center">
           <p className="hand text-[26px]">A Tuesday at {ROSA.shopName}</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Shoppers’ agents come to Rosa’s stall. Rosa gets paid.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa told her agent about today’s fruit once. Now pick a shopper: each sends an AI agent with a different goal, and Rosa’s agent sells to each one her way, then PayPal pays her.</p>
+          <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Tell your agent what to buy. Rosa gets paid.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa taught her stall’s agent this morning. Now you send a shopping agent with your own goal. The two agents make the deal, and PayPal pays Rosa.</p>
         </header>
 
         <Steps taught={taught} anyRun={runs.length > 0} paid={runs.some((r) => r.outcome === "paid")} />
@@ -197,37 +152,36 @@ export default function Demo() {
         {/* Act 1: Rosa teaches (played back) */}
         <TeachPlayback ready={!!setup} onDone={() => setTaught(true)} />
 
-        {/* Act 2: pick a shopper */}
-        <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Shoppers">
-          <h2 className="text-[28px] font-semibold">2. Who’s shopping?</h2>
-          <p className="text-[17px] text-label-2">Each shopper tells their own agent what they want. Same stall, same rules, different deals.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Act 2: the shopper's intent */}
+        <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Your agent">
+          <h2 className="text-center text-[28px] font-semibold sm:text-[34px]">2. What should your agent buy?</h2>
+          <p className="text-center text-[17px] text-label-2">Say it the way you’d say it to a friend: what, how much, what for, and your budget.</p>
+          <form
+            className="mx-auto mt-6 flex max-w-3xl flex-col gap-2 rounded-[28px] bg-card p-2 shadow-[0_18px_40px_-24px_rgba(60,30,10,0.4)] sm:flex-row sm:items-center sm:rounded-full sm:pl-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(intent);
+            }}
+          >
+            <input
+              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[19px] outline-none placeholder:text-label-3 focus-visible:outline-none sm:px-0"
+              placeholder="e.g. 4 lb peaches for jam, under $10"
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              aria-label="What should your agent buy?"
+            />
+            <button type="submit" disabled={busy || !intent.trim() || !setup} className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 py-3.5 text-[17px] font-semibold text-white hover:bg-brand-hover disabled:opacity-40">
+              <IconCart size={20} /> {busy ? "Shopping…" : "Send my agent"}
+            </button>
+          </form>
+          <div className="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-2">
+            <span className="py-1.5 text-[14px] text-label-3">Try:</span>
             {PERSONAS.map((p) => (
-              <button key={p.id} type="button" disabled={busy || !setup} onClick={() => start(p.name, p.emoji, p.says, p.intent)} className="group rounded-[22px] bg-card p-5 text-left shadow-[0_1px_0_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-16px_rgba(60,30,10,0.35)] disabled:opacity-60">
-                <div className="flex items-center justify-between">
-                  <span className="text-[28px]" aria-hidden>
-                    {p.emoji}
-                  </span>
-                  {status(p.name) && <span className="rounded-full bg-fill px-2.5 py-1 text-[12px] font-medium text-label-2">{status(p.name)}</span>}
-                </div>
-                <div className="mt-2 text-[17px] font-semibold">{p.name}’s agent</div>
-                <p className="mt-1 text-[15px] leading-snug text-label-2">“{p.says}”</p>
-                <span className="mt-3 inline-block text-[15px] font-medium text-link group-hover:underline">Send to Rosa’s stall ›</span>
+              <button key={p.id} type="button" disabled={busy} onClick={() => setIntent(p.says)} className={`rounded-full px-3.5 py-1.5 text-left text-[14px] ${intent === p.says ? "bg-label text-white" : "bg-card text-label-2 hover:text-label"}`}>
+                {p.emoji} {p.says}
               </button>
             ))}
           </div>
-          <form
-            className="mt-3 flex items-center gap-2 rounded-full bg-card p-1.5 pl-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (custom.trim()) start("You", "🛒", custom.trim(), parseIntent(custom));
-            }}
-          >
-            <input className="min-w-0 flex-1 bg-transparent py-2 text-[17px] outline-none placeholder:text-label-3" placeholder="Or write your own: “4 lb peaches for jam, under $10”" value={custom} onChange={(e) => setCustom(e.target.value)} aria-label="Your shopping intent" />
-            <button type="submit" disabled={busy || !custom.trim() || !setup} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-[15px] font-medium text-white hover:bg-brand-hover disabled:opacity-40">
-              <IconCart size={18} /> Send agent
-            </button>
-          </form>
         </section>
 
         {/* Act 3: the deal, the interface, and Rosa's phone */}
@@ -245,19 +199,7 @@ export default function Demo() {
 
 // ------------------------------------------------------------------ helpers
 
-const short = (id: string) => (id.length > 12 ? `${id.slice(0, 8)}…` : id);
 const total = (s: Session) => s.totals.find((t) => t.type === "total")?.amount ?? 0;
-function sessionSummary(s: Session) {
-  const n = s.negotiation;
-  const unit = s.line_items[0]?.item.unit ?? "";
-  const per = unit === "each" ? "" : `/${unit}`;
-  if (s.status === "ready_for_payment") return `ready_for_payment · agreed ${usd(n.agreed_per_unit)}${per} · total ${usd(total(s))}`;
-  if (s.status === "canceled") return "canceled · nothing charged";
-  return `${s.status} · stall counters ${usd(n.seller_counter_per_unit)}${per}${n.seller_counter_is_final ? " (final)" : ""}`;
-}
-function pickSession(s: Session) {
-  return { id: s.id, status: s.status, line_items: s.line_items, totals: s.totals, payment_provider: "paypal", negotiation: s.negotiation, order: s.order };
-}
 
 // ------------------------------------------------------------------ pieces
 
@@ -362,7 +304,7 @@ function TeachPlayback({ ready, onDone }: { ready: boolean; onDone: () => void }
 
 function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView) => void }) {
   const end = useRef<HTMLDivElement>(null);
-  const msgs: Line[] = run ? [...run.lines, ...(run.session?.conversation ?? []).map((m) => ({ who: m.role, text: m.text }) as Line)] : [];
+  const msgs: Line[] = run?.lines ?? [];
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [msgs.length]);
@@ -388,6 +330,21 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
       {run && (
         <div className="flex-1 space-y-2">
           <p className="hand text-[22px]">{run.who === "You" ? "You" : run.who}: “{run.says}”</p>
+          {run.mode && (
+            <p className="text-center text-[11px] font-medium uppercase tracking-wide text-label-3">
+              {run.mode.agent === "openai" ? `OpenAI agent · ${run.mode.model}` : "Rule-based agent (no OpenAI key)"} · {run.mode.paypalToolkit ? "PayPal Agent Toolkit on" : "PayPal Agent Toolkit off (no Sandbox keys)"}
+            </p>
+          )}
+          {run.mandate && (
+            <div className="rise rounded-[16px] border border-line bg-canvas px-4 py-3 text-[14px]">
+              <div className="text-[12px] font-semibold uppercase tracking-wide text-label-3">Your agent’s mandate</div>
+              <div className="mt-1">
+                {run.mandate.quantity} × {run.mandate.want} · {run.mandate.priority === "cheapest" ? "best price" : run.mandate.priority === "quality" ? "best quality" : "good value"} ·{" "}
+                <b>{run.mandate.max_total_cents === null ? "no budget limit" : `never over ${usd(run.mandate.max_total_cents)}`}</b>
+              </div>
+              <div className="mt-0.5 text-[12px] text-label-3">Enforced by the server: an offer or deal over budget is refused before it reaches the stall.</div>
+            </div>
+          )}
           {msgs.map((l, i) =>
             l.who === "note" ? (
               <p key={i} className="rise py-1 text-center text-[12px] font-medium text-label-3">

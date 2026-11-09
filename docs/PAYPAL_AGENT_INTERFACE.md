@@ -9,6 +9,17 @@ How a buyer agent finds Rosa’s stall, talks to her seller agent, and pays with
 
 Stallkeeper is built so a small stall can show up in that world: a product feed agents can read, checkout sessions in the ACP shape with PayPal as the payment provider, and payment through PayPal Orders v2.
 
+## The buyer agent
+The shopper types what they want (“4 lb peaches for jam, under $10”). Their buyer agent runs on the server (`POST /api/buyer-agent/run`, streamed as NDJSON):
+- **With `OPENAI_API_KEY`**: an OpenAI tool-calling agent (`OPENAI_MODEL`, default `gpt-5.4-mini`). It first turns the sentence into a **mandate** (what, how many, max total, priority, questions), then shops with tools:
+  - Stall tools: `read_product_feed`, `ask_seller`, `open_checkout_session`, `propose_price`, `accept_seller_counter`, `walk_away`, `complete_checkout` (these call the checkout sessions below).
+  - **PayPal Agent Toolkit** (`@paypal/agent-toolkit/openai`, Sandbox): its tool definitions are given to the model as-is and run through `toolkit.handleToolCall`. Enabled tool: `get_order` (read-only).
+- **Without it**: a rule-based agent with the same tools, labeled on screen.
+
+The mandate is enforced in the tool code, not by the model: an offer or deal over the shopper’s budget is refused before it reaches the stall. The agent stops at `complete_checkout`; the shopper approves in PayPal. After approval and the server’s verified capture, the buyer agent calls the toolkit’s `get_order` itself (`POST /api/buyer-agent/confirm`) and reports PayPal’s status.
+
+Why the toolkit doesn’t create or capture the order: the server’s own Orders v2 path takes the amount from the agreed, locked quote, sends idempotency keys, and verifies the captured amount before a sale counts. An agent never sets an amount.
+
 ## Flow
 ```
 buyer agent                         Stallkeeper (Rosa's seller agent)              PayPal
@@ -52,6 +63,8 @@ Amounts are integer cents.
 ## What is real and what is modeled
 | Part | Status |
 |---|---|
+| PayPal Agent Toolkit (`get_order`) | Real package (`@paypal/agent-toolkit` 1.11.0), Sandbox; active when PayPal keys are set. Not yet run against PayPal from this build’s CI (no network) |
+| OpenAI buyer agent | Real OpenAI tool calling when `OPENAI_API_KEY` is set; tested here with a scripted stand-in model |
 | PayPal Orders v2 create / capture / verify, webhooks | Real against PayPal Sandbox when `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` are set; tested with an in-memory fake |
 | Checkout sessions | Our endpoints, shaped after ACP checkout sessions (create / update / get / complete / cancel). Not certified against the ACP spec, and not connected to PayPal Agent Ready or Braintree onboarding |
 | `negotiation` extension | Our addition; not part of ACP, UCP or any PayPal API |
