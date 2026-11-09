@@ -538,12 +538,12 @@ function Conversation({ run, onPaid }: { run: Run | null; onPaid: (o: OrderView)
             <IconStore size={16} />
           </span>
           <span className="truncate">
-            <b className="block text-label">Rosa’s agent (AI)</b>sells for Rosa, the shop owner
+            <b className="block text-label">Seller agent</b>for Rosa, shop owner
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2 text-right">
           <span>
-            <b className="block text-label">{run && run.who !== "Shopper" ? `${run.who}’s agent` : "Shopper’s agent"}</b>buys for {run && run.who !== "Shopper" ? run.who : "the shopper"}
+            <b className="block text-label">Buyer agent</b>for {run && run.who !== "Shopper" ? `${run.who}, shopper` : "the shopper"}
           </span>
           <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-[16px] text-white">{run?.emoji ?? <IconCart size={16} />}</span>
         </span>
