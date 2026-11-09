@@ -1,0 +1,39 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: #141010; }
+
+.ph { position: absolute; inset: 0; overflow: hidden; }
+.ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(20,14,10,0.80) 0%, rgba(20,14,10,0.42) 52%, rgba(20,14,10,0.08) 100%); }
+.shadeb { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(20,14,10,0.78) 0%, rgba(20,14,10,0.15) 45%, rgba(20,14,10,0) 70%); }
+.kick { position: absolute; left: 140px; font-family: Caveat, cursive; font-size: 68px; color: #ffb38f; }
+.title { position: absolute; left: 140px; width: 1240px; font-family: 'Playfair Display', serif; font-size: 100px; line-height: 1.05; color: #fff; }
+.title i { color: #ffb38f; }
+.sub { position: absolute; left: 144px; width: 1120px; font-size: 38px; line-height: 1.4; color: rgba(255,255,255,0.85); }
+.note { position: absolute; font-family: Caveat, cursive; font-size: 92px; color: #fff; }
+.w { display: inline-block; }
+.cap { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; }
+.cap span { display: inline-block; max-width: 1500px; padding: 14px 30px; background: rgba(20,14,10,0.85); color: #fff; font-size: 40px; line-height: 1.3; border-radius: 12px; }
+.tag { position: absolute; right: 80px; top: 56px; padding: 12px 22px; border-radius: 999px; background: #0b2a5c; color: #fff; font-size: 28px; font-weight: 700; }
+.chap { position: absolute; left: 80px; top: 56px; padding: 10px 22px; border-radius: 999px; background: rgba(20,14,10,0.85); color: #fff; font-size: 28px; }
+.chap b { color: #ffb38f; font-family: Caveat, cursive; font-size: 40px; font-weight: 600; margin-right: 8px; }
+@font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+  </style>
+  <div id="root" data-composition-id="v1-promise" data-width="1920" data-height="1080">
+    <div id="v1-promise-d1" class="ph clip" data-start="0" data-duration="6.85" style="" ><img src="assets/img/apples-box.jpg" alt="" style="object-position:50% 60%" /></div>
+    <div id="v1-promise-d2" class="shade clip" data-start="0" data-duration="6.85" style="" data-layout-ignore></div>
+    <h2 id="v1-promise-h3" class="title clip" data-start="0.0" data-duration="6.85" style="top:340px;font-size:100px" ><span class="w">Your</span> <span class="w">own</span> <span class="w">AI</span> <span class="w">selling</span> <span class="w">agent.</span> <i class="w">In</i> <i class="w">minutes.</i> <i class="w">Just</i> <i class="w">by</i> <i class="w">talking.</i></h2>
+    <p id="v1-promise-p4" class="sub clip" data-start="0.0" data-duration="6.85" style="top:710px" >No code. No website. No forms.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#v1-promise-d1 img", { scale: 1.1 }, { scale: 1.0, duration: 6.85, ease: "none" }, 0);
+    tl.fromTo("#v1-promise-h3 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.0);
+    tl.fromTo("#v1-promise-p4", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.6);
+    tl.to(["#v1-promise-h3", "#v1-promise-p4"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 6.6);
+    window.__timelines["v1-promise"] = tl;
+  </script>
+</template>

@@ -10,6 +10,20 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 (async () => {
   const b = await chromium.launch({ args: ['--force-device-scale-factor=1.3333333'] });
   const ctx = await b.newContext({ viewport: { width: W, height: H }, locale: 'en-US' });
+  // recording only: ask the PayPal JS SDK for an English checkout UI
+  await ctx.route(/paypal\.com\/sdk\/js/, (route) => {
+    const u = new URL(route.request().url());
+    u.searchParams.set('locale', 'en_US');
+    route.continue({ url: u.toString() });
+  });
+  await ctx.route(/sandbox\.paypal\.com\/(checkoutnow|webapps\/hermes|checkoutweb|pay\/)/, (route) => {
+    const r = route.request();
+    if (r.resourceType() !== 'document') return route.continue();
+    const u = new URL(r.url());
+    if (u.searchParams.get('locale.x') === 'en_US') return route.continue();
+    u.searchParams.set('locale.x', 'en_US'); u.searchParams.set('country.x', 'US');
+    route.continue({ url: u.toString() });
+  });
   const p = await ctx.newPage();
   await p.goto('https://jomm.onrender.com/demo', { waitUntil: 'networkidle' });
   // finish Act 1 quickly (not recorded here)
@@ -63,6 +77,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   await pay.waitFor({ timeout: 90000 });
   await pop.waitForTimeout(2500);
   await pop.screenshot({ path: `${out}/review.png` });
+  if (process.env.NOAPPROVE) { log('stop before approve'); await b.close(); return; }
   await pay.click();
   mark('approved');
   await pop.waitForEvent('close', { timeout: 60000 }).catch(() => log('popup did not close'));

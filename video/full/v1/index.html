@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #141010; }
+      #root { position: relative; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="138.46" data-width="1920" data-height="1080">
+      <div id="v1-hook" data-composition-id="v1-hook" data-composition-src="compositions/hook.html" data-start="0.0" data-duration="6.37" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-big" data-composition-id="v1-big" data-composition-src="compositions/big.html" data-start="6.37" data-duration="7.35" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-small" data-composition-id="v1-small" data-composition-src="compositions/small.html" data-start="13.72" data-duration="8.55" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-mission" data-composition-id="v1-mission" data-composition-src="compositions/mission.html" data-start="22.27" data-duration="8.77" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-promise" data-composition-id="v1-promise" data-composition-src="compositions/promise.html" data-start="31.04" data-duration="6.85" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-rosa" data-composition-id="v1-rosa" data-composition-src="compositions/rosa.html" data-start="37.89" data-duration="14.11" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-mina" data-composition-id="v1-mina" data-composition-src="compositions/mina.html" data-start="52.0" data-duration="9.6" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-intent" data-composition-id="v1-intent" data-composition-src="compositions/intent.html" data-start="61.6" data-duration="9.61" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-haggle" data-composition-id="v1-haggle" data-composition-src="compositions/haggle.html" data-start="71.21" data-duration="16.51" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-approve" data-composition-id="v1-approve" data-composition-src="compositions/approve.html" data-start="87.72" data-duration="14.66" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-paid" data-composition-id="v1-paid" data-composition-src="compositions/paid.html" data-start="102.38" data-duration="11.46" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-rex" data-composition-id="v1-rex" data-composition-src="compositions/rex.html" data-start="113.84" data-duration="6.71" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-stack" data-composition-id="v1-stack" data-composition-src="compositions/stack.html" data-start="120.55" data-duration="10.31" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v1-end" data-composition-id="v1-end" data-composition-src="compositions/end.html" data-start="130.86" data-duration="7.6" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <audio id="vo-hook" class="clip" src="assets/vo/00-hook.mp3" data-start="0.25" data-duration="5.52" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-big" class="clip" src="assets/vo/01-big.mp3" data-start="6.62" data-duration="6.504" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-small" class="clip" src="assets/vo/02-small.mp3" data-start="13.97" data-duration="7.704" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-mission" class="clip" src="assets/vo/03-mission.mp3" data-start="22.52" data-duration="7.92" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-promise" class="clip" src="assets/vo/04-promise.mp3" data-start="31.29" data-duration="6.0" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-rosa" class="clip" src="assets/vo/05-rosa.mp3" data-start="38.14" data-duration="12.864" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-mina" class="clip" src="assets/vo/06-mina.mp3" data-start="52.25" data-duration="8.352" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-intent" class="clip" src="assets/vo/07-intent.mp3" data-start="61.85" data-duration="8.16" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-haggle" class="clip" src="assets/vo/08-haggle.mp3" data-start="71.46" data-duration="15.264" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-approve" class="clip" src="assets/vo/09-approve.mp3" data-start="87.97" data-duration="13.008" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-paid" class="clip" src="assets/vo/10-paid.mp3" data-start="102.63" data-duration="10.008" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-rex" class="clip" src="assets/vo/11-rex.mp3" data-start="114.09" data-duration="5.664" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-stack" class="clip" src="assets/vo/12-stack.mp3" data-start="120.8" data-duration="9.456" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-end" class="clip" src="assets/vo/13-end.mp3" data-start="131.11" data-duration="4.752" data-volume="1" data-track-index="6"></audio>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

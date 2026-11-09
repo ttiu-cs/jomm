@@ -26,12 +26,14 @@ BASE = """
 """.replace("SERIFX", SERIF)
 
 def words(t, cls="w"):
-    out = []
+    """Split into word spans; *a few words* become italic accent words."""
+    out, ital = [], False
     for w in t.split(" "):
-        if w.startswith("*") and w.endswith("*"):
-            out.append(f'<i class="{cls}">{w[1:-1]}</i>')
-        else:
-            out.append(f'<span class="{cls}">{w}</span>')
+        st = w.startswith("*"); en = w.endswith("*")
+        w2 = w.strip("*")
+        if st: ital = True
+        out.append(f'<i class="{cls}">{w2}</i>' if ital else f'<span class="{cls}">{w2}</span>')
+        if en: ital = False
     return " ".join(out)
 
 class Scene:

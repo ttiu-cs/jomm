@@ -1,0 +1,442 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "nested_media_start_basis_ambiguous",
+        "severity": "warning",
+        "message": "<video id=\"v1-approve-cam1v1\"> has data-start=\"3.2\" inside a sub-composition. Nested media timing is local to its composition by default; a nonzero value can be confused with a legacy root-global timestamp.",
+        "selector": "#v1-approve-cam1v1",
+        "dataAttributes": {},
+        "sourceFile": "/home/user/jomm/video/full/v1/compositions/approve.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep data-start=\"3.2\" if it is composition-local. If this is a legacy root-global timestamp, add data-hf-media-start-basis=\"global\"; otherwise convert it to local time by subtracting the host start."
+      },
+      {
+        "code": "nested_media_start_basis_ambiguous",
+        "severity": "warning",
+        "message": "<video id=\"v1-approve-cam1v2\"> has data-start=\"7.1\" inside a sub-composition. Nested media timing is local to its composition by default; a nonzero value can be confused with a legacy root-global timestamp.",
+        "selector": "#v1-approve-cam1v2",
+        "dataAttributes": {},
+        "sourceFile": "/home/user/jomm/video/full/v1/compositions/approve.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep data-start=\"7.1\" if it is composition-local. If this is a legacy root-global timestamp, add data-hf-media-start-basis=\"global\"; otherwise convert it to local time by subtracting the host start."
+      },
+      {
+        "code": "nested_media_start_basis_ambiguous",
+        "severity": "warning",
+        "message": "<video id=\"v1-haggle-cam1v1\"> has data-start=\"15.2\" inside a sub-composition. Nested media timing is local to its composition by default; a nonzero value can be confused with a legacy root-global timestamp.",
+        "selector": "#v1-haggle-cam1v1",
+        "dataAttributes": {},
+        "sourceFile": "/home/user/jomm/video/full/v1/compositions/haggle.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep data-start=\"15.2\" if it is composition-local. If this is a legacy root-global timestamp, add data-hf-media-start-basis=\"global\"; otherwise convert it to local time by subtracting the host start."
+      },
+      {
+        "code": "nested_media_start_basis_ambiguous",
+        "severity": "warning",
+        "message": "<video id=\"v1-intent-cam1v1\"> has data-start=\"9.5\" inside a sub-composition. Nested media timing is local to its composition by default; a nonzero value can be confused with a legacy root-global timestamp.",
+        "selector": "#v1-intent-cam1v1",
+        "dataAttributes": {},
+        "sourceFile": "/home/user/jomm/video/full/v1/compositions/intent.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep data-start=\"9.5\" if it is composition-local. If this is a legacy root-global timestamp, add data-hf-media-start-basis=\"global\"; otherwise convert it to local time by subtracting the host start."
+      }
+    ],
+    "filesScanned": 15
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 5,
+    "findings": [
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 23.077,
+        "selector": "#v1-mission-d1 > img:nth-of-type(1)",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -87.26,
+          "top": -49.09,
+          "right": 2007.26,
+          "bottom": 1129.09,
+          "width": 2094.53,
+          "height": 1178.17
+        },
+        "containerSelector": "#v1-mission-d1",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 87.26,
+          "right": 87.26,
+          "top": 49.09,
+          "bottom": 49.09
+        },
+        "dataAttributes": {
+          "data-hf-render-id": "hf-media-4",
+          "data-hf-authored-opacity": ""
+        },
+        "sourceFile": "compositions/mission.html",
+        "bbox": {
+          "x": -87.26,
+          "y": -49.09,
+          "width": 2094.53,
+          "height": 1178.17
+        },
+        "firstSeen": 23.077,
+        "lastSeen": 23.077,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          23.077
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 69.23,
+        "selector": "#v1-intent-cam1",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 0,
+          "top": -136,
+          "right": 2496,
+          "bottom": 1268,
+          "width": 2496,
+          "height": 1404
+        },
+        "containerSelector": "#v1-intent > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "right": 576,
+          "top": 136,
+          "bottom": 188
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/intent.html",
+        "bbox": {
+          "x": 0,
+          "y": -136,
+          "width": 2496,
+          "height": 1404
+        },
+        "firstSeen": 69.23,
+        "lastSeen": 69.23,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          69.23
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 84.614,
+        "selector": "#v1-haggle-cam1",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 0,
+          "top": -540,
+          "right": 2880,
+          "bottom": 1080,
+          "width": 2880,
+          "height": 1620
+        },
+        "containerSelector": "#v1-haggle > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "right": 960,
+          "top": 540
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/haggle.html",
+        "bbox": {
+          "x": 0,
+          "y": -540,
+          "width": 2880,
+          "height": 1620
+        },
+        "firstSeen": 84.614,
+        "lastSeen": 84.614,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          84.614
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 99.999,
+        "selector": "#v1-approve-cam1",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -704,
+          "top": 0,
+          "right": 2368,
+          "bottom": 1728,
+          "width": 3072,
+          "height": 1728
+        },
+        "containerSelector": "#v1-approve > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 704,
+          "right": 448,
+          "bottom": 648
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/approve.html",
+        "bbox": {
+          "x": -704,
+          "y": 0,
+          "width": 3072,
+          "height": 1728
+        },
+        "firstSeen": 99.999,
+        "lastSeen": 99.999,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          99.999
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 115.383,
+        "selector": "#v1-rex-cam1",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 0,
+          "top": -540,
+          "right": 2880,
+          "bottom": 1080,
+          "width": 2880,
+          "height": 1620
+        },
+        "containerSelector": "#v1-rex > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "right": 960,
+          "top": 540
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/rex.html",
+        "bbox": {
+          "x": 0,
+          "y": -540,
+          "width": 2880,
+          "height": 1620
+        },
+        "firstSeen": 115.383,
+        "lastSeen": 115.383,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          115.383
+        ]
+      }
+    ],
+    "duration": 138.46,
+    "samples": [
+      7.692,
+      23.077,
+      38.461,
+      53.846,
+      69.23,
+      84.614,
+      99.999,
+      115.383,
+      130.768
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 5,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      7.692,
+      38.461,
+      69.23,
+      99.999,
+      130.768
+    ],
+    "checked": 34,
+    "passed": 34
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 2,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "dead_stretch",
+        "severity": "warning",
+        "message": "Nothing on screen changes for 3.93 s (9.48–13.41 s): start the next move within 3 s, or put data-hold on the element whose stillness is deliberate; see references/motion.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 9.477,
+        "seconds": 3.93,
+        "floorSeconds": 3,
+        "until": 13.407
+      },
+      {
+        "code": "dead_stretch",
+        "severity": "warning",
+        "message": "Nothing on screen changes for 6.94 s (123.67–130.60 s): start the next move within 3 s, or put data-hold on the element whose stillness is deliberate; see references/motion.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 123.666,
+        "seconds": 6.935,
+        "floorSeconds": 3,
+        "until": 130.601
+      }
+    ],
+    "enabled": true,
+    "step": 0.23100000000000165,
+    "samples": 599
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  },
+  "saved": {
+    "id": "207e09da-81ee-4ae3-93f3-6edda82c452c",
+    "revision": null,
+    "report": "/home/user/jomm/video/full/v1/.hyperframes/artifacts/checks/207e09da-81ee-4ae3-93f3-6edda82c452c.json",
+    "attribution": "unversioned"
+  },
+  "_meta": {
+    "version": "0.9.26",
+    "latestVersion": "0.9.26",
+    "updateAvailable": false,
+    "checkedAt": "2026-11-09T19:47:39.279Z",
+    "skillsOutdated": 3,
+    "skillsMissing": 0,
+    "updateNotice": "For the user: 3 installed HyperFrames skills are out of date (this run is HyperFrames CLI 0.9.26). To update them, run: npx hyperframes update"
+  }
+}
