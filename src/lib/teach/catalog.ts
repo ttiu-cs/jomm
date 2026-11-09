@@ -92,6 +92,9 @@ export function getItemBySku(db: DB, shopId: string, sku: string) {
   return { ...item, photo };
 }
 
+const sentence = (s: string) => (s.replace(/\.\./g, ".").trim().replace(/[.!]?$/, "."));
+const lowerFirst = (s: string) => (/^(I|I’m|I'm)\b/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
+
 /** The seller agent answers a buyer question using only what the owner taught it. */
 export async function answerQuestion(db: DB, productId: string, question: string) {
   const k = getKnowledge(db, productId);
@@ -103,7 +106,7 @@ export async function answerQuestion(db: DB, productId: string, question: string
   const llm = getLlm();
   if (llm) {
     const raw = (await llm.completeJson(
-      `You are the seller agent for a small shop, answering a buyer (or buyer agent). Use ONLY the owner's facts below. If the facts don't cover the question, say you'll need to check with the owner. Never mention a lowest price. 1-2 sentences. Return JSON {"answer": string}.`,
+      `You are the voice of a small, friendly market stall talking to a shopper (or their buyer agent). Speak in first person as the stall, warm and plain, like a good shopkeeper: no "the owner told me", no corporate tone. Use ONLY the facts below; never invent origin, freshness, or quality claims. If the facts don't cover the question, say honestly you'd have to check, then offer what you do know. Never mention a lowest or minimum price. 1-2 short sentences. Return JSON {"answer": string}.`,
       JSON.stringify({ item: p.name, unit: p.unit, ownerFacts: known, question: q }),
     )) as { answer?: unknown } | null;
     if (raw && typeof raw.answer === "string" && raw.answer.length < 500) return { answer: raw.answer, source: "llm" as const, facts: known };
@@ -111,10 +114,10 @@ export async function answerQuestion(db: DB, productId: string, question: string
   const qt = new Set(tokens(q));
   const hits = known.filter((f) => tokens(f).some((t) => qt.has(t)));
   const answer = hits.length
-    ? `The owner told me: ${hits.join(". ").replace(/\.\./g, ".")}.`
+    ? sentence(hits.join(". "))
     : known.length
-      ? `I don't have that detail, but the owner told me: ${known.slice(0, 2).join(". ")}.`
-      : "I'll need to check with the owner on that.";
+      ? `Good question. I’d have to check on that one. What I can tell you: ${lowerFirst(sentence(known.slice(0, 2).join(". ")))}`
+      : "Good question. I’d have to check on that one and get back to you.";
   return { answer, source: "rules" as const, facts: known };
 }
 

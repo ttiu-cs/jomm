@@ -5,11 +5,35 @@ import { useSearchParams } from "next/navigation";
 import { useSeller } from "@/lib/client/seller";
 import { usd } from "@/lib/client/format";
 import { rememberShop } from "@/components/shells";
-import { IconCamera } from "@/components/icons";
+import { IconCamera, IconCart } from "@/components/icons";
 
 function greeting() {
   const h = new Date().getHours();
   return h < 11 ? "Good morning! Fresh stock in?" : h < 17 ? "Afternoon! Here’s how it’s going." : "Evening. Here’s how today went.";
+}
+
+/** The moment that matters: a shopper's agent shows up and haggles with yours. One tap to watch it. */
+function BuyerArriving({ shopId, item, first }: { shopId: string; item: { name: string; unit: string; listPriceCents: number; available: number }; first: boolean }) {
+  const qty = item.unit === "each" ? 1 : Math.min(2, item.available);
+  const budget = Math.round((item.listPriceCents * qty * 0.94) / 5) * 5;
+  const money = `$${(budget / 100).toFixed(2)}`;
+  const q = item.unit === "each" ? `1 ${item.name}, budget ${money}` : `${qty} ${item.unit} of ${item.name}, max ${money} total`;
+  return (
+    <Link
+      href={`/market?auto=1&shop=${encodeURIComponent(shopId)}&q=${encodeURIComponent(q)}`}
+      className={`${first ? "rise" : ""} mt-4 flex items-center gap-4 rounded-[22px] bg-label p-5 text-white`}
+      style={first ? { animationDelay: "500ms" } : undefined}
+    >
+      <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand">
+        <IconCart size={22} />
+        <span className="rec-dot absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-label bg-[#ff3b30]" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] text-white/60">{first ? "Your first buyer is here" : "Try it"}</span>
+        <span className="block text-[17px] font-semibold leading-snug">A shopper’s agent wants your {item.name}. Watch your assistant haggle ›</span>
+      </span>
+    </Link>
+  );
 }
 
 export default function SellerHome({ shopId }: { shopId: string }) {
@@ -37,6 +61,7 @@ export default function SellerHome({ shopId }: { shopId: string }) {
           Your shop is open. Your assistant is answering buyers now.
         </div>
       )}
+      {d.items.some((i) => i.available > 0) && <BuyerArriving shopId={shopId} item={d.items.find((i) => i.available > 0)!} first={!!opened} />}
 
       <section aria-label="Money" className="mt-4 rounded-[22px] bg-card p-5">
         <div className="text-[15px] text-label-2">Received with PayPal</div>

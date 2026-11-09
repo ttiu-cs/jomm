@@ -1,6 +1,10 @@
 import { handle, db, readJson } from "@/lib/server/http";
-import { makeOffer } from "@/lib/server/negotiation";
+import { buyerView, makeOffer } from "@/lib/server/negotiation";
+import { voiceLastSellerLine } from "@/lib/server/voice";
 export const POST = handle(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const b = await readJson<{ offerCents?: number }>(req);
-  return makeOffer(db(), (await params).id, Number(b.offerCents));
+  const id = (await params).id;
+  makeOffer(db(), id, Number(b.offerCents));
+  await voiceLastSellerLine(db(), id);
+  return buyerView(db(), id);
 });

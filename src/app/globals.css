@@ -205,6 +205,21 @@ body {
   animation: focus-in 1.6s ease-out both;
   pointer-events: none;
 }
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing 1s ease-in-out infinite;
+}
 @keyframes blink {
   50% {
     opacity: 0.25;
@@ -231,6 +246,7 @@ body {
   .handheld,
   .focus-square,
   .rec-dot,
+  .typing-dot,
   .listening {
     animation: none;
   }

@@ -3,6 +3,7 @@ import { db } from "@/lib/server/http";
 import { listShops } from "@/lib/teach/catalog";
 import { SiteFooter, SiteHeader } from "@/components/shells";
 import { HeroPhone } from "@/components/HeroPhone";
+import { DealReplay } from "@/components/DealReplay";
 import { IconCamera, IconLock } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -13,27 +14,38 @@ export default function Home() {
     <div>
       <SiteHeader />
       <main>
-        {/* Hero */}
-        <section className="px-5 pt-14 text-center sm:pt-20">
-          <p className="text-[21px] font-semibold">Stallkeeper</p>
-          <h1 className="display mx-auto mt-1 max-w-3xl text-[48px] leading-[1.05] sm:text-[72px]">Your stall. Now with a helping hand.</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-[21px] leading-snug text-label-2 sm:text-[24px]">
-            Show it what came in this morning and talk, the way you’d brief a new helper. It answers shoppers and their AI agents, haggles like you would, and gets you paid with PayPal.
-          </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <Link href="/seller" className="rounded-full bg-brand px-6 py-3 text-[17px] text-white hover:bg-brand-hover">
-              Start selling
-            </Link>
-            <Link href="/market" className="text-[17px] text-link hover:underline">
-              Watch a buyer agent shop ›
-            </Link>
+        {/* Hero: the deal happening, right away */}
+        <section className="px-5 pt-10 sm:pt-14">
+          <div className="mx-auto grid max-w-[1024px] items-center gap-10 lg:grid-cols-[1fr_420px]">
+            <div className="text-center lg:text-left">
+              <p className="hand text-[26px]">For the stall on the corner</p>
+              <h1 className="display mt-1 text-[46px] leading-[1.04] sm:text-[64px]">Your stall. Now with a helping hand.</h1>
+              <p className="mt-4 text-[20px] leading-snug text-label-2 sm:text-[22px]">
+                Show it what came in this morning and talk, the way you’d brief a new helper. Then it haggles with shoppers’ AI agents like you would, and gets you paid with PayPal.
+              </p>
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 lg:justify-start">
+                <Link href="/seller" className="rounded-full bg-brand px-6 py-3 text-[17px] text-white hover:bg-brand-hover">
+                  Start selling
+                </Link>
+                <Link href="/market?auto=1" className="text-[17px] text-link hover:underline">
+                  Watch a buyer agent shop ›
+                </Link>
+              </div>
+            </div>
+            <div>
+              <p className="mb-3 text-center text-[15px] font-medium text-label-2 lg:text-left">
+                <span className="rec-dot mr-1.5 inline-block h-2 w-2 rounded-full bg-[#ff3b30] align-middle" />
+                A shopper’s agent haggling with the stall’s agent
+              </p>
+              <DealReplay />
+            </div>
           </div>
-          <figure className="mx-auto mt-12 max-w-[1024px]">
+          <figure className="mx-auto mt-14 max-w-[1024px]">
             <div className="overflow-hidden rounded-[28px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/photos/hero-vendor.jpg" alt="A young vendor wiping fruit at his street stall" className="warm-photo aspect-[16/10] w-full object-cover sm:aspect-[16/8]" />
+              <img src="/photos/hero-vendor.jpg" alt="A young vendor wiping fruit at his street stall" className="warm-photo aspect-[16/10] w-full object-cover sm:aspect-[16/7]" />
             </div>
-            <figcaption className="hand mt-3 text-[24px]">Every stall opens the same way: crates out, prices up, coffee on. Now there’s help.</figcaption>
+            <figcaption className="hand mt-3 text-[24px]">He’s busy with the crates. His agent is busy with the customers.</figcaption>
           </figure>
         </section>
 

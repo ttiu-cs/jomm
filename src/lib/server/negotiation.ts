@@ -157,15 +157,30 @@ function taughtReason(st: Strategy): string {
   return `The owner ${SELL_BY_TEXT[k.sell_by]} and set a floor of ${fmt(k.floor_cents)} per ${st.unit}. With ${st.w.stock} ${st.unit} left, I can go down to ${fmt(st.w.walkAwayCents)}.`;
 }
 
-function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number): string {
+/** " a pound", " a box", "" for single items: how a stall owner says the unit out loud. */
+export function perSpoken(unit: string): string {
+  if (unit === "each") return "";
+  return ` a ${unit === "lb" ? "pound" : unit === "kg" ? "kilo" : unit}`;
+}
+function totalSpoken(price: number, qty: number, unit: string): string {
+  if (qty <= 1) return "";
+  return `, so ${fmt(price * qty)} for ${qty === 1 ? "one" : qty}${unit === "each" ? "" : ` ${unit}`}`;
+}
+/** First person, in the stall's own voice: the owner's words become the assistant's words. */
+function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number, round = 1): string {
   const k = st.knowledge!;
-  const fact = k.facts[0] ? `${k.facts[0].replace(/[.!]$/, "")}. ` : "";
-  const per = st.unit === "each" ? "" : ` per ${st.unit}`;
-  const total = qty > 1 ? ` (${fmt(price * qty)} for ${qty} ${st.unit})` : "";
-  if (kind === "ACCEPT") return `Deal at ${fmt(price)}${per}${total}. I'm locking that price for you for 5 minutes.`;
-  if (kind === "COUNTER") return `${fact}I can do ${fmt(price)}${per}${total}.`;
-  if (kind === "FINAL") return `${k.sell_by === "today" ? "I'd like these gone today, so " : ""}${fmt(price)}${per} is my best price${total}.`;
-  return `I can't go lower than ${fmt(price)}${per}.`;
+  const fact = k.facts[(round - 1) % Math.max(1, k.facts.length)];
+  const said = fact ? `${fact.replace(/[.!]$/, "")}. ` : "";
+  const per = perSpoken(st.unit);
+  const total = totalSpoken(price, qty, st.unit);
+  if (kind === "ACCEPT") return `You’ve got a deal: ${fmt(price)}${per}${total}. I’ll hold them for you for 5 minutes.`;
+  if (kind === "COUNTER")
+    return round <= 1 ? `${said}I can’t do that, but I can do ${fmt(price)}${per}${total}.` : `Let’s meet in the middle: ${fmt(price)}${per}${total}.`;
+  if (kind === "FINAL")
+    return k.sell_by === "today"
+      ? `These need to go today, so ${fmt(price)}${per}${total}. That’s as low as I go.`
+      : `${fmt(price)}${per}${total} is as low as I go. They’re worth it, promise.`;
+  return `Sorry, I can’t go under ${fmt(price)}${per}.`;
 }
 
 function sellerLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, w: WalkAwayResult): string {
@@ -240,12 +255,13 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   const st = computeStrategy(db, ctx);
   const w = st.w;
   const k = n.buyer_offers + 1;
-  const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) => (st.knowledge ? taughtLine(kind, price, st, n.qty) : sellerLine(kind, price, w));
+  const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) => (st.knowledge ? taughtLine(kind, price, st, n.qty, k) : sellerLine(kind, price, w));
   const roundUp = (c: number) => Math.ceil(c / st.step) * st.step;
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
-  const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${st.unit} of ${ctx.product.name}` : `one ${ctx.product.name}`;
-  const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : ` per ${st.unit}`;
-  addMsg(db, n.id, "buyer", "OFFER", offerCents, `I'd like ${qtyText} for ${fmt(offerCents)}${perText}.`, now);
+  const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${st.unit} of ${ctx.product.name}` : `the ${ctx.product.name}`;
+  const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : perSpoken(st.unit);
+  const buyerLine = k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Last try: ${fmt(offerCents)}${perText}?`;
+  addMsg(db, n.id, "buyer", "OFFER", offerCents, buyerLine, now);
 
   if (!w.available || w.stock < n.qty) {
     db.prepare("UPDATE negotiations SET status='CLOSED' WHERE id=?").run(n.id);
@@ -254,7 +270,7 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   }
   const pub = w.publishedCents;
   if (offerCents >= pub) {
-    addMsg(db, n.id, "seller", "ACCEPT", pub, `That's at or above our listed price. Deal at ${fmt(pub)}${perText}.`, now);
+    addMsg(db, n.id, "seller", "ACCEPT", pub, `That’s our listed price, so yes! ${fmt(pub)}${perText}. I’ll hold them for 5 minutes.`, now);
     agree(db, getNeg(db, n.id), pub, now);
     return;
   }
@@ -311,8 +327,9 @@ export function acceptCounter(db: DB, id: string, now = new Date()) {
   if (n.status !== "OPEN") throw new DomainError("NEGOTIATION_CLOSED", `Negotiation is ${n.status}.`, 409);
   if (n.last_counter_cents === null) throw new DomainError("NO_COUNTER", "There is no seller counteroffer to accept.", 409);
   db.transaction(() => {
-    addMsg(db, id, "buyer", "ACCEPT", n.last_counter_cents, `Accepted at ${fmt(n.last_counter_cents!)}.`, now);
-    addMsg(db, id, "seller", "ACCEPT", n.last_counter_cents, `Deal at ${fmt(n.last_counter_cents!)}${n.qty > 1 ? ` each (${fmt(n.last_counter_cents! * n.qty)} total)` : ""}. I'm locking that price for you for 5 minutes.`, now);
+    const unit = (db.prepare("SELECT unit FROM products WHERE id=?").get(n.product_id) as { unit: string }).unit;
+    addMsg(db, id, "buyer", "ACCEPT", n.last_counter_cents, `${fmt(n.last_counter_cents!)} works. Deal!`, now);
+    addMsg(db, id, "seller", "ACCEPT", n.last_counter_cents, `Lovely. ${fmt(n.last_counter_cents!)}${perSpoken(unit)}${totalSpoken(n.last_counter_cents!, n.qty, unit)}. I’ll hold them for you for 5 minutes.`, now);
     agree(db, n, n.last_counter_cents!, now);
   }).immediate();
   emit("negotiation", n.product_id, { id });
@@ -323,7 +340,7 @@ export function declineNegotiation(db: DB, id: string, now = new Date()) {
   const n = getNeg(db, id);
   if (n.status === "OPEN") {
     db.prepare("UPDATE negotiations SET status='CLOSED', updated_at=? WHERE id=?").run(now.toISOString(), id);
-    addMsg(db, id, "buyer", "DECLINE", null, "No thanks, that's above my budget.", now);
+    addMsg(db, id, "buyer", "DECLINE", null, "That’s a little over my budget. I’ll pass this time, thanks!", now);
     emit("negotiation", n.product_id, { id });
   }
   return buyerView(db, id);

@@ -168,7 +168,7 @@ export default function ItemPage({ shopId, sku }: { shopId: string; sku: string 
 
           <section>
             <h2 className="text-[22px] font-semibold">Ask or make an offer</h2>
-            <p className="text-[15px] text-label-2">The stall’s assistant answers from what the owner told it.</p>
+            <p className="text-[15px] text-label-2">Ask the stall anything. It knows what the owner knows.</p>
             <div className="mt-4 space-y-2">
               {thread.map((m, i) => (
                 <div key={i} className={`rise flex ${m.role === "buyer" ? "justify-end" : ""}`}>

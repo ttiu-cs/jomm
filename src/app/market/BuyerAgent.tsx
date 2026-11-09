@@ -47,8 +47,8 @@ const EXAMPLES = ["2 lb of sweet apples, max $6 total", "3 lb peaches, budget $7
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const round5 = (c: number) => Math.round(c / 5) * 5;
 
-export default function BuyerAgent() {
-  const [request, setRequest] = useState(EXAMPLES[0]);
+export default function BuyerAgent({ initialRequest, shopId, auto }: { initialRequest?: string; shopId?: string; auto?: boolean } = {}) {
+  const [request, setRequest] = useState(initialRequest || EXAMPLES[0]);
   const [lines, setLines] = useState<Line[]>([]);
   const [result, setResult] = useState<Line | null>(null);
   const [chosen, setChosen] = useState<CatalogItem | null>(null);
@@ -65,7 +65,7 @@ export default function BuyerAgent() {
     endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [thread.length]);
 
-  const go = async () => {
+  const go = async (text = request) => {
     setErr(null);
     setLines([]);
     setResult(null);
@@ -75,9 +75,9 @@ export default function BuyerAgent() {
     setOrder(null);
     setRunning(true);
     try {
-      const r = parseBuyerRequest(request);
+      const r = parseBuyerRequest(text);
       push({ who: "note", text: `Looking for ${r.qty}${r.unit ? " " + r.unit : ""} of “${r.keywords}”${r.budgetCents ? `, ${usd(r.budgetCents)} total at most` : ""}.` });
-      const cat = await api<{ items: CatalogItem[] }>(`/api/catalog?q=${encodeURIComponent(r.keywords)}`);
+      const cat = await api<{ items: CatalogItem[] }>(`/api/catalog?q=${encodeURIComponent(r.keywords)}${shopId ? `&shop=${encodeURIComponent(shopId)}` : ""}`);
       const items = cat.items.filter((i) => i.available >= r.qty);
       if (!items.length) {
         push({ who: "note", text: cat.items.length ? "Found it, but not enough in stock anywhere." : "No shop sells that yet. Open a sample shop from the seller side first." });
@@ -124,6 +124,18 @@ export default function BuyerAgent() {
     }
   };
 
+  const started = useRef(false);
+  useEffect(() => {
+    if (!auto) return;
+    const t = setTimeout(() => {
+      if (started.current) return;
+      started.current = true;
+      go(initialRequest || EXAMPLES[0]);
+    }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onPaid = useCallback((o: OrderView) => setOrder(o), []);
   const paid = order?.order.status === "PAID";
   const per = chosen && chosen.unit !== "each" ? `/${chosen.unit}` : "";
@@ -160,15 +172,15 @@ export default function BuyerAgent() {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
           <section aria-label="Conversation" className="rounded-[28px] bg-canvas p-4 sm:p-6">
-            <div className="mb-4 flex items-center justify-between text-[13px] text-label-2">
-              <span className="flex items-center gap-2">
+            <div className="mb-4 flex items-center justify-between gap-3 text-[13px] text-label-2">
+              <span className="flex min-w-0 items-center gap-2">
                 <span className="grid h-7 w-7 place-items-center rounded-full bg-label text-white">
                   <IconStore size={15} />
                 </span>
-                {chosen ? `${chosen.shopName} assistant` : "Stall assistant"}
+                <span className="truncate">{chosen ? `${chosen.shopName}’s agent` : "Stall’s agent"}</span>
               </span>
-              <span className="flex items-center gap-2">
-                Your buyer agent
+              <span className="flex shrink-0 items-center gap-2">
+                Your agent
                 <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-white">
                   <IconCart size={15} />
                 </span>
