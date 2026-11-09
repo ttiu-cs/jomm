@@ -1,25 +1,26 @@
 # 3-minute demo script
 
-**One line:** Show your shop to the camera and talk. Your AI seller agent learns, sells to buyer agents within your limits, and gets paid through PayPal.
+**One line:** Shoppers’ AI agents come to a small stall. The stall’s own agent sells to each one the owner’s way, and PayPal pays the owner.
 
-**Positioning:** Buyer agents are starting to shop for people. Large sellers can plug into agentic commerce; a fruit stand or a closet seller has no catalog and no developer. This lets the smallest sellers take part by talking.
+**Positioning:** Shopping is moving to AI agents, and PayPal is building the rails (Agent Ready, Store Sync, Orders v2). Big merchants will plug in. A fruit stand has no catalog and no developer. Stallkeeper puts the smallest seller on those rails by talking.
 
 ## Setup
-- Start the app. Open `/seller` on a phone (camera needs https or localhost) or a laptop, and `/market` in a second window.
-- With PayPal Sandbox keys, run one checkout beforehand so the Sandbox login is warm. Keep a backup recording of the PayPal step. Never present a MOCK payment as PayPal.
-- Stage fallback: on the Teach screen choose **Try it with a demo fruit stand**. The illustrated stall pans to each crate, and **Tap to say** sends the next scripted line through the same conversation logic (no camera or microphone needed). Or open **Sample fruit stand** on `/seller`.
+- Start the app and open `/demo` on a laptop (projector) at 1440 px wide or more.
+- With PayPal Sandbox keys, run one checkout beforehand so the Sandbox login is warm, and keep a backup recording of the PayPal step. Without keys, the payment is labeled “practice”; say so, and never present it as a PayPal payment.
 
 ## Script
 | Time | Screen | Do | Say |
 |---|---|---|---|
-| 0:00–0:20 | Home | Show the 3 steps | "Buyer agents will shop for us. The smallest sellers have no way to sell to them. Until now." |
-| 0:20–1:10 | `/seller` → Teach tab | Camera on. Point at apples: "These are Fuji apples, about 30 lb. Really sweet this year." Agent asks for price → "$3 a pound, no less than $2.40." → "No rush." Next item: peaches "have to go today, $4, lowest $2." | "It asks like a new employee would: how many, what price, the lowest I'd take, what buyers should know. Cards, SKUs and stock fill in as I talk. The lowest price stays private." |
-| 1:10–1:25 | Open my shop → seller Home, Items tab | Show SKUs and QR shelf labels | "One tap, and the shop is live: SKUs, stock, prices, and QR labels for walk-in shoppers." |
-| 1:25–2:20 | `/market` | "2 lb of sweet apples, max $6 total" → Send buyer agent | "The buyer agent finds the shop and asks 'Are they sweet?' My agent answers with what I said. They negotiate. Because I said no rush, my agent stops at $2.76, not my $2.40 floor. Peaches I said must go today, so it would go all the way down." |
-| 2:20–2:45 | `/market` → PayPal | Approve in PayPal Sandbox | "A person approves; the buyer agent can't pay alone. The server verifies the capture with PayPal, then stock drops." |
-| 2:45–3:00 | Seller dashboard | Show the deal and the payment | "The sale shows up on my dashboard with the PayPal capture. Fruit stand today, a closet tomorrow, same way." |
+| 0:00–0:20 | `/demo` top | Let Rosa’s replay play | “This is Rosa. Before opening, she points her phone at each crate and talks, once. Price, the lowest she’d take, whether it must go today.” |
+| 0:20–0:40 | Act 1 card | Point at the private limits | “Her agent turned that into listings and private rules. The lock means no buyer will ever see these numbers.” |
+| 0:40–1:30 | Maya | Click **Maya’s agent** | “Maya wants smoothie fruit, cheapest, $8 max. Her agent reads Rosa’s product feed and picks the soft peaches, because Rosa said they’re perfect for smoothies. They haggle. Rosa said peaches must go today, so her agent gives ground.” Point at the dark panel: “Every step is a checkout session with PayPal as the payment provider, the shape PayPal Agent Ready uses.” |
+| 1:30–1:50 | Approve | Click Pay (PayPal) | “Maya’s agent can’t pay on its own. Maya approves in PayPal. The server captures and verifies with PayPal.” Point at the phone: “Rosa’s phone: PayPal, $7.95. Peaches gone before they turned.” |
+| 1:50–2:20 | Leo, then Rex | Click **Leo’s agent**, approve; click **Rex’s agent** | “Leo only cares about quality: he asks if they’re sweet and pays full price. Rex lowballs. Rosa’s agent holds the line above her private floor. No sale, nothing charged.” |
+| 2:20–2:45 | Custom intent | Type “4 lb peaches for jam, under $10” | “Any shopper, any agent, any intent. Same stall rules.” |
+| 2:45–3:00 | Rosa’s phone | Point at the day total | “Rosa never looked up from her crates. Her agent sold four different ways, and PayPal paid her.” |
 
 ## Say correctly
-- The agent doesn't train a model; it remembers what the owner taught and sells from it.
-- Without an AI key, the conversation runs on a built-in rule-based parser. With `ANTHROPIC_API_KEY`, Claude also reads the camera frame. Prices and limits only ever come from what the owner said.
-- Payments are PayPal Sandbox (test money). Seller onboarding to each owner's own PayPal account (Partner Referrals) and PayPal Agent Ready / Store Sync are integration design, not live in this build.
+- Rosa’s teaching is a scripted replay. It runs her words through the real teaching parser, but no live camera is used in the demo.
+- The checkout sessions follow the Agentic Commerce Protocol shape that PayPal Agent Ready accepts, and the product feed follows the idea of Store Sync. Neither is connected to PayPal’s Agent Ready or Store Sync programs in this build. The price negotiation is our own extension.
+- Payment is PayPal Orders v2 in Sandbox (test money) when keys are set; otherwise a labeled practice payment.
+- Rosa’s reactions on her phone are scripted lines, chosen by what actually happened.

@@ -89,8 +89,8 @@ export function DealReplay() {
       </div>
       <div className="mt-2 flex items-center justify-between border-t border-line pt-3 text-[13px]">
         <span className="text-label-3">Example conversation</span>
-        <Link href="/market?auto=1" className="font-medium text-link hover:underline">
-          Run it for real ›
+        <Link href="/demo" className="font-medium text-link hover:underline">
+          Try it with your own shopper ›
         </Link>
       </div>
     </div>

@@ -1,29 +1,51 @@
 # Stallkeeper (working name; repo: retail-pricing-os)
 
-**Pricing Intelligence for Every Seller Agent.** Every buyer agent knows how to find the best price. Every seller agent should know how to set one.
+**Shoppers’ AI agents come to a small stall. The stall’s own agent sells to each one the owner’s way. PayPal pays the owner.**
 
-**AI shop assistants for the smallest sellers.** Turn on the camera, walk through your shop and talk. Your AI seller agent asks questions like a new employee (how many, what price, the lowest you'd take, what buyers should know), builds SKUs, stock and prices from your answers, then sells to buyer agents within your limits and gets paid through PayPal.
+The smallest sellers (a fruit stand, a closet resale) shouldn’t fall behind when shopping moves to AI agents. Stallkeeper gives a stall owner a seller agent that speaks the agent-commerce interfaces PayPal supports, so any buyer agent can find the stall, ask questions, propose a price, and check out with PayPal, while the owner’s lowest prices stay private.
 
+## The demo: `/demo`
+One page, three acts, about two minutes:
+
+1. **Rosa teaches her agent** (scripted replay). Rosa points her phone at three crates and talks: what it is, how much, the price, the lowest she’d take, and whether it has to go today. The replay runs her words through the real teaching pipeline and opens her stall. No live camera is needed for the demo.
+2. **Shoppers’ agents arrive.** Pick a shopper, or type your own intent (“4 lb peaches for jam, under $10”). Each agent has a different goal:
+   | Shopper | Intent | What happens |
+   |---|---|---|
+   | Maya | Smoothies, cheapest, $8 max | Picks the soft peaches (Rosa said “perfect for smoothies”), haggles; Rosa’s agent gives more because they must go today |
+   | Leo | Sweetest apples, quality first | Asks “Are they sweet?”, pays the listed price, no haggling |
+   | Jun | Party strawberries, under $15 | Haggles a little, settles inside budget |
+   | Rex | $5 for 2 boxes, not a cent more | Rosa’s agent holds the line above her private floor; no sale, nothing charged |
+3. **PayPal pays Rosa.** The shopper approves in PayPal (agents can’t pay on their own). Rosa’s phone shows the PayPal notification, her day’s total, the stock left, and her reaction.
+
+Next to the conversation, the **PayPal agent interface** panel shows every call the buyer agent makes, with the request and response data. See [`docs/PAYPAL_AGENT_INTERFACE.md`](docs/PAYPAL_AGENT_INTERFACE.md).
+
+## The agent interface (summary)
+| Step | Endpoint | Modeled on |
+|---|---|---|
+| Discover | `GET /api/agentic/feed?shop=` | PayPal Store Sync (catalog + inventory for AI agents) |
+| Ask | `POST /api/shops/{shop}/items/{sku}/ask` | Answers only from the owner’s own words |
+| Check out | `POST /api/agentic/checkout_sessions` (+ `/{id}`, `/{id}/complete`, `/{id}/cancel`) | Agentic Commerce Protocol checkout sessions, which PayPal Agent Ready accepts, with `payment_provider: paypal` |
+| Negotiate | `negotiation` extension on create/update | Our addition: per-unit proposal, counter, final offer |
+| Pay | PayPal Orders v2 create → buyer approval → capture | PayPal Orders v2 (Sandbox) |
+
+## Other pages
 | Who | Where | What |
 |---|---|---|
-| Everyone | `/` | Two choices: "I sell things" or "Watch a buyer agent shop" |
 | **Seller** (phone-first app) | `/seller` | Name your shop once; the app remembers it |
-| | `/seller/{shopId}` | Home: today's money, items that need attention, latest deals |
-| | `/seller/{shopId}/teach` | Camera conversation: show items and talk; cards fill in; "Open my shop" |
-| | `/seller/{shopId}/items` | Items (stock, price, private lowest price) and printable QR labels |
-| | `/seller/{shopId}/deals` | Payments received and conversations the agent handled |
-| **Shopper** | `/shop/{shopId}` | Public shop page (shareable link) |
-| | `/s/{shopId}/{sku}` | Item page from a QR label: ask, make an offer, pay with PayPal |
-| | `/market` | Try a buyer agent |
-| Developers | footer links | Pricing engine demo, hourly pricing, lab, agent API |
+| | `/seller/{shopId}` | Home: today’s money, items that need attention, latest deals |
+| | `/seller/{shopId}/teach` | Teach by talking (camera optional; sample stand with “Tap to say”) |
+| | `/seller/{shopId}/items`, `/deals` | Items and QR labels; payments and conversations |
+| **Shopper** | `/shop/{shopId}`, `/s/{shopId}/{sku}` | Shop page; item page from a QR label |
+| | `/market` | Free-form buyer agent |
+| Developers | footer links | Pricing engine, hourly pricing, lab, agent API |
 
 How it works:
-- **Teaching:** each turn sends the owner's words plus the current camera frame. With `ANTHROPIC_API_KEY`, Claude reads both; without it, a deterministic parser handles it (English, some Korean). Prices, quantities and floors only ever come from what the owner said, and the owner can tap any card to correct it.
-- **Selling:** the seller agent answers questions only from the owner's facts. It negotiates per unit (max 3 buyer offers) and never goes below the owner's private floor. How far it goes depends on urgency: "today" means it may concede down to the floor, "this week" 70% of the gap, "no rush" 40%.
-- **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a labeled MOCK without keys). Stock is decremented exactly once after a verified capture.
+- **Teaching:** a deterministic parser turns the owner’s words into items, prices, private floors and urgency (an optional LLM can help with free-form speech; the demo doesn’t use it). The owner can tap any card to correct it.
+- **Selling:** the seller agent answers only from the owner’s facts. It negotiates per unit (max 3 buyer offers) and never goes below the owner’s private floor. How far it goes depends on urgency: “today” may concede down to the floor, “this week” 70% of the gap, “no rush” 40%.
+- **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a clearly labeled practice payment without keys). Stock is decremented exactly once after a verified capture.
 
 ## Design
-Apple-style (after apple.com and the iOS Human Interface Guidelines): system font (SF Pro on Apple devices, Inter elsewhere), #1d1d1f on white / #f5f5f7, one blue (#0071e3) for actions, iOS system colors only for status, large tight headlines, frosted nav and tab bars, grouped inset lists. Real photography from Pexels (free license, see `public/photos/CREDITS.md`). Without a camera, **Use the sample fruit stand** (or closet) shows real photos that switch to the item being discussed, and offers the next line as a "Tap to say" button; the product photo is cropped from that photo.
+Apple-style structure warmed up for small shops: system font, warm paper whites, a persimmon accent, the owner’s words in handwriting, candid photos from Pexels (see `public/photos/CREDITS.md`).
 
 ## Quick start
 Requires Node 20+ (tested on 22).
@@ -44,7 +66,7 @@ npm run seed
 npm run dev
 ```
 
-Open http://localhost:3000. With no PayPal credentials, checkout runs in a clearly labeled **MOCK** mode. To use real PayPal Sandbox, fill `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` in `.env.local` (see `docs/PAYPAL_INTEGRATION.md`) and restart.
+Open http://localhost:3000/demo. With no PayPal credentials, checkout runs in a clearly labeled **MOCK** mode. To use real PayPal Sandbox, fill `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` in `.env.local` (see `docs/PAYPAL_INTEGRATION.md`) and restart.
 
 Other commands:
 

@@ -102,7 +102,7 @@ export async function answerQuestion(db: DB, productId: string, question: string
   const q = question.trim().slice(0, 300);
   if (!q) throw new DomainError("VALIDATION", "Ask a question.", 422);
   const p = db.prepare("SELECT name, unit FROM products WHERE id=?").get(productId) as { name: string; unit: string };
-  const known = [...k.facts, ...(k.condition ? [`Condition: ${k.condition}`] : [])];
+  const known = [...k.facts, ...(k.condition ? [k.condition] : [])];
   const llm = getLlm();
   if (llm) {
     const raw = (await llm.completeJson(

@@ -27,6 +27,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-12 max-w-[1024px] items-center justify-between gap-3 px-5">
         <Logo />
         <nav className="flex items-center gap-5 text-[14px]">
+          <Link href="/demo" className={path.startsWith("/demo") ? "font-medium text-label" : "text-label-2 hover:text-label"}>
+            Demo
+          </Link>
           <Link href="/market" className={`hidden sm:inline ${path.startsWith("/market") ? "text-label" : "text-label-2 hover:text-label"}`}>
             Buyer agent
           </Link>

@@ -153,7 +153,7 @@ function applyInterpretation(db: DB, sessionId: string, focusId: string | null, 
 }
 
 /** One conversational turn: owner speech (+ optional camera frame as a JPEG data URL). */
-export async function teachTurn(db: DB, sessionId: string, input: { text: string; imageDataUrl?: string | null }, now = new Date()) {
+export async function teachTurn(db: DB, sessionId: string, input: { text: string; imageDataUrl?: string | null }, now = new Date(), opts: { rulesOnly?: boolean } = {}) {
   const s = getSession(db, sessionId);
   if (s.status !== "OPEN") throw new DomainError("SESSION_CLOSED", "This session already opened the shop. Start a new session to teach more.", 409);
   const text = (input.text ?? "").trim().slice(0, 1000);
@@ -166,7 +166,7 @@ export async function teachTurn(db: DB, sessionId: string, input: { text: string
   let target = "focus";
   let reply: string | null = null;
   let source = "rules";
-  const llm = getLlm();
+  const llm = opts.rulesOnly ? null : getLlm();
   if (llm) {
     const ctx = {
       focusItemId: focus?.id ?? null,

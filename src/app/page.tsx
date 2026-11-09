@@ -24,11 +24,11 @@ export default function Home() {
                 Show it what came in this morning and talk, the way you’d brief a new helper. Then it haggles with shoppers’ AI agents like you would, and gets you paid with PayPal.
               </p>
               <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 lg:justify-start">
-                <Link href="/seller" className="rounded-full bg-brand px-6 py-3 text-[17px] text-white hover:bg-brand-hover">
-                  Start selling
+                <Link href="/demo" className="rounded-full bg-brand px-6 py-3 text-[17px] text-white hover:bg-brand-hover">
+                  Watch the demo
                 </Link>
-                <Link href="/market?auto=1" className="text-[17px] text-link hover:underline">
-                  Watch a buyer agent shop ›
+                <Link href="/seller" className="text-[17px] text-link hover:underline">
+                  Start selling ›
                 </Link>
               </div>
             </div>

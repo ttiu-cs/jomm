@@ -162,14 +162,21 @@ export function perSpoken(unit: string): string {
   if (unit === "each") return "";
   return ` a ${unit === "lb" ? "pound" : unit === "kg" ? "kilo" : unit}`;
 }
+/** "2 boxes", "3 lb": units said the way people say them. */
+export function unitsSpoken(n: number, unit: string): string {
+  if (unit === "lb" || unit === "kg" || unit === "each") return unit === "each" ? "" : unit;
+  return n > 1 ? (/(x|s|ch|sh)$/.test(unit) ? `${unit}es` : `${unit}s`) : unit;
+}
 function totalSpoken(price: number, qty: number, unit: string): string {
   if (qty <= 1) return "";
-  return `, so ${fmt(price * qty)} for ${qty === 1 ? "one" : qty}${unit === "each" ? "" : ` ${unit}`}`;
+  return `, so ${fmt(price * qty)} for ${qty}${unit === "each" ? "" : ` ${unitsSpoken(qty, unit)}`}`;
 }
 /** First person, in the stall's own voice: the owner's words become the assistant's words. */
 function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number, round = 1): string {
   const k = st.knowledge!;
-  const fact = k.facts[(round - 1) % Math.max(1, k.facts.length)];
+  // Lead with something that sells; flaws are disclosed in the listing, not used as a haggling line.
+  const selling = k.facts.filter((f) => !/\b(soft|stain|flaw|worn|bruis|scratch|tear|dent|old)/i.test(f));
+  const fact = selling[(round - 1) % Math.max(1, selling.length)];
   const said = fact ? `${fact.replace(/[.!]$/, "")}. ` : "";
   const per = perSpoken(st.unit);
   const total = totalSpoken(price, qty, st.unit);
@@ -258,7 +265,7 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) => (st.knowledge ? taughtLine(kind, price, st, n.qty, k) : sellerLine(kind, price, w));
   const roundUp = (c: number) => Math.ceil(c / st.step) * st.step;
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
-  const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${st.unit} of ${ctx.product.name}` : `the ${ctx.product.name}`;
+  const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${unitsSpoken(n.qty, st.unit)} of ${ctx.product.name.toLowerCase()}` : `the ${ctx.product.name}`;
   const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : perSpoken(st.unit);
   const buyerLine = k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Last try: ${fmt(offerCents)}${perText}?`;
   addMsg(db, n.id, "buyer", "OFFER", offerCents, buyerLine, now);
