@@ -32,6 +32,12 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Parents often pass a new onDone each render; keep it out of the effect deps so the PayPal
+  // buttons are rendered once per order instead of being torn down ("zoid destroyed all components").
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
 
   useEffect(() => {
     api<{ mode: string; clientId: string | null }>("/api/paypal/config")
@@ -44,7 +50,7 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
     const el = ref.current;
     let buttons: PayPalButtons | null = null;
     let cancelled = false;
-    const refresh = () => api<OrderView>(`/api/orders/${orderId}`).then(onDone);
+    const refresh = () => api<OrderView>(`/api/orders/${orderId}`).then((o) => onDoneRef.current(o));
     loadPayPalSdk(cfg.clientId)
       .then(() => {
         if (cancelled || !window.paypal) return;
@@ -54,7 +60,7 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
           onApprove: async (data: { orderID: string }, actions: { restart: () => Promise<void> }) => {
             setBusy(true);
             try {
-              onDone(await api<OrderView>(`/api/paypal/orders/${data.orderID}/capture`, {}));
+              onDoneRef.current(await api<OrderView>(`/api/paypal/orders/${data.orderID}/capture`, {}));
             } catch (e) {
               const m = e instanceof Error ? e.message : String(e);
               if (/declined/i.test(m)) {
@@ -81,7 +87,7 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
       buttons?.close?.().catch(() => {});
       el.innerHTML = "";
     };
-  }, [cfg, orderId, onDone]);
+  }, [cfg, orderId]);
 
   const mock = async (outcome: "success" | "fail") => {
     setBusy(true);
@@ -101,7 +107,7 @@ export function Checkout({ orderId, onDone }: { orderId: string; onDone: (o: Ord
       {err && <div className="rounded-md border border-bad/40 px-2 py-1 text-sm text-bad">{err}</div>}
       {cfg.mode === "PAYPAL_SANDBOX" ? (
         <>
-          <SourceBadge source="PAYPAL_SANDBOX" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[12px] font-semibold text-label-2">PayPal Sandbox · test money · not paid yet</span>
           <div ref={ref} className="min-h-12" />
           <p className="text-xs text-ink-2">PayPal Sandbox, test money. The sale counts only after our server checks the payment with PayPal.</p>
         </>
