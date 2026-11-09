@@ -36,12 +36,19 @@ export function speak(role: VoiceRole, text: string, opts: { muted?: boolean; si
   const k = `${role}|${text}`;
   const a = cache.get(k) ?? new Audio(url(role, text));
   cache.delete(k);
+  // Only one voice at a time: stop whatever is still playing before this line starts.
+  if (current && current !== a) {
+    current.pause();
+    currentFinish?.();
+  }
   current = a;
   return new Promise<void>((resolve) => {
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
+      a.pause(); // if a safety timer ends the line, it must also go quiet
+      if (current === a) current = null;
       if (currentFinish === finish) currentFinish = null;
       resolve();
     };
@@ -55,6 +62,14 @@ export function speak(role: VoiceRole, text: string, opts: { muted?: boolean; si
       wait().then(finish);
     };
     a.play().catch(() => wait().then(finish)); // autoplay blocked: keep going silently
-    setTimeout(finish, 15000); // never hang the replay
+    // Never hang the replay, but give long lines (a Channel3 summary) their full length.
+    let guard = setTimeout(finish, 20000);
+    const fitGuard = () => {
+      if (!Number.isFinite(a.duration)) return;
+      clearTimeout(guard);
+      guard = setTimeout(finish, a.duration * 1000 + 4000);
+    };
+    if (a.readyState >= 1) fitGuard(); // prefetched: length already known
+    else a.onloadedmetadata = fitGuard;
   });
 }

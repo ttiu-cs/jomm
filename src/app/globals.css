@@ -268,6 +268,15 @@ body {
   background: linear-gradient(90deg, transparent, rgb(224 89 42 / 0.18), transparent);
   animation: c3-sweep 1.1s linear infinite;
 }
+/* The big card stays ~6s, then slides up and away; a small pill stays as a reminder. */
+@keyframes c3-life {
+  0%, 85% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-24px) scale(0.9); visibility: hidden; }
+}
+.c3-life { animation: c3-life 7s ease-in forwards; pointer-events: none; }
+@keyframes c3-mini { 0%, 88% { opacity: 0; } 100% { opacity: 1; } }
+.c3-mini { animation: c3-mini 7.2s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .c3-pop, .c3-scan::after { animation: none; }
+  .c3-life { animation-duration: 6s; }
 }
