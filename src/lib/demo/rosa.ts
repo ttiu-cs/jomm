@@ -48,6 +48,8 @@ export const ROSA = {
       learned: "Strawberries · $5.49/box · never below $4.25 · this week",
     },
   ],
+  /** Rosa's phone video: one clip for opening the stall, then one per crate (generated, POV, hands only). */
+  clips: { open: "/videos/rosa-open.mp4", scenes: ["/videos/rosa-apples.mp4", "/videos/rosa-peaches.mp4", "/videos/rosa-strawberries.mp4"] },
   photos: { "fuji apples": "/photos/apples-box.jpg", "white peaches": "/photos/peaches-hand.jpg", strawberries: "/photos/strawberries-market.jpg" } as Record<string, string>,
 };
 

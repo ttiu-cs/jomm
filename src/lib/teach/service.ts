@@ -233,6 +233,17 @@ const DraftPatch = z
     condition: z.string().max(40).nullable(),
     sellBy: z.enum(["today", "this_week", "no_rush"]).nullable(),
     facts: z.array(z.string().min(1).max(160)).max(12),
+    rules: z
+      .object({
+        closeHour: z.number().int().min(0).max(23).nullable(),
+        marketCents: z.number().int().min(1).max(10_000_00).nullable(),
+        marketNote: z.string().max(60).nullable(),
+        demand: z.enum(["high", "normal", "slow"]).nullable(),
+        bulk: z.union([z.object({ minQty: z.number().int().min(1).max(1000), pctOff: z.number().int().min(1).max(50) }), z.literal(false)]).nullable(),
+        leftover: z.enum(["waste", "use", "keep"]).nullable(),
+      })
+      .partial()
+      .strict(),
   })
   .partial()
   .strict();
@@ -243,7 +254,7 @@ export function updateDraft(db: DB, itemId: string, patch: unknown, now = new Da
   const row = db.prepare("SELECT * FROM draft_items WHERE id=?").get(itemId) as DraftRow | undefined;
   if (!row) throw new DomainError("NOT_FOUND", "Item not found", 404);
   db.prepare(
-    "UPDATE draft_items SET name=?, unit=?, quantity=?, list_price_cents=?, floor_price_cents=?, condition=?, sell_by=?, facts_json=?, updated_at=? WHERE id=?",
+    "UPDATE draft_items SET name=?, unit=?, quantity=?, list_price_cents=?, floor_price_cents=?, condition=?, sell_by=?, facts_json=?, rules_json=?, updated_at=? WHERE id=?",
   ).run(
     p.name ?? row.name,
     p.unit ?? row.unit,
@@ -253,6 +264,7 @@ export function updateDraft(db: DB, itemId: string, patch: unknown, now = new Da
     p.condition !== undefined ? p.condition : row.condition,
     p.sellBy !== undefined ? p.sellBy : row.sell_by,
     p.facts ? JSON.stringify(p.facts) : row.facts_json,
+    p.rules ? JSON.stringify({ ...JSON.parse(row.rules_json || "{}"), ...p.rules }) : (row.rules_json ?? "{}"),
     now.toISOString(),
     itemId,
   );

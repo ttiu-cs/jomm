@@ -147,6 +147,12 @@ export default function SellerHome({ shopId }: { shopId: string }) {
           </ul>
         )}
       </section>
+      <p className="mt-10 text-center text-[13px] text-label-3">
+        Not {d.shop.name}?{" "}
+        <Link href="/seller?switch=1" className="text-link hover:underline">
+          Start another shop
+        </Link>
+      </p>
     </main>
   );
 }

@@ -100,11 +100,8 @@ export function SellerShell({ shopId, shopName, children }: { shopId: string; sh
             ))}
           </nav>
           <div className="flex items-center gap-4 text-[14px]">
-            <Link href={`/shop/${shopId}`} className="text-link hover:underline">
-              Shop page
-            </Link>
-            <Link href="/seller?switch=1" className="text-link hover:underline">
-              Switch
+            <Link href={`/shop/${shopId}`} className="text-link hover:underline" title="See your shop the way shoppers and their agents see it">
+              View my shop ›
             </Link>
           </div>
         </div>

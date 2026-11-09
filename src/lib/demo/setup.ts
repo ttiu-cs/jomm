@@ -27,5 +27,7 @@ export async function setupRosa(db: DB, now = new Date()) {
     // The real conversation the replay shows: Rosa's lines and her agent's questions.
     transcript: taught.messages.map((m) => ({ role: m.role, text: m.text })),
     checklists: taught.items.map((i) => ({ name: i.name, checklist: i.checklist })),
+    // What the agent learned, per item (shown in the demo's "How Rosa taught her agent" panel).
+    learned: taught.items.map((i) => ({ name: i.name, unit: i.unit, quantity: i.quantity, listPriceCents: i.listPriceCents, floorPriceCents: i.floorPriceCents, sellBy: i.sellBy, facts: i.facts, condition: i.condition, rules: i.rules ?? {} })),
   };
 }

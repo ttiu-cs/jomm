@@ -6,6 +6,7 @@ import { Checkout, type OrderView } from "@/components/Checkout";
 import { SiteHeader } from "@/components/shells";
 import { IconCart, IconCheck, IconLock, IconStore } from "@/components/icons";
 import { PERSONAS, ROSA } from "@/lib/demo/rosa";
+import { prefetch, speak, stopVoice } from "@/lib/client/voice";
 
 // ------------------------------------------------------------------ types
 
@@ -159,6 +160,11 @@ export default function Demo() {
         {/* Act 2: the shopper's intent */}
         <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Your agent">
           <h2 className="text-center text-[28px] font-semibold sm:text-[34px]">2. What should your agent buy?</h2>
+          {setup && (
+            <div className="mt-1 flex justify-center">
+              <HowRosaTaught data={setup} label="ⓘ What does Rosa’s agent know?" />
+            </div>
+          )}
           <p className="text-center text-[17px] text-label-2">Say it the way you’d say it to a friend: what, how much, what for, and your budget.</p>
           <form
             className="mx-auto mt-6 flex max-w-3xl flex-col gap-2 rounded-[28px] bg-card p-2 shadow-[0_18px_40px_-24px_rgba(60,30,10,0.4)] sm:flex-row sm:items-center sm:rounded-full sm:pl-6"
@@ -231,6 +237,17 @@ interface SetupData {
   startedAt: string;
   transcript: { role: "owner" | "agent"; text: string }[];
   checklists: { name: string; checklist: Check[] }[];
+  learned: {
+    name: string;
+    unit: string;
+    quantity: number | null;
+    listPriceCents: number | null;
+    floorPriceCents: number | null;
+    sellBy: string | null;
+    facts: string[];
+    condition: string | null;
+    rules: { closeHour?: number | null; marketCents?: number | null; marketNote?: string | null; demand?: string | null; bulk?: { minQty: number; pctOff: number } | false | null; leftover?: string | null };
+  }[];
 }
 
 /** Which checklist items Rosa's n-th line in a scene answers (line 1: what/how many/facts, 2: prices, 3: deadline, then one rule each). */
@@ -259,20 +276,38 @@ function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () =>
     });
   }, [data]);
   const [i, setI] = useState(0);
+  const [started, setStarted] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
   const finished = steps.length > 0 && i >= steps.length;
   const doneRef = useRef(false);
   useEffect(() => {
-    if (!steps.length) return;
-    if (finished) {
-      if (!doneRef.current) {
-        doneRef.current = true;
-        onDone();
-      }
-      return;
+    if (finished && !doneRef.current) {
+      doneRef.current = true;
+      onDone();
     }
-    const t = setTimeout(() => setI((x) => x + 1), i === 0 ? 700 : steps[i - 1]?.role === "owner" ? 650 : 950);
-    return () => clearTimeout(t);
-  }, [i, finished, steps, onDone]);
+  }, [finished, onDone]);
+  useEffect(() => {
+    mutedRef.current = muted;
+    if (muted) stopVoice();
+  }, [muted]);
+  // Each line is revealed, then spoken (Rosa's voice / her agent's voice); the next one is preloaded.
+  useEffect(() => {
+    if (!started || !steps.length) return;
+    const ctl = { on: true };
+    (async () => {
+      for (let k = 0; k < steps.length && ctl.on; k++) {
+        const st = steps[k];
+        if (steps[k + 1]) prefetch(steps[k + 1].role, steps[k + 1].text);
+        setI(k + 1);
+        await speak(st.role, st.text, { muted: mutedRef.current });
+      }
+    })();
+    return () => {
+      ctl.on = false;
+      stopVoice();
+    };
+  }, [started, steps]);
 
   const cur = steps[Math.min(i, steps.length - 1)];
   const sceneIdx = finished ? ROSA.scenes.length - 1 : (cur?.scene ?? 0);
@@ -287,16 +322,34 @@ function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () =>
   return (
     <section className="mt-10 grid items-stretch gap-5 lg:grid-cols-[1fr_1fr]" aria-label="Rosa teaches">
       <div className="grain relative min-h-[460px] overflow-hidden rounded-[28px] bg-black">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={scene.photo} src={scene.photo} alt="" className="handheld warm-photo absolute inset-0 h-full w-full object-cover" />
-        <span key={`f${scene.photo}`} className="focus-square z-10" aria-hidden />
+        <video key={started || finished ? ROSA.clips.scenes[sceneIdx] : ROSA.clips.open} src={started || finished ? ROSA.clips.scenes[sceneIdx] : ROSA.clips.open} poster={scene.photo} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />
+        <span key={`f${sceneIdx}`} className="focus-square z-10" aria-hidden />
+        {!started && !finished && data && (
+          <div className="absolute inset-0 z-20 grid place-items-center bg-black/35">
+            <button type="button" onClick={() => setStarted(true)} className="flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-[17px] font-semibold text-label shadow-lg">
+              ▶ Play Rosa’s video
+            </button>
+          </div>
+        )}
+        {started && !finished && (
+          <button type="button" onClick={() => setMuted((m) => !m)} className="frosted-dark absolute right-[92px] top-4 z-10 rounded-full px-3 py-1.5 text-[14px] text-white" aria-label={muted ? "Sound on" : "Sound off"}>
+            {muted ? "🔇" : "🔊"}
+          </button>
+        )}
         <div className="absolute left-4 top-4 z-10 flex items-center gap-2">
           <span className="frosted-dark flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-white">
             <span className="rec-dot h-2 w-2 rounded-full bg-[#ff3b30]" /> Rosa’s phone · scripted replay
           </span>
         </div>
         {!finished && steps.length > 0 && (
-          <button type="button" onClick={() => setI(steps.length)} className="frosted-dark absolute right-4 top-4 z-10 rounded-full px-3.5 py-1.5 text-[14px] text-white">
+          <button
+            type="button"
+            onClick={() => {
+              setStarted(false);
+              setI(steps.length);
+            }}
+            className="frosted-dark absolute right-4 top-4 z-10 rounded-full px-3.5 py-1.5 text-[14px] text-white"
+          >
             Skip ›
           </button>
         )}
@@ -365,9 +418,98 @@ function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () =>
           ) : (
             <p className="text-label-3">{data ? "Listening…" : "Setting up Rosa’s stall…"}</p>
           )}
+          {data && <HowRosaTaught data={data} />}
         </div>
       </div>
     </section>
+  );
+}
+
+const SELL_BY_TXT: Record<string, string> = { today: "Must sell today", this_week: "This week", no_rush: "No rush" };
+const hour12 = (h: number) => `${((h + 11) % 12) + 1} ${h >= 12 ? "pm" : "am"}`;
+
+/** Shows exactly what Rosa said and what her agent took from it, so the demo isn't a black box. */
+function HowRosaTaught({ data, label = "ⓘ How Rosa taught her agent" }: { data: SetupData; label?: string }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"learned" | "conversation">("learned");
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="mt-2 text-[15px] font-medium text-link hover:underline">
+        {label}
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-label="How Rosa taught her agent" onClick={() => setOpen(false)}>
+          <div className="max-h-[88vh] w-full max-w-[760px] overflow-y-auto rounded-[28px] bg-card p-6 text-left shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[24px] font-semibold">How Rosa taught her agent</h3>
+                <p className="text-[15px] text-label-2">One short conversation this morning, pointing her phone at each crate. Everything the agent sells and haggles with comes from this.</p>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full bg-fill px-3 py-1.5 text-[14px]">
+                Close
+              </button>
+            </div>
+            <div className="mt-4 inline-flex rounded-full bg-fill p-1 text-[14px]">
+              {(["learned", "conversation"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 ${tab === t ? "bg-card font-semibold shadow-sm" : "text-label-2"}`}>
+                  {t === "learned" ? "What the agent knows" : "The conversation"}
+                </button>
+              ))}
+            </div>
+            {tab === "learned" ? (
+              <div className="mt-4 space-y-3">
+                {data.learned.map((it) => {
+                  const r = it.rules;
+                  const per = it.unit === "each" ? "" : `/${it.unit}`;
+                  const rows: [string, string, boolean?][] = [
+                    ["Stock", `${it.quantity ?? "?"} ${it.unit}`],
+                    ["Listed price", `${usd(it.listPriceCents)}${per}`],
+                    ["Lowest price", `${usd(it.floorPriceCents)}${per}`, true],
+                    ["Sell by", SELL_BY_TXT[it.sellBy ?? ""] ?? "—"],
+                    ...(typeof r.closeHour === "number" ? ([["Closing time", hour12(r.closeHour), true]] as [string, string, boolean][]) : []),
+                    ["Price elsewhere", typeof r.marketCents === "number" ? `${usd(r.marketCents)}${per} at ${(r.marketNote ?? "other shops").replace(/^the /, "the ")}` : "—", true],
+                    ["Bulk deal", r.bulk ? `${r.bulk.pctOff}% off ${r.bulk.minQty}+ ${it.unit}` : r.bulk === false ? "None" : "—", true],
+                    ["If unsold", r.leftover === "waste" ? "Thrown away" : r.leftover === "use" ? "She uses them" : r.leftover === "keep" ? "They keep" : "—", true],
+                    ["How fast it sells", r.demand === "high" ? "Sells out" : r.demand === "slow" ? "Slow this week" : r.demand === "normal" ? "Steady" : "—", true],
+                    ["Buyers are told", [...it.facts, ...(it.condition ? [it.condition] : [])].join(" · ") || "—"],
+                  ];
+                  return (
+                    <div key={it.name} className="rounded-[18px] bg-canvas p-4">
+                      <div className="text-[17px] font-semibold">{it.name}</div>
+                      <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-[14px] sm:grid-cols-2">
+                        {rows.map(([k, v, priv]) => (
+                          <div key={k} className="flex justify-between gap-3 border-b border-line py-1">
+                            <dt className="flex items-center gap-1 text-label-2">
+                              {priv && <IconLock size={11} />}
+                              {k}
+                            </dt>
+                            <dd className="text-right">{v}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  );
+                })}
+                <p className="flex items-center gap-1.5 text-[13px] text-label-3">
+                  <IconLock size={12} /> Private to Rosa’s agent. Shoppers and their agents only see the listing and what buyers are told.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {data.transcript.map((m, k) => (
+                  <div key={k} className={`flex ${m.role === "owner" ? "justify-end" : ""}`}>
+                    <p className={`max-w-[80%] rounded-[18px] px-3.5 py-2 text-[14px] leading-snug ${m.role === "owner" ? "rounded-br-[6px] bg-brand text-white" : "rounded-bl-[6px] bg-fill"}`}>
+                      <span className={`block text-[11px] font-semibold ${m.role === "owner" ? "text-white/70" : "text-label-3"}`}>{m.role === "owner" ? "Rosa" : "Her agent"}</span>
+                      {m.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

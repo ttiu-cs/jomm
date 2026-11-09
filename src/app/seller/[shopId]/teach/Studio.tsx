@@ -7,6 +7,21 @@ import { EXAMPLE_SCRIPTS } from "@/lib/teach/examples";
 import { SCENES, photoFor, photoToDataUrl, type SceneKind } from "@/lib/client/demoPhotos";
 import { ItemCard } from "@/components/ItemCard";
 import { IconCamera, IconMic, IconSend, IconStop, IconStore } from "@/components/icons";
+import { ROSA } from "@/lib/demo/rosa";
+import { prefetch, speak as speakLine, stopVoice } from "@/lib/client/voice";
+
+/** Rosa's sample video: one clip per crate, played while her lines go through the real teaching pipeline. */
+const CLIPS = ROSA.clips;
+const ROSA_LINES = ROSA.scenes.flatMap((sc) => sc.lines);
+const AGENT_HELLO = "Morning, Rosa! Show me what you've got today.";
+const sceneOfLine = (n: number) => {
+  let left = n;
+  for (let i = 0; i < ROSA.scenes.length; i++) {
+    if (left < ROSA.scenes[i].lines.length) return i;
+    left -= ROSA.scenes[i].lines.length;
+  }
+  return ROSA.scenes.length - 1;
+};
 
 interface Item {
   id: string;
@@ -19,6 +34,8 @@ interface Item {
   sellBy: "today" | "this_week" | "no_rush" | null;
   facts: string[];
   photo: string | null;
+  rules?: { closeHour?: number | null; marketCents?: number | null; marketNote?: string | null; demand?: string | null; bulk?: { minQty: number; pctOff: number } | false | null; leftover?: string | null };
+  checklist?: { key: string; label: string; done: boolean; skipped?: boolean }[];
 }
 interface Session {
   id: string;
@@ -42,7 +59,7 @@ interface SpeechRec {
   stop: () => void;
 }
 type SpeechCtor = new () => SpeechRec;
-type Source = { kind: "none" } | { kind: "camera" } | { kind: "demo"; scene: SceneKind };
+type Source = { kind: "none" } | { kind: "camera" } | { kind: "demo"; scene: SceneKind } | { kind: "video" };
 
 const GREETING = "Hi! Point me at something you sell and tell me what it is, like “These are Fuji apples, about 30 lb.”";
 
@@ -75,6 +92,11 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   const [err, setErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const clipRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [caption, setCaption] = useState<string | null>(null);
+  const [agentLine, setAgentLine] = useState<string | null>(null);
   const [speechOk] = useState(() => {
     if (typeof window === "undefined") return false;
     const w = window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor };
@@ -92,7 +114,10 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   const focusItem = session.items.find((i) => i.id === session.focusItemId) ?? null;
   const items = [...session.items].sort((a, b) => (a.id === session.focusItemId ? -1 : b.id === session.focusItemId ? 1 : 0));
   const ready = session.items.filter((i) => i.quantity !== null && i.quantity > 0 && i.listPriceCents !== null).length;
-  const lastAgent = [...session.messages].reverse().find((m) => m.role === "agent")?.text ?? GREETING;
+  const lastAgent = agentLine ?? [...session.messages].reverse().find((m) => m.role === "agent")?.text ?? GREETING;
+  const ownerSaid = session.messages.filter((m) => m.role === "owner").length;
+  const videoDone = source.kind === "video" && ownerSaid >= ROSA_LINES.length;
+  const clip = source.kind !== "video" ? null : ownerSaid === 0 && !caption ? CLIPS.open : CLIPS.scenes[sceneOfLine(Math.max(0, ownerSaid - (caption ? 0 : 1)))];
   const demoPhoto = source.kind === "demo" ? (focusItem && photoFor(source.scene, focusItem.name)?.src) || SCENES[source.scene].wide : null;
   const nextLine = useMemo(() => {
     if (source.kind !== "demo") return null;
@@ -117,6 +142,14 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   };
 
   const frame = async (utterance: string): Promise<string | null> => {
+    const cv = clipRef.current;
+    if (source.kind === "video" && cv && canvasRef.current && cv.videoWidth) {
+      const c = canvasRef.current;
+      c.width = 512;
+      c.height = Math.round((cv.videoHeight / cv.videoWidth) * 512);
+      c.getContext("2d")!.drawImage(cv, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.7);
+    }
     if (source.kind === "demo") {
       const p = photoFor(source.scene, utterance) ?? (focusItem ? photoFor(source.scene, focusItem.name) : null);
       return p ? photoToDataUrl(p.src) : null;
@@ -141,22 +174,69 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
     [speak, lang],
   );
 
-  const send = async (utterance: string) => {
+  const send = async (utterance: string): Promise<Session | null> => {
     const t = utterance.trim();
-    if (!t || sending) return;
+    if (!t || sending) return null;
     setSending(true);
     setErr(null);
     try {
-      const s = await api<Session>(`/api/teach/sessions/${session.id}/turn`, { text: t, image: await frame(t) });
+      const s = await api<Session>(`/api/teach/sessions/${session.id}/turn`, { text: t, image: await frame(t), scripted: source.kind === "video" });
       setSession(s);
       setText("");
-      if (s.reply) say(s.reply);
+      if (s.reply && source.kind !== "video") say(s.reply);
+      return s;
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
+      return null;
     } finally {
       setSending(false);
     }
   };
+
+  // The sample video: Rosa says each line (her voice), the line goes through the real teaching
+  // pipeline, and the agent's actual reply is spoken back. Pausing stops after the current line.
+  const playRef = useRef({ on: false });
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+    if (muted) stopVoice();
+  }, [muted]);
+  const sendRef = useRef(send);
+  useEffect(() => {
+    sendRef.current = send;
+  });
+  useEffect(() => {
+    if (source.kind !== "video" || !playing) return;
+    const ctl = { on: true };
+    playRef.current = ctl;
+    (async () => {
+      let said = ownerSaid;
+      if (said === 0) {
+        setAgentLine(AGENT_HELLO);
+        prefetch("owner", ROSA_LINES[0]);
+        await speakLine("agent", AGENT_HELLO, { muted: mutedRef.current });
+      }
+      while (ctl.on && said < ROSA_LINES.length) {
+        const line = ROSA_LINES[said];
+        setCaption(line);
+        await speakLine("owner", line, { muted: mutedRef.current });
+        if (!ctl.on) break;
+        const s = await sendRef.current(line);
+        if (!s) break;
+        said++;
+        setAgentLine(null);
+        if (said < ROSA_LINES.length) prefetch("owner", ROSA_LINES[said]);
+        if (s.reply && ctl.on) await speakLine("agent", s.reply, { muted: mutedRef.current });
+      }
+      setCaption(null);
+      if (said >= ROSA_LINES.length) setPlaying(false);
+    })();
+    return () => {
+      ctl.on = false;
+      stopVoice();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, source.kind]);
 
   const toggleMic = () => {
     if (listening) return recRef.current?.stop();
@@ -206,11 +286,18 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
       <section className="lg:sticky lg:top-20 lg:self-start">
         <div className="grain relative h-[58vh] min-h-[360px] overflow-hidden bg-black lg:aspect-[4/5] lg:h-auto lg:rounded-[32px]">
           {source.kind === "camera" && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
+          {clip && <video ref={clipRef} key={clip} src={clip} poster={clip === CLIPS.open ? "/photos/stall-live.jpg" : ROSA.scenes[CLIPS.scenes.indexOf(clip)]?.photo} autoPlay loop muted playsInline className="warm-photo absolute inset-0 h-full w-full object-cover" />}
+          {source.kind === "video" && caption && (
+            <p key={caption} className="rise absolute inset-x-4 bottom-[132px] z-10 ml-auto w-fit max-w-[88%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[16px] leading-snug text-white shadow-lg">
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/70">Rosa</span>
+              {caption}
+            </p>
+          )}
           {demoPhoto && (
             // eslint-disable-next-line @next/next/no-img-element
             <img key={demoPhoto} src={demoPhoto} alt="Sample camera view" className="handheld warm-photo absolute inset-0 h-full w-full object-cover" />
           )}
-          {source.kind !== "none" && <span key={`focus-${demoPhoto ?? "cam"}-${session.focusItemId ?? ""}`} className="focus-square z-10" aria-hidden />}
+          {source.kind !== "none" && <span key={`focus-${demoPhoto ?? clip ?? "cam"}-${session.focusItemId ?? ""}`} className="focus-square z-10" aria-hidden />}
           {source.kind === "none" && (
             <div className="absolute inset-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -219,15 +306,20 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
                 <div className="w-full max-w-sm text-center text-white">
                   <p className="hand text-[30px] text-[#ffd9a8]">Morning! What are we selling today?</p>
                   <h2 className="display mt-1 text-[30px] leading-tight">Show me your stall.</h2>
-                  <p className="mt-2 text-[17px] text-white/80">Walk around with the camera on and talk, like you’re training a new helper.</p>
-                  <button type="button" onClick={startCamera} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-[17px] font-semibold text-label">
-                    <IconCamera size={22} /> Turn on camera
+                  <p className="mt-2 text-[17px] text-white/80">Walk around with the camera on and talk, like you’re training a new helper. Your assistant asks until it knows enough to haggle for you.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSource({ kind: "video" });
+                      setPlaying(true);
+                    }}
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-[17px] font-semibold text-label"
+                  >
+                    ▶ Play the sample video
                   </button>
-                  <button type="button" onClick={() => setSource({ kind: "demo", scene: "fruit" })} className="frosted-dark mt-3 w-full rounded-full py-3.5 text-[17px] font-medium text-white">
-                    Use the sample fruit stand
-                  </button>
-                  <button type="button" onClick={() => setSource({ kind: "demo", scene: "closet" })} className="mt-3 text-[15px] text-white/80 hover:text-white">
-                    Or a sample closet
+                  <p className="mt-2 text-[13px] text-white/70">Rosa teaches her fruit stall’s assistant, with sound. For this demo, instead of your camera.</p>
+                  <button type="button" onClick={startCamera} className="mt-4 inline-flex items-center gap-1.5 text-[15px] text-white/80 hover:text-white">
+                    <IconCamera size={16} /> Or use my camera (needs https)
                   </button>
                   {camErr && <p className="mt-4 rounded-2xl bg-white/15 p-3 text-[14px]">{camErr}</p>}
                 </div>
@@ -239,7 +331,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
             <Link href={`/seller/${session.shopId}`} className="frosted-dark rounded-full px-3.5 py-1.5 text-[15px] text-white lg:hidden">
               Done
             </Link>
-            {source.kind !== "none" ? <LiveBadge sample={source.kind === "demo"} /> : <span />}
+            {source.kind !== "none" ? <LiveBadge sample={source.kind === "demo" || source.kind === "video"} /> : <span />}
             <button
               type="button"
               onClick={openShop}
@@ -270,6 +362,20 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
 
         {/* Talk bar */}
         <div className="frosted fixed inset-x-0 bottom-0 z-40 border-t border-black/10 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2.5 lg:static lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          {source.kind === "video" && (
+            <div className="mx-auto mb-2.5 flex max-w-[1100px] items-center gap-2">
+              {videoDone ? (
+                <p className="flex-1 rounded-[18px] bg-card px-4 py-3 text-[15px] font-medium text-green">Done. Check the cards, then tap “Open shop”.</p>
+              ) : (
+                <button type="button" onClick={() => setPlaying((p) => !p)} className="flex-1 rounded-full bg-label py-3 text-[16px] font-semibold text-white">
+                  {playing ? "❚❚ Pause" : ownerSaid ? "▶ Resume video" : "▶ Play"}
+                </button>
+              )}
+              <button type="button" onClick={() => setMuted((m) => !m)} className="rounded-full bg-card px-4 py-3 text-[15px]" aria-label={muted ? "Sound on" : "Sound off"}>
+                {muted ? "🔇" : "🔊"}
+              </button>
+            </div>
+          )}
           {nextLine && (
             <button
               type="button"
@@ -336,6 +442,7 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
               ) : (
                 <button type="button" onClick={() => setEditing(it.id)} className="block w-full text-left">
                   <ItemCard t={it} active={session.focusItemId === it.id} />
+                  {it.checklist && <Checklist items={it.checklist} />}
                 </button>
               )}
             </div>
@@ -373,6 +480,30 @@ function Teach({ session, setSession, onOpened }: { session: Session; setSession
   );
 }
 
+/** What the assistant still needs to know to haggle well. */
+function Checklist({ items }: { items: NonNullable<Item["checklist"]> }) {
+  const done = items.filter((c) => c.done).length;
+  const missing = items.filter((c) => !c.done);
+  return (
+    <div className="mt-1.5 rounded-[14px] bg-card px-3 py-2 text-[12px]">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">Ready to haggle</span>
+        <span className={`tnum rounded-full px-2 py-0.5 font-semibold ${missing.length ? "bg-fill text-label-2" : "bg-green-fill/15 text-green"}`}>
+          {done}/{items.length}
+        </span>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {items.map((c) => (
+          <span key={c.key} className={`rounded-full px-2 py-0.5 ${c.done ? "bg-label text-white" : c.skipped ? "bg-fill text-label-3 line-through" : "bg-fill text-label-3"}`}>
+            {c.done ? "✓ " : ""}
+            {c.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** "● Live 00:42" like a phone camera recording, so the screen reads as a live camera, not a photo. */
 function LiveBadge({ sample }: { sample: boolean }) {
   const [secs, setSecs] = useState(0);
@@ -401,6 +532,13 @@ function EditItem({ item, onDone }: { item: Item; onDone: (s: Session | null) =>
     floor: item.floorPriceCents !== null ? (item.floorPriceCents / 100).toFixed(2) : "",
     sellBy: item.sellBy ?? "",
     facts: item.facts.join("\n"),
+    closeHour: typeof item.rules?.closeHour === "number" ? String(item.rules.closeHour) : "",
+    market: typeof item.rules?.marketCents === "number" ? (item.rules.marketCents / 100).toFixed(2) : "",
+    marketNote: item.rules?.marketNote ?? "",
+    bulkQty: item.rules?.bulk ? String(item.rules.bulk.minQty) : "",
+    bulkPct: item.rules?.bulk ? String(item.rules.bulk.pctOff) : "",
+    leftover: item.rules?.leftover ?? "",
+    demand: item.rules?.demand ?? "",
   });
   const [err, setErr] = useState<string | null>(null);
   const cents = (s: string) => (s.trim() ? Math.round(parseFloat(s) * 100) : null);
@@ -446,6 +584,14 @@ function EditItem({ item, onDone }: { item: Item; onDone: (s: Session | null) =>
               floorPriceCents: cents(f.floor),
               sellBy: f.sellBy || null,
               facts: f.facts.split("\n").map((x) => x.trim()).filter(Boolean),
+              rules: {
+                closeHour: f.closeHour ? parseInt(f.closeHour, 10) : null,
+                marketCents: cents(f.market),
+                marketNote: f.marketNote.trim() || null,
+                bulk: f.bulkQty && f.bulkPct ? { minQty: parseInt(f.bulkQty, 10), pctOff: parseInt(f.bulkPct, 10) } : item.rules?.bulk === false ? false : null,
+                leftover: (f.leftover || null) as "waste" | "use" | "keep" | null,
+                demand: (f.demand || null) as "high" | "normal" | "slow" | null,
+              },
             })
           }
         >
@@ -464,6 +610,48 @@ function EditItem({ item, onDone }: { item: Item; onDone: (s: Session | null) =>
           <option value="today">Today</option>
           <option value="this_week">This week</option>
           <option value="no_rush">No rush</option>
+        </select>
+      </label>
+      <div className="border-b border-line bg-canvas px-4 pb-1 pt-3 text-[13px] font-semibold uppercase tracking-wide text-label-2">For haggling (only you see this)</div>
+      {f.sellBy === "today" && (
+        <label className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+          <span>Closing time</span>
+          <select className="bg-transparent text-right text-label-2 outline-none" value={f.closeHour} onChange={(e) => setF({ ...f, closeHour: e.target.value })}>
+            <option value="">Not set</option>
+            {Array.from({ length: 12 }, (_, k) => k + 12).map((h) => (
+              <option key={h} value={h}>
+                {h === 12 ? "12 pm" : `${h - 12} pm`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {row("market", "Price elsewhere ($)", "number")}
+      {row("marketNote", "Where (e.g. the supermarket)")}
+      <label className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+        <span className="shrink-0">Bulk deal</span>
+        <span className="flex min-w-0 items-center gap-1 text-label-2">
+          <input type="number" inputMode="numeric" className="w-12 bg-transparent text-right outline-none" placeholder="5" value={f.bulkQty} onChange={(e) => setF({ ...f, bulkQty: e.target.value })} aria-label="Bulk minimum quantity" />
+          {item.unit === "each" ? "+" : `${item.unit}+`}
+          <input type="number" inputMode="numeric" className="w-10 bg-transparent text-right outline-none" placeholder="10" value={f.bulkPct} onChange={(e) => setF({ ...f, bulkPct: e.target.value })} aria-label="Bulk percent off" />% off
+        </span>
+      </label>
+      <label className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+        <span>If unsold</span>
+        <select className="bg-transparent text-right text-label-2 outline-none" value={f.leftover} onChange={(e) => setF({ ...f, leftover: e.target.value })}>
+          <option value="">Not set</option>
+          <option value="waste">Thrown away</option>
+          <option value="use">I use them (jam, juice…)</option>
+          <option value="keep">They keep</option>
+        </select>
+      </label>
+      <label className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+        <span>How fast it sells</span>
+        <select className="bg-transparent text-right text-label-2 outline-none" value={f.demand} onChange={(e) => setF({ ...f, demand: e.target.value })}>
+          <option value="">Not set</option>
+          <option value="high">Sells out</option>
+          <option value="normal">Steady</option>
+          <option value="slow">Slow</option>
         </select>
       </label>
       <label className="block px-4 py-2.5">
