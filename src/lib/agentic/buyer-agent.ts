@@ -400,8 +400,10 @@ async function toolLoop(ctx: Ctx, client: OpenAI, model: string, messages: ChatC
     const msg = r.choices[0]?.message;
     if (!msg) break;
     messages.push(msg as ChatCompletionMessageParam);
-    if (msg.content?.trim()) emit({ type: "note", text: msg.content.trim() });
     const calls = (msg.tool_calls ?? []).filter((c): c is ChatCompletionMessageFunctionToolCall => c.type === "function");
+    // Models often repeat the offer they are about to send as a note; show it once, in the chat.
+    const note = msg.content?.trim();
+    if (note && !calls.some((c) => c.function.arguments?.includes(note.slice(0, 40)))) emit({ type: "note", text: note });
     if (!calls.length) {
       // Models sometimes narrate the next step ("please approve in PayPal") without calling the tool.
       const open = ctx.sessionId ? sessionView(ctx.db, ctx.sessionId).status : null;
