@@ -154,7 +154,7 @@ export default function Demo() {
         <header className="text-center">
           <p className="hand text-[26px]">A Tuesday at {ROSA.shopName}</p>
           <h1 className="display mx-auto mt-1 max-w-3xl text-[40px] leading-[1.05] sm:text-[56px]">Teach your stall. It haggles with AI. PayPal pays.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa runs a three-crate fruit stall, with no website and no tech team. She filmed her stall and talked, and that built her own selling agent. When a shopper’s AI agent comes looking, hers haggles the way she would, and PayPal pays her on the spot.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-[18px] text-label-2">Rosa runs a three-crate fruit stall, with no website and no tech team. She just pointed her phone camera at her crates and talked with her agent, and it learned her prices, her limits and her reasons. When a shopper’s AI agent comes looking, hers haggles the way she would, and PayPal pays her on the spot.</p>
         </header>
 
         <Steps taught={taught} anyRun={runs.length > 0} paid={runs.some((r) => r.outcome === "paid")} />
