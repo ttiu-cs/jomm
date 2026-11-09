@@ -14,6 +14,7 @@ import { createQuote, type QuoteRow } from "./commerce";
 import { expireStaleQuotes, getContext, type ProductContext } from "./context";
 import { emit } from "./events";
 import { DomainError, audit, newId } from "./util";
+import type { SellingRules } from "../teach/parser";
 
 export const MAX_BUYER_OFFERS = 3;
 export const MAX_NEGOTIATION_QTY = 10;
@@ -53,12 +54,12 @@ export interface NegotiationMessage {
 }
 
 /** Seller-private pricing view for negotiation (merchant / demo only; never sent to buyers). */
-export function sellerNegotiationView(db: DB, productId: string, now = new Date()) {
+export function sellerNegotiationView(db: DB, productId: string, now = new Date(), qty = 1) {
   expireStaleQuotes(db, now);
   const ctx = getContext(db, productId, now);
-  const st = computeStrategy(db, ctx);
+  const st = computeStrategy(db, ctx, qty, now);
   const reason = st.knowledge ? taughtReason(st) : sellerReason(ctx, st.w);
-  return { ...st.w, reason, storeOpen: ctx.storeOpen, closeHour: ctx.product.closeHour, maxDiscountBps: ctx.policy.maxNegotiationDiscountBps, sellBy: st.knowledge?.sell_by ?? null, unit: st.unit };
+  return { ...st.w, reason, why: st.why ?? null, pressure: st.pressure ?? null, storeOpen: ctx.storeOpen, closeHour: ctx.product.closeHour, maxDiscountBps: ctx.policy.maxNegotiationDiscountBps, sellBy: st.knowledge?.sell_by ?? null, unit: st.unit };
 }
 
 export interface Knowledge {
@@ -66,13 +67,63 @@ export interface Knowledge {
   sell_by: "today" | "this_week" | "no_rush";
   condition: string | null;
   facts: string[];
+  rules: SellingRules;
 }
 
 export function getKnowledge(db: DB, productId: string): Knowledge | null {
-  const k = db.prepare("SELECT floor_cents, sell_by, condition, facts_json FROM product_knowledge WHERE product_id=?").get(productId) as
-    | { floor_cents: number; sell_by: Knowledge["sell_by"]; condition: string | null; facts_json: string }
+  const k = db.prepare("SELECT floor_cents, sell_by, condition, facts_json, rules_json FROM product_knowledge WHERE product_id=?").get(productId) as
+    | { floor_cents: number; sell_by: Knowledge["sell_by"]; condition: string | null; facts_json: string; rules_json: string | null }
     | undefined;
-  return k ? { floor_cents: k.floor_cents, sell_by: k.sell_by, condition: k.condition, facts: JSON.parse(k.facts_json) } : null;
+  return k ? { floor_cents: k.floor_cents, sell_by: k.sell_by, condition: k.condition, facts: JSON.parse(k.facts_json), rules: JSON.parse(k.rules_json || "{}") } : null;
+}
+
+const hasRules = (k: Knowledge | null) => !!k && Object.values(k.rules ?? {}).some((v) => v !== undefined && v !== null);
+/** Owners who taught selling rules get a longer, reasoned haggle (4 offers); others the short one (3). */
+export function maxOffersFor(db: DB, productId: string) {
+  return hasRules(getKnowledge(db, productId)) ? 4 : MAX_BUYER_OFFERS;
+}
+
+/** Hour of day at the stall (fractional), in the stall's own time zone. */
+function stallHour(tz: string, now: Date) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(now);
+    const h = Number(parts.find((p) => p.type === "hour")?.value ?? 12);
+    const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+    return h + m / 60;
+  } catch {
+    return now.getUTCHours();
+  }
+}
+const OPEN_HOUR = 8;
+const hourLabel = (h: number) => `${((Math.round(h) + 11) % 12) + 1} ${h >= 12 ? "pm" : "am"}`;
+
+/**
+ * How much of the gap between listed price and the owner's floor the agent may give up, from what
+ * the owner taught: urgency, time left before closing, how it usually sells, what happens to
+ * leftovers, and how the price compares with what shoppers pay elsewhere. Each factor is recorded
+ * so the owner can see why.
+ */
+export function sellingPressure(k: Knowledge, listCents: number, hour: number) {
+  const r = k.rules ?? {};
+  const why: { factor: string; effect: number }[] = [];
+  const add = (factor: string, effect: number) => why.push({ factor, effect });
+  add(k.sell_by === "today" ? "Must sell today" : k.sell_by === "this_week" ? "Should sell this week" : "No rush", k.sell_by === "today" ? 0.55 : k.sell_by === "this_week" ? 0.3 : 0.12);
+  if (k.sell_by === "today" && typeof r.closeHour === "number") {
+    const span = Math.max(1, r.closeHour - OPEN_HOUR);
+    const elapsed = Math.min(1, Math.max(0, (hour - OPEN_HOUR) / span));
+    add(`${Math.round(elapsed * 100)}% of the day gone (closes ${hourLabel(r.closeHour)})`, +(0.35 * elapsed).toFixed(2));
+  }
+  if (r.demand === "slow") add("Selling slowly", 0.15);
+  if (r.demand === "high") add("Usually sells out", -0.2);
+  if (r.leftover === "waste" && k.sell_by !== "no_rush") add("Unsold ones are wasted", 0.1);
+  if (r.leftover === "use") add("Leftovers get used", -0.05);
+  if (typeof r.marketCents === "number" && r.marketCents > 0) {
+    const ratio = listCents / r.marketCents;
+    if (ratio > 1.05) add(`Priced above ${r.marketNote ?? "elsewhere"} (${fmt(r.marketCents)})`, 0.1);
+    else if (ratio < 0.95) add(`Already cheaper than ${r.marketNote ?? "elsewhere"} (${fmt(r.marketCents)})`, -0.1);
+  }
+  const p = Math.min(1, Math.max(0, why.reduce((a, w) => a + w.effect, 0)));
+  return { pressure: p, why };
 }
 
 /** Owner-taught urgency: how much of the gap between listed price and owner floor the agent may give up. */
@@ -85,12 +136,19 @@ interface Strategy {
   step: number; // price rounding step for counters
   knowledge: Knowledge | null;
   unit: string;
+  maxOffers: number;
+  /** Rules-based haggle only: the list price after any bulk deal, and the reasoning. */
+  listForQty?: number;
+  bulkApplied?: { minQty: number; pctOff: number } | null;
+  pressure?: number;
+  why?: { factor: string; effect: number }[];
 }
 
-function computeStrategy(db: DB, ctx: ProductContext): Strategy {
+function computeStrategy(db: DB, ctx: ProductContext, qty = 1, now = new Date()): Strategy {
   const k = getKnowledge(db, ctx.product.id);
   const unit = (db.prepare("SELECT unit FROM products WHERE id=?").get(ctx.product.id) as { unit: string }).unit;
-  if (!k) return { w: computeWalkAway(ctx), schedule: CONCESSION, step: 25, knowledge: null, unit };
+  if (!k) return { w: computeWalkAway(ctx), schedule: CONCESSION, step: 25, knowledge: null, unit, maxOffers: MAX_BUYER_OFFERS };
+  if (hasRules(k)) return rulesStrategy(ctx, k, unit, qty, now);
   if (!ctx.published) throw new DomainError("NO_PRICE", "No published price.", 409);
   const list = ctx.published.priceCents;
   const floor = Math.min(list, k.floor_cents);
@@ -113,6 +171,48 @@ function computeStrategy(db: DB, ctx: ProductContext): Strategy {
     step: 5,
     knowledge: k,
     unit,
+    maxOffers: MAX_BUYER_OFFERS,
+  };
+}
+
+/** Haggle from the owner's selling rules: pressure sets the walk-away, bulk deals lower both ends. */
+function rulesStrategy(ctx: ProductContext, k: Knowledge, unit: string, qty: number, now: Date): Strategy {
+  if (!ctx.published) throw new DomainError("NO_PRICE", "No published price.", 409);
+  const list = ctx.published.priceCents;
+  const floor = Math.min(list, k.floor_cents);
+  const up5 = (c: number) => Math.ceil(c / 5) * 5;
+  const { pressure, why } = sellingPressure(k, list, stallHour(ctx.product.timezone, now));
+  let walk = Math.max(floor, Math.min(list, up5(list - (list - floor) * pressure)));
+  const bulk = k.rules.bulk && qty >= k.rules.bulk.minQty ? k.rules.bulk : null;
+  let listForQty = list;
+  if (bulk) {
+    listForQty = up5(list * (1 - bulk.pctOff / 100));
+    walk = Math.max(floor, Math.min(listForQty, up5(walk * (1 - bulk.pctOff / 100))));
+    why.push({ factor: `Bulk deal: ${bulk.pctOff}% off ${bulk.minQty}+`, effect: 0 });
+  }
+  const stock = ctx.storeOpen ? ctx.stock.available : 0;
+  return {
+    w: {
+      available: stock > 0,
+      stock,
+      hour: ctx.sim.current_hour,
+      hoursRemaining: 24,
+      publishedCents: list,
+      marginalValueCents: 0,
+      walkAwayCents: walk,
+      floorCents: floor,
+      expectedDemandAtPublished: 0,
+      regime: pressure > 0.6 ? "SURPLUS" : pressure > 0.3 ? "BALANCED" : "SCARCE",
+    },
+    schedule: [0.3, 0.6, 0.85, 1.0],
+    step: 5,
+    knowledge: k,
+    unit,
+    maxOffers: 4,
+    listForQty,
+    bulkApplied: bulk,
+    pressure,
+    why,
   };
 }
 
@@ -154,6 +254,10 @@ const SELL_BY_TEXT: Record<Knowledge["sell_by"], string> = { today: "needs to se
 function taughtReason(st: Strategy): string {
   const k = st.knowledge!;
   if (!st.w.available) return "Sold out.";
+  if (st.why) {
+    const parts = st.why.map((w) => `${w.factor}${w.effect ? ` (${w.effect > 0 ? "+" : "−"}${Math.round(Math.abs(w.effect) * 100)})` : ""}`);
+    return `Will go down to ${fmt(st.w.walkAwayCents)} per ${st.unit} (your lowest is ${fmt(k.floor_cents)}). Willingness ${Math.round((st.pressure ?? 0) * 100)}%: ${parts.join(" · ")}.`;
+  }
   return `The owner ${SELL_BY_TEXT[k.sell_by]} and set a floor of ${fmt(k.floor_cents)} per ${st.unit}. With ${st.w.stock} ${st.unit} left, I can go down to ${fmt(st.w.walkAwayCents)}.`;
 }
 
@@ -169,7 +273,7 @@ export function unitsSpoken(n: number, unit: string): string {
 }
 function totalSpoken(price: number, qty: number, unit: string): string {
   if (qty <= 1) return "";
-  return `, so ${fmt(price * qty)} for ${qty}${unit === "each" ? "" : ` ${unitsSpoken(qty, unit)}`}`;
+  return `, that’s ${fmt(price * qty)} for ${qty}${unit === "each" ? "" : ` ${unitsSpoken(qty, unit)}`}`;
 }
 /** First person, in the stall's own voice: the owner's words become the assistant's words. */
 function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number, round = 1): string {
@@ -189,6 +293,37 @@ function taughtLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: numb
       : `${fmt(price)}${per}${total} is as low as I go. They’re worth it, promise.`;
   return `Sorry, I can’t go under ${fmt(price)}${per}.`;
 }
+
+/** The stall's lines when the owner taught selling rules: every move comes with a reason. */
+function rulesLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, st: Strategy, qty: number, round: number): string {
+  const k = st.knowledge!;
+  const r = k.rules;
+  const per = perSpoken(st.unit);
+  const total = totalSpoken(price, qty, st.unit);
+  const bulk = st.bulkApplied ? `Since you’re taking ${qty} ${unitsSpoken(qty, st.unit)}, that’s with my ${st.bulkApplied.pctOff}% bulk discount. ` : "";
+  const selling = k.facts.filter((f) => !/\b(soft|stain|flaw|worn|bruis|scratch|tear|dent|old)/i.test(f));
+  const said = selling[0] ? `${selling[0].replace(/[.!]$/, "")}. ` : "";
+  const cheaperThanMarket = typeof r.marketCents === "number" && st.w.publishedCents < r.marketCents * 0.95;
+  const market = typeof r.marketCents === "number" ? `${capitalize(r.marketNote ?? "other shops")} ${/supermarket|store|market|stand|stall|shop/.test(r.marketNote ?? "") ? "charges" : "charge"} ${fmt(r.marketCents)}${per}` : "";
+  const closing = k.sell_by === "today" && typeof r.closeHour === "number" ? `We close at ${hourLabel(r.closeHour)} and I’d like these gone today` : "";
+  if (kind === "ACCEPT") return `${bulk}You’ve got a deal: ${fmt(price)}${per}${total}. I’ll hold them for you for 5 minutes.`;
+  if (kind === "REJECT") return `Sorry, I can’t go under ${fmt(price)}${per}.`;
+  if (kind === "FINAL") {
+    const why = r.leftover === "waste" && k.sell_by !== "no_rush" ? "I’d rather you have them than see them go to waste" : r.demand === "high" ? "these always sell out" : cheaperThanMarket ? `that’s still well under ${r.marketNote ?? "other shops"}` : "they’re worth it, promise";
+    return `${bulk}${fmt(price)}${per}${total} is truly my best. ${capitalize(why)}.`;
+  }
+  // COUNTER: a different reason each round, the way a stall owner talks.
+  if (round <= 1) return `${said}${cheaperThanMarket ? `${market}, so this is already a good deal. ` : ""}${bulk}I can do ${fmt(price)}${per}${total}.`;
+  if (round === 2) {
+    if (closing) return `${closing}, so ${fmt(price)}${per}${total}.`;
+    if (r.demand === "high") return `These usually sell out, but for you: ${fmt(price)}${per}${total}.`;
+    if (market && !cheaperThanMarket) return `${market}, and mine are fresher. ${fmt(price)}${per}${total}?`;
+    return `Let’s meet in the middle: ${fmt(price)}${per}${total}.`;
+  }
+  if (r.demand === "slow") return `It’s been a slow week, so okay: ${fmt(price)}${per}${total}.`;
+  return `Alright, ${fmt(price)}${per}${total}. That’s close to my limit.`;
+}
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function sellerLine(kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number, w: WalkAwayResult): string {
   const why =
@@ -229,7 +364,7 @@ export function buyerView(db: DB, id: string) {
     unit,
     listedPriceCents: n.published_cents,
     offersUsed: n.buyer_offers,
-    offersLeft: n.final_counter ? 0 : MAX_BUYER_OFFERS - n.buyer_offers,
+    offersLeft: n.final_counter ? 0 : maxOffersFor(db, n.product_id) - n.buyer_offers,
     sellerCounterCents: n.last_counter_cents,
     sellerCounterIsFinal: !!n.final_counter,
     agreedPriceCents: n.agreed_price_cents,
@@ -259,15 +394,16 @@ function validateOffer(offerCents: number, published: number) {
 
 function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
   const ctx = getContext(db, n.product_id, now);
-  const st = computeStrategy(db, ctx);
+  const st = computeStrategy(db, ctx, n.qty, now);
   const w = st.w;
   const k = n.buyer_offers + 1;
-  const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) => (st.knowledge ? taughtLine(kind, price, st, n.qty, k) : sellerLine(kind, price, w));
+  const line = (kind: "ACCEPT" | "COUNTER" | "FINAL" | "REJECT", price: number) =>
+    st.why ? rulesLine(kind, price, st, n.qty, k) : st.knowledge ? taughtLine(kind, price, st, n.qty, k) : sellerLine(kind, price, w);
   const roundUp = (c: number) => Math.ceil(c / st.step) * st.step;
   db.prepare("UPDATE negotiations SET buyer_offers=?, walk_away_cents=?, published_cents=?, updated_at=? WHERE id=?").run(k, w.walkAwayCents, w.publishedCents, now.toISOString(), n.id);
   const qtyText = n.qty > 1 || st.unit !== "each" ? `${n.qty} ${unitsSpoken(n.qty, st.unit)} of ${ctx.product.name.toLowerCase()}` : `the ${ctx.product.name}`;
   const perText = st.unit === "each" ? (n.qty > 1 ? " each" : "") : perSpoken(st.unit);
-  const buyerLine = offerCents >= w.publishedCents ? `I’ll take ${qtyText} at ${fmt(offerCents)}${perText}, please.` : k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Last try: ${fmt(offerCents)}${perText}?`;
+  const buyerLine = offerCents >= w.publishedCents ? `I’ll take ${qtyText} at ${fmt(offerCents)}${perText}, please.` : k === 1 ? `Hi! Could you do ${fmt(offerCents)}${perText} for ${qtyText}?` : k >= st.maxOffers ? `Last try: ${fmt(offerCents)}${perText}?` : k === 2 ? `Hmm. How about ${fmt(offerCents)}${perText}?` : `Could you meet me at ${fmt(offerCents)}${perText}?`;
   addMsg(db, n.id, "buyer", "OFFER", offerCents, buyerLine, now);
 
   if (!w.available || w.stock < n.qty) {
@@ -282,8 +418,10 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
     return;
   }
   // Concede a share of the gap each round; never below walk-away, never above the last counter.
+  // A bulk deal starts the haggle from the discounted price.
   const sched = st.schedule;
-  let target = k >= MAX_BUYER_OFFERS ? w.walkAwayCents : Math.max(w.walkAwayCents, roundUp(pub - (pub - w.walkAwayCents) * sched[k - 1]));
+  const base = st.listForQty ?? pub;
+  let target = k >= st.maxOffers ? w.walkAwayCents : Math.max(w.walkAwayCents, roundUp(base - (base - w.walkAwayCents) * sched[k - 1]));
   if (n.last_counter_cents !== null) target = Math.min(target, n.last_counter_cents);
   target = Math.min(target, pub);
   if (offerCents >= target) {
@@ -291,7 +429,7 @@ function respond(db: DB, n: NegotiationRow, offerCents: number, now: Date) {
     agree(db, getNeg(db, n.id), offerCents, now);
     return;
   }
-  const final = k >= MAX_BUYER_OFFERS || target === w.walkAwayCents;
+  const final = k >= st.maxOffers || target === w.walkAwayCents;
   const counter = final ? Math.min(pub, Math.max(target, w.walkAwayCents)) : target;
   db.prepare("UPDATE negotiations SET last_counter_cents=?, final_counter=? WHERE id=?").run(counter, final ? 1 : 0, n.id);
   addMsg(db, n.id, "seller", final ? "FINAL" : "COUNTER", counter, line(final ? "FINAL" : "COUNTER", counter), now);
@@ -319,7 +457,7 @@ export function startNegotiation(db: DB, productId: string, offerCents: number, 
 export function makeOffer(db: DB, id: string, offerCents: number, now = new Date()) {
   let n = expireIfStale(db, getNeg(db, id), now);
   if (n.status !== "OPEN") throw new DomainError("NEGOTIATION_CLOSED", `Negotiation is ${n.status}.`, 409);
-  if (n.final_counter || n.buyer_offers >= MAX_BUYER_OFFERS) throw new DomainError("NO_OFFERS_LEFT", "The seller made a final offer. Accept it or walk away.", 409);
+  if (n.final_counter || n.buyer_offers >= maxOffersFor(db, n.product_id)) throw new DomainError("NO_OFFERS_LEFT", "The seller made a final offer. Accept it or walk away.", 409);
   validateOffer(offerCents, n.published_cents);
   db.transaction(() => {
     n = getNeg(db, id);

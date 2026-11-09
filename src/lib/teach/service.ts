@@ -10,7 +10,7 @@ import { getLlm } from "../agent/llm";
 import { DEFAULT_COSTS, DEFAULT_DEMAND_MODEL, DEFAULT_POLICY } from "../pricing/scenario";
 import { emit } from "../server/events";
 import { DomainError, audit, newId } from "../server/util";
-import { interpretUtterance, nextQuestion, type DraftFields, type Interpretation, type SellBy } from "./parser";
+import { checklist, interpretUtterance, nextQuestion, nextRule, type DraftFields, type Interpretation, type SellBy, type SellingRules } from "./parser";
 
 export interface DraftItem extends DraftFields {
   id: string;
@@ -29,6 +29,7 @@ interface DraftRow {
   sell_by: SellBy | null;
   facts_json: string;
   photo: string | null;
+  rules_json?: string;
 }
 
 const toDraft = (r: DraftRow): DraftItem => ({
@@ -42,7 +43,11 @@ const toDraft = (r: DraftRow): DraftItem => ({
   sellBy: r.sell_by,
   facts: JSON.parse(r.facts_json),
   photo: r.photo,
+  rules: JSON.parse(r.rules_json || "{}") as SellingRules,
 });
+
+/** Draft plus what the agent still needs to know to haggle well. */
+export const withChecklist = (d: DraftItem) => ({ ...d, checklist: checklist(d) });
 
 export function createShopSession(db: DB, shopName: string, now = new Date()) {
   const name = shopName.trim().slice(0, 60);
@@ -81,7 +86,7 @@ export function getSession(db: DB, id: string) {
     | { id: string; store_id: string; status: string; focus_item_id: string | null; shop_name: string }
     | undefined;
   if (!s) throw new DomainError("NOT_FOUND", "Teaching session not found", 404);
-  const items = (db.prepare("SELECT * FROM draft_items WHERE session_id=? ORDER BY created_at, rowid").all(id) as DraftRow[]).map(toDraft);
+  const items = (db.prepare("SELECT * FROM draft_items WHERE session_id=? ORDER BY created_at, rowid").all(id) as DraftRow[]).map(toDraft).map(withChecklist);
   const messages = db.prepare("SELECT role, text, had_image, source, created_at FROM teach_messages WHERE session_id=? ORDER BY id").all(id) as {
     role: "owner" | "agent";
     text: string;
@@ -104,6 +109,17 @@ const LlmTurn = z.object({
       floorPriceCents: z.number().int().min(1).max(10_000_00).nullable().optional(),
       condition: z.string().max(40).nullable().optional(),
       sellBy: z.enum(["today", "this_week", "no_rush"]).nullable().optional(),
+      rules: z
+        .object({
+          closeHour: z.number().int().min(0).max(23).nullable(),
+          marketCents: z.number().int().min(1).max(10_000_00).nullable(),
+          marketNote: z.string().max(60).nullable(),
+          demand: z.enum(["high", "normal", "slow"]).nullable(),
+          bulk: z.union([z.object({ minQty: z.number().int().min(1).max(1000), pctOff: z.number().int().min(1).max(50) }), z.literal(false)]).nullable(),
+          leftover: z.enum(["waste", "use", "keep"]).nullable(),
+        })
+        .partial()
+        .optional(),
     })
     .partial()
     .default({}),
@@ -117,8 +133,9 @@ Rules:
 - floorPriceCents is the lowest price the owner will accept per unit. sellBy is "today", "this_week" or "no_rush".
 - Facts are short buyer-relevant statements the owner made (taste, size, condition, flaws, origin). You may add one visual fact you can clearly see, prefixed "Looks: ".
 - target: "new" if the owner introduced a different item (give newItemName), "focus" for the item currently in focus, or an existing item id.
-- Ask about the most important missing field for the focused item, in this order: quantity, price, lowest price, buyer-relevant facts, sell-by.
-Return ONLY JSON: {"reply": string, "target": "new"|"focus"|"<item id>", "newItemName": string|null, "set": {"unit"?: string, "quantity"?: int, "listPriceCents"?: int, "floorPriceCents"?: int, "condition"?: string, "sellBy"?: "today"|"this_week"|"no_rush"}, "addFacts": string[]}`;
+- Ask about the most important missing field for the focused item, in this order: quantity, price, lowest price, buyer-relevant facts, sell-by; then the selling rules you need to haggle well: closing time (only if it must sell today), what shoppers pay elsewhere, any bulk deal, what happens to leftovers (skip if no rush), how fast it usually sells. Each item's "checklist" shows what is still missing. If the owner doesn't know, set that rule to null and move on.
+- Selling rules go in set.rules: closeHour (0-23), marketCents + marketNote (e.g. "the supermarket"), demand ("high"|"normal"|"slow"), bulk ({"minQty", "pctOff"} or false for no deal), leftover ("waste"|"use"|"keep"). A price elsewhere is NOT the item's own price.
+Return ONLY JSON: {"reply": string, "target": "new"|"focus"|"<item id>", "newItemName": string|null, "set": {"unit"?: string, "quantity"?: int, "listPriceCents"?: int, "floorPriceCents"?: int, "condition"?: string, "sellBy"?: "today"|"this_week"|"no_rush", "rules"?: {...}}, "addFacts": string[]}`;
 
 function applyInterpretation(db: DB, sessionId: string, focusId: string | null, i: Interpretation, target: string, photo: string | null, now: Date): string | null {
   const iso = now.toISOString();
@@ -133,9 +150,14 @@ function applyInterpretation(db: DB, sessionId: string, focusId: string | null, 
   if (!id) return null;
   const row = db.prepare("SELECT * FROM draft_items WHERE id=?").get(id) as DraftRow;
   const facts: string[] = JSON.parse(row.facts_json);
+  const rules: SellingRules = { ...JSON.parse(row.rules_json || "{}"), ...(i.set.rules ?? {}) };
+  if (i.skip) {
+    const key = nextRule({ ...toDraft(row), rules });
+    if (key) rules[key] = null;
+  }
   for (const f of i.addFacts) if (!facts.some((x) => x.toLowerCase() === f.toLowerCase())) facts.push(f);
   db.prepare(
-    `UPDATE draft_items SET unit=?, quantity=?, list_price_cents=?, floor_price_cents=?, condition=?, sell_by=?, facts_json=?, photo=COALESCE(photo, ?), updated_at=? WHERE id=?`,
+    `UPDATE draft_items SET unit=?, quantity=?, list_price_cents=?, floor_price_cents=?, condition=?, sell_by=?, facts_json=?, rules_json=?, photo=COALESCE(photo, ?), updated_at=? WHERE id=?`,
   ).run(
     i.set.unit ?? row.unit,
     i.set.quantity ?? row.quantity,
@@ -144,6 +166,7 @@ function applyInterpretation(db: DB, sessionId: string, focusId: string | null, 
     i.set.condition ?? row.condition,
     i.set.sellBy ?? row.sell_by,
     JSON.stringify(facts.slice(0, 12)),
+    JSON.stringify(rules),
     photo,
     iso,
     id,
@@ -332,9 +355,9 @@ export function publishSession(db: DB, sessionId: string, now = new Date()) {
         "teach",
       );
       db.prepare(
-        `INSERT INTO product_knowledge (product_id, store_id, floor_cents, sell_by, condition, facts_json, photo, taught_at) VALUES (?,?,?,?,?,?,?,?)
-         ON CONFLICT(product_id) DO UPDATE SET floor_cents=excluded.floor_cents, sell_by=excluded.sell_by, condition=excluded.condition, facts_json=excluded.facts_json, photo=COALESCE(excluded.photo, product_knowledge.photo), taught_at=excluded.taught_at`,
-      ).run(productId, s.shopId, floor, it.sellBy ?? "no_rush", it.condition, JSON.stringify(it.facts), it.photo, iso);
+        `INSERT INTO product_knowledge (product_id, store_id, floor_cents, sell_by, condition, facts_json, photo, taught_at, rules_json) VALUES (?,?,?,?,?,?,?,?,?)
+         ON CONFLICT(product_id) DO UPDATE SET floor_cents=excluded.floor_cents, sell_by=excluded.sell_by, condition=excluded.condition, facts_json=excluded.facts_json, photo=COALESCE(excluded.photo, product_knowledge.photo), taught_at=excluded.taught_at, rules_json=excluded.rules_json`,
+      ).run(productId, s.shopId, floor, it.sellBy ?? "no_rush", it.condition, JSON.stringify(it.facts), it.photo, iso, JSON.stringify(it.rules ?? {}));
       published.push({ productId, sku, name: it.name });
     }
     db.prepare("UPDATE teach_sessions SET status='PUBLISHED', updated_at=? WHERE id=?").run(iso, sessionId);

@@ -117,12 +117,13 @@ CREATE TABLE IF NOT EXISTS draft_items (
   id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES teach_sessions(id), name TEXT NOT NULL,
   unit TEXT NOT NULL DEFAULT 'each', quantity INTEGER, list_price_cents INTEGER, floor_price_cents INTEGER,
   condition TEXT, sell_by TEXT CHECK (sell_by IN ('today','this_week','no_rush')), facts_json TEXT NOT NULL DEFAULT '[]',
-  photo TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  photo TEXT, rules_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 -- What the seller agent knows about a published product. floor_cents is private to the seller.
 CREATE TABLE IF NOT EXISTS product_knowledge (
   product_id TEXT PRIMARY KEY REFERENCES products(id), store_id TEXT NOT NULL, floor_cents INTEGER NOT NULL,
-  sell_by TEXT NOT NULL, condition TEXT, facts_json TEXT NOT NULL, photo TEXT, taught_at TEXT NOT NULL
+  sell_by TEXT NOT NULL, condition TEXT, facts_json TEXT NOT NULL, photo TEXT, taught_at TEXT NOT NULL,
+  rules_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE TABLE IF NOT EXISTS audit_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL,

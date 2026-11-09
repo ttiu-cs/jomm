@@ -41,7 +41,8 @@ Next to the conversation, the **PayPal agent interface** panel shows every call 
 
 How it works:
 - **Teaching:** a deterministic parser turns the owner’s words into items, prices, private floors and urgency (an optional LLM can help with free-form speech; the demo doesn’t use it). The owner can tap any card to correct it.
-- **Selling:** the seller agent answers only from the owner’s facts. It negotiates per unit (max 3 buyer offers) and never goes below the owner’s private floor. How far it goes depends on urgency: “today” may concede down to the floor, “this week” 70% of the gap, “no rush” 40%.
+- **Teaching what it takes to haggle:** after price, lowest price and deadline, the agent keeps asking until its checklist is complete: what shoppers pay elsewhere, the closing time (for must-go-today items), any bulk deal, what happens to leftovers, and how fast the item sells. “I don’t know” skips a question.
+- **Selling:** the seller agent answers only from the owner’s facts and never goes below the owner’s private floor. With taught selling rules it haggles over up to 4 offers: how far it may go comes from urgency, time left before closing (in the stall’s time zone), demand, waste risk and price versus elsewhere; bulk deals lower the starting price. Every counter carries a reason (“The supermarket charges $3.49 a pound…”, “We close at 6 pm…”), and the owner sees the private reasoning (“Why my agent priced it this way”). Items taught without those rules use the simpler urgency schedule (today / this week / no rush).
 - **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a clearly labeled practice payment without keys). Stock is decremented exactly once after a verified capture.
 
 ## Design

@@ -19,6 +19,10 @@ export function openDb(file: string): DB {
   if (!cols.includes("origin")) db.exec("ALTER TABLE price_quotes ADD COLUMN origin TEXT NOT NULL DEFAULT 'PUBLISHED'");
   const negCols = (db.prepare("PRAGMA table_info(negotiations)").all() as { name: string }[]).map((c) => c.name);
   if (!negCols.includes("qty")) db.exec("ALTER TABLE negotiations ADD COLUMN qty INTEGER NOT NULL DEFAULT 1");
+  for (const t of ["draft_items", "product_knowledge"]) {
+    const c = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((x) => x.name);
+    if (!c.includes("rules_json")) db.exec(`ALTER TABLE ${t} ADD COLUMN rules_json TEXT NOT NULL DEFAULT '{}'`);
+  }
   return db;
 }
 

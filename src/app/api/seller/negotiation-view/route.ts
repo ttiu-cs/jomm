@@ -7,5 +7,6 @@ export const GET = handle((req: Request) => {
   const u = new URL(req.url);
   const productId = u.searchParams.get("productId");
   const pid = productId && d.prepare("SELECT 1 FROM products WHERE id=?").get(productId) ? productId : resolveProductId(d, u.searchParams.get("sku"));
-  return { ...sellerNegotiationView(d, pid), recent: listNegotiations(d, pid, 8) };
+  const qty = Math.max(1, Math.min(10, Number(u.searchParams.get("qty") ?? 1) || 1));
+  return { ...sellerNegotiationView(d, pid, new Date(), qty), recent: listNegotiations(d, pid, 8) };
 });

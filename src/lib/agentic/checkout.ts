@@ -27,8 +27,8 @@ type Status = "not_ready_for_payment" | "ready_for_payment" | "in_progress" | "c
 export function sessionView(db: DB, id: string) {
   const v = buyerView(db, id);
   const p = db
-    .prepare("SELECT p.sku, p.name, p.unit, p.store_id, s.name AS shop FROM negotiations n JOIN products p ON p.id=n.product_id JOIN stores s ON s.id=p.store_id WHERE n.id=?")
-    .get(id) as { sku: string; name: string; unit: string; store_id: string; shop: string };
+    .prepare("SELECT p.id, p.sku, p.name, p.unit, p.store_id, s.name AS shop FROM negotiations n JOIN products p ON p.id=n.product_id JOIN stores s ON s.id=p.store_id WHERE n.id=?")
+    .get(id) as { id: string; sku: string; name: string; unit: string; store_id: string; shop: string };
   const ord = v.quote ? (db.prepare("SELECT id FROM orders WHERE quote_id=?").get(v.quote.id) as { id: string } | undefined) : undefined;
   const o = ord ? orderView(db, ord.id) : null;
   const unit = v.agreedPriceCents ?? v.listedPriceCents;
@@ -44,7 +44,7 @@ export function sessionView(db: DB, id: string) {
     status,
     currency: "usd",
     merchant: { id: p.store_id, name: p.shop },
-    line_items: [{ id: p.sku, item: { id: p.sku, title: p.name, unit: p.unit, quantity: v.qty }, base_amount: base, discount: base - total, total }],
+    line_items: [{ id: p.sku, product_id: p.id, item: { id: p.sku, title: p.name, unit: p.unit, quantity: v.qty }, base_amount: base, discount: base - total, total }],
     totals: [
       { type: "items_base_amount", display_text: "Listed", amount: base },
       { type: "discount", display_text: "Agreed with the stall", amount: base - total },

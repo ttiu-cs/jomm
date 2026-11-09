@@ -87,3 +87,35 @@ describe("agent checkout sessions (ACP shape, PayPal provider)", () => {
     expect(() => createSession(db, { items: [{ id: "NOPE", quantity: 1 }] })).toThrow(/Unknown item/);
   });
 });
+
+describe("selling rules taught in conversation", () => {
+  it("reads closing time, prices elsewhere, bulk deals, leftovers and demand without mistaking them for the item's own price", async () => {
+    const { interpretUtterance } = await import("@/lib/teach/parser");
+    expect(interpretUtterance("The supermarket has Fujis at $3.49.")).toMatchObject({ set: { rules: { marketCents: 349, marketNote: "the supermarket" } } });
+    expect(interpretUtterance("The supermarket has Fujis at $3.49.").set.listPriceCents).toBeUndefined();
+    expect(interpretUtterance("3 lb or more, 15% off.").set).toEqual({ rules: { bulk: { minQty: 3, pctOff: 15 } } });
+    expect(interpretUtterance("We close at 6.").set.rules).toEqual({ closeHour: 18 });
+    expect(interpretUtterance("Anything left goes to compost.").set.rules).toEqual({ leftover: "waste" });
+    expect(interpretUtterance("Slow this week. It's been cold.").set).toEqual({ rules: { demand: "slow" } });
+    expect(interpretUtterance("Steady. About 10 pounds a day.").set).toEqual({ rules: { demand: "normal" } });
+    expect(interpretUtterance("I don't know").skip).toBe(true);
+  });
+
+  it("Rosa's agent asks until nothing is missing, then haggles from those rules", async () => {
+    const r = await setupRosa(db);
+    expect(r.checklists.every((c) => c.checklist.every((x) => x.done))).toBe(true);
+    expect(r.transcript.filter((m) => m.role === "agent").some((m) => /supermarket/.test(m.text))).toBe(true);
+    const { sellerNegotiationView } = await import("@/lib/server/negotiation");
+    const threePmLA = new Date("2026-11-09T23:00:00Z");
+    const id = (name: string) => r.items.find((i) => i.name === name)!.productId;
+    // Peaches: must go today, late in the day, slow week, wasted if unsold, pricier than the farm stand.
+    expect(sellerNegotiationView(db, id("White peaches"), threePmLA).walkAwayCents).toBe(215);
+    // Apples: no rush and already cheaper than the supermarket, so the agent holds the price...
+    expect(sellerNegotiationView(db, id("Fuji apples"), threePmLA).walkAwayCents).toBe(289);
+    // ...unless the buyer takes enough for Rosa's bulk deal.
+    expect(sellerNegotiationView(db, id("Fuji apples"), threePmLA, 5).walkAwayCents).toBe(265);
+    // Peaches early in the morning give less ground than at 3 pm.
+    const eightAm = new Date("2026-11-09T16:00:00Z");
+    expect(sellerNegotiationView(db, id("White peaches"), eightAm).walkAwayCents).toBeGreaterThan(215);
+  });
+});

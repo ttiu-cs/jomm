@@ -36,6 +36,15 @@ function fakeOpenAI(steps: ((msgs: Msg[]) => { content?: string; call?: { name: 
   };
   return { client: client as unknown as OpenAI, calls };
 }
+/** A buyer that reacts to the stall's counter (the stall's price depends on the time of day). */
+const haggle = (m: Msg[]) => {
+  const t = lastTool(m);
+  if (t.status === "in_progress") return { content: "Please approve in PayPal." };
+  if (t.status === "ready_for_payment") return { call: { name: "complete_checkout", args: {} } };
+  const c = t.negotiation?.seller_counter_per_unit;
+  if (c != null && c * 4 <= 1000) return { call: { name: "accept_seller_counter", args: {} } };
+  return { call: { name: "propose_price", args: { offer_per_unit_usd: 2.45, message: "Meet me at $2.45?" } } };
+};
 const lastTool = (msgs: Msg[]) => JSON.parse(String([...msgs].reverse().find((m) => m.role === "tool")?.content ?? "{}"));
 
 describe("OpenAI buyer agent (scripted model)", () => {
@@ -55,10 +64,7 @@ describe("OpenAI buyer agent (scripted model)", () => {
           expect(lastTool(m).error).toMatch(/mandate/);
           return { call: { name: "open_checkout_session", args: { sku, quantity: 4, offer_per_unit_usd: 2.2, message: "Hi Rosa! Could you do $2.20 a pound for jam peaches?" } } };
         },
-        () => ({ call: { name: "propose_price", args: { offer_per_unit_usd: 2.45, message: "Meet me at $2.45?" } } }),
-        (m) => (lastTool(m).status === "ready_for_payment" ? { call: { name: "complete_checkout", args: {} } } : { call: { name: "accept_seller_counter", args: {} } }),
-        (m) => (lastTool(m).status === "in_progress" ? { content: "Please approve in PayPal." } : { call: { name: "complete_checkout", args: {} } }),
-        () => ({ content: "Please approve in PayPal." }),
+        ...Array.from({ length: 6 }, () => haggle),
       ],
       { want: "peaches for jam", quantity: 4, max_total_usd: 10, priority: "balanced", questions: ["Good for jam?"] },
     );

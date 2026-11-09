@@ -12,7 +12,7 @@ import { PERSONAS, ROSA } from "@/lib/demo/rosa";
 interface Session {
   id: string;
   status: "not_ready_for_payment" | "ready_for_payment" | "in_progress" | "completed" | "canceled";
-  line_items: { id: string; item: { title: string; unit: string; quantity: number }; base_amount: number; total: number }[];
+  line_items: { id: string; product_id: string; item: { title: string; unit: string; quantity: number }; base_amount: number; total: number }[];
   totals: { type: string; amount: number }[];
   negotiation: { status: string; offers_left: number; seller_counter_per_unit: number | null; seller_counter_is_final: boolean; agreed_per_unit: number | null };
   order: { id: string; status: string; payment_source: string; paypal_order_id: string | null; capture_id: string | null } | null;
@@ -53,7 +53,7 @@ interface Run {
 // ------------------------------------------------------------------ page
 
 export default function Demo() {
-  const [setup, setSetup] = useState<{ shopId: string; startedAt: string } | null>(null);
+  const [setup, setSetup] = useState<SetupData | null>(null);
   const [taught, setTaught] = useState(false);
   const [runs, setRuns] = useState<Run[]>([]);
   const [intent, setIntent] = useState("");
@@ -63,11 +63,12 @@ export default function Demo() {
   const busy = active?.outcome === "running";
 
   useEffect(() => {
-    api<{ shopId: string; startedAt: string }>("/api/demo/rosa", {})
+    api<SetupData>("/api/demo/rosa", {})
       .then(setSetup)
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
   }, []);
 
+  const markTaught = useCallback(() => setTaught(true), []);
   const patch = useCallback((key: number, f: (r: Run) => Partial<Run>) => setRuns((rs) => rs.map((r) => (r.key === key ? { ...r, ...f(r) } : r))), []);
 
   /** Sends the shopper's sentence to their buyer agent (server-side) and streams what it does. */
@@ -153,7 +154,7 @@ export default function Demo() {
         {err && <p className="mt-4 rounded-2xl bg-red/10 px-4 py-3 text-red">{err}</p>}
 
         {/* Act 1: Rosa teaches (played back) */}
-        <TeachPlayback ready={!!setup} onDone={() => setTaught(true)} />
+        <TeachPlayback data={setup} onDone={markTaught} />
 
         {/* Act 2: the shopper's intent */}
         <section className={`mt-12 transition-opacity ${taught ? "" : "pointer-events-none opacity-40"}`} aria-label="Your agent">
@@ -224,30 +225,68 @@ function Steps({ taught, anyRun, paid }: { taught: boolean; anyRun: boolean; pai
   );
 }
 
-/** Rosa's morning, played back like a short clip (no live camera in the demo). */
-function TeachPlayback({ ready, onDone }: { ready: boolean; onDone: () => void }) {
-  const all = useMemo(() => ROSA.scenes.flatMap((s, si) => s.lines.map((l, li) => ({ si, li, text: l }))), []);
+type Check = { key: string; label: string; done: boolean; skipped?: boolean };
+interface SetupData {
+  shopId: string;
+  startedAt: string;
+  transcript: { role: "owner" | "agent"; text: string }[];
+  checklists: { name: string; checklist: Check[] }[];
+}
+
+/** Which checklist items Rosa's n-th line in a scene answers (line 1: what/how many/facts, 2: prices, 3: deadline, then one rule each). */
+function answeredKeys(lineInScene: number, checklist: Check[]): Set<string> {
+  const keys = new Set<string>();
+  if (lineInScene >= 1) ["quantity", "facts"].forEach((k) => keys.add(k));
+  if (lineInScene >= 2) ["price", "floor"].forEach((k) => keys.add(k));
+  if (lineInScene >= 3) keys.add("sellBy");
+  const rules = checklist.map((c) => c.key).filter((k) => !["quantity", "price", "floor", "facts", "sellBy"].includes(k));
+  rules.slice(0, Math.max(0, lineInScene - 3)).forEach((k) => keys.add(k));
+  return keys;
+}
+
+/** Rosa's morning, played back like a short clip: her words and her agent's questions, through the real teaching pipeline. */
+function TeachPlayback({ data, onDone }: { data: SetupData | null; onDone: () => void }) {
+  const steps = useMemo(() => {
+    if (!data) return [];
+    let owner = -1;
+    const bounds = ROSA.scenes.map((s) => s.lines.length);
+    return data.transcript.map((m) => {
+      if (m.role === "owner") owner++;
+      let left = Math.max(0, owner);
+      let scene = 0;
+      while (scene < bounds.length - 1 && left >= bounds[scene]) left -= bounds[scene++];
+      return { ...m, scene, lineInScene: left + 1 };
+    });
+  }, [data]);
   const [i, setI] = useState(0);
-  const finished = i >= all.length;
+  const finished = steps.length > 0 && i >= steps.length;
   const doneRef = useRef(false);
   useEffect(() => {
+    if (!steps.length) return;
     if (finished) {
-      if (ready && !doneRef.current) {
+      if (!doneRef.current) {
         doneRef.current = true;
         onDone();
       }
       return;
     }
-    const t = setTimeout(() => setI((x) => x + 1), i === 0 ? 900 : 1300);
+    const t = setTimeout(() => setI((x) => x + 1), i === 0 ? 700 : steps[i - 1]?.role === "owner" ? 650 : 950);
     return () => clearTimeout(t);
-  }, [i, finished, ready, onDone]);
-  const cur = all[Math.min(i, all.length - 1)];
-  const scene = ROSA.scenes[finished ? ROSA.scenes.length - 1 : cur.si];
-  const learnedCount = finished ? ROSA.scenes.length : cur.si + (cur.li === 2 && i > 0 ? 1 : 0);
+  }, [i, finished, steps, onDone]);
+
+  const cur = steps[Math.min(i, steps.length - 1)];
+  const sceneIdx = finished ? ROSA.scenes.length - 1 : (cur?.scene ?? 0);
+  const scene = ROSA.scenes[sceneIdx];
+  const visible = steps.slice(0, Math.min(i, steps.length)).filter((s) => s.scene === sceneIdx).slice(-4);
+  const lastOwnerLine = (si: number) => {
+    if (finished) return 99;
+    const shown = steps.slice(0, i).filter((s) => s.scene === si && s.role === "owner");
+    return shown.length;
+  };
 
   return (
     <section className="mt-10 grid items-stretch gap-5 lg:grid-cols-[1fr_1fr]" aria-label="Rosa teaches">
-      <div className="grain relative min-h-[380px] overflow-hidden rounded-[28px] bg-black">
+      <div className="grain relative min-h-[460px] overflow-hidden rounded-[28px] bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={scene.photo} src={scene.photo} alt="" className="handheld warm-photo absolute inset-0 h-full w-full object-cover" />
         <span key={`f${scene.photo}`} className="focus-square z-10" aria-hidden />
@@ -256,48 +295,75 @@ function TeachPlayback({ ready, onDone }: { ready: boolean; onDone: () => void }
             <span className="rec-dot h-2 w-2 rounded-full bg-[#ff3b30]" /> Rosa’s phone · scripted replay
           </span>
         </div>
-        {!finished && (
-          <button type="button" onClick={() => setI(all.length)} className="frosted-dark absolute right-4 top-4 z-10 rounded-full px-3.5 py-1.5 text-[14px] text-white">
+        {!finished && steps.length > 0 && (
+          <button type="button" onClick={() => setI(steps.length)} className="frosted-dark absolute right-4 top-4 z-10 rounded-full px-3.5 py-1.5 text-[14px] text-white">
             Skip ›
           </button>
         )}
         <div className="absolute inset-x-4 bottom-4 z-10 space-y-2">
-          {all
-            .slice(0, Math.min(i, all.length))
-            .filter((l) => l.si === (finished ? ROSA.scenes.length - 1 : cur.si))
-            .map((l) => (
-              <p key={`${l.si}-${l.li}`} className="rise ml-auto w-fit max-w-[88%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[16px] leading-snug text-white">
-                {l.text}
+          {!data && <p className="frosted-dark w-fit rounded-full px-4 py-2 text-[14px] text-white">Setting up Rosa’s stall…</p>}
+          {visible.map((m, k) =>
+            m.role === "owner" ? (
+              <p key={`${m.scene}-${k}-${m.text}`} className="rise ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-[6px] bg-brand px-4 py-2.5 text-[15px] leading-snug text-white">
+                {m.text}
               </p>
-            ))}
+            ) : (
+              <p key={`${m.scene}-${k}-${m.text}`} className="rise frosted flex w-fit max-w-[88%] items-start gap-2 rounded-[20px] rounded-bl-[6px] px-3.5 py-2.5 text-[15px] leading-snug text-label">
+                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-label text-white">
+                  <IconStore size={11} />
+                </span>
+                {m.text}
+              </p>
+            ),
+          )}
         </div>
       </div>
 
       <div className="flex flex-col rounded-[28px] bg-card p-6">
         <h2 className="text-[28px] font-semibold">1. Rosa teaches her agent</h2>
-        <p className="mt-1 text-[16px] text-label-2">She points her phone at each crate and talks, once, before opening. Her agent turns it into listings and private selling rules.</p>
-        <ul className="mt-5 space-y-3">
-          {ROSA.scenes.map((s, k) => (
-            <li key={s.photo} className={`flex items-center gap-3 rounded-[18px] bg-canvas p-3 transition ${k < learnedCount ? "opacity-100" : "opacity-30"}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.photo} alt="" className="warm-photo h-14 w-14 rounded-[12px] object-cover" />
-              <div className="min-w-0 text-[15px] leading-snug">
-                <div className="font-semibold">{s.learned.split(" · ")[0]}</div>
-                <div className="text-label-2">
-                  {s.learned.split(" · ")[1]} · <IconLock size={12} className="-mt-0.5 inline" /> {s.learned.split(" · ")[2]} · {s.learned.split(" · ")[3]}
+        <p className="mt-1 text-[16px] text-label-2">Her agent keeps asking until it has what it needs to haggle like Rosa would: prices elsewhere, closing time, bulk deals, what happens to leftovers, how fast things sell.</p>
+        <ul className="mt-4 space-y-3">
+          {ROSA.scenes.map((s, si) => {
+            const cl = data?.checklists[si]?.checklist ?? [];
+            const answered = answeredKeys(lastOwnerLine(si), cl);
+            const done = cl.filter((c) => answered.has(c.key) && c.done).length;
+            return (
+              <li key={s.photo} className={`rounded-[18px] bg-canvas p-3 transition ${si <= sceneIdx || finished ? "opacity-100" : "opacity-35"}`}>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.photo} alt="" className="warm-photo h-12 w-12 rounded-[12px] object-cover" />
+                  <div className="min-w-0 flex-1 text-[15px] leading-snug">
+                    <div className="font-semibold">{s.learned.split(" · ")[0]}</div>
+                    <div className="text-label-2">
+                      {s.learned.split(" · ")[1]} · <IconLock size={12} className="-mt-0.5 inline" /> {s.learned.split(" · ")[2]}
+                    </div>
+                  </div>
+                  <span className={`tnum shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold ${cl.length && done === cl.length ? "bg-green-fill/15 text-green" : "bg-fill text-label-2"}`}>
+                    {done}/{cl.length || "–"}
+                  </span>
                 </div>
-              </div>
-              {k < learnedCount && <IconCheck size={20} className="ml-auto shrink-0 text-green" />}
-            </li>
-          ))}
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {cl.map((c) => {
+                    const on = answered.has(c.key) && c.done;
+                    return (
+                      <span key={c.key} className={`rounded-full px-2 py-0.5 text-[11px] ${on ? "bg-label text-white" : "bg-fill text-label-3"}`}>
+                        {on ? "✓ " : ""}
+                        {c.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </li>
+            );
+          })}
         </ul>
-        <div className="mt-auto pt-5 text-[14px]">
-          {finished && ready ? (
+        <div className="mt-auto pt-4 text-[14px]">
+          {finished ? (
             <p className="rise flex items-center gap-2 font-medium text-green">
-              <IconCheck size={18} /> Stall is open to shoppers’ agents. The lowest prices stay private.
+              <IconCheck size={18} /> Nothing missing. Stall is open to shoppers’ agents; the lowest prices stay private.
             </p>
           ) : (
-            <p className="text-label-3">{ready ? "Listening…" : "Setting up Rosa’s stall…"}</p>
+            <p className="text-label-3">{data ? "Listening…" : "Setting up Rosa’s stall…"}</p>
           )}
         </div>
       </div>
@@ -469,6 +535,7 @@ function RosaPhone({ shopId, since, runs }: { shopId: string; since: string; run
               </div>
             </div>
             {reaction && <p className="hand rise px-1 text-[22px] leading-tight">Rosa: “{reaction}”</p>}
+            {latest?.session && <WhyPanel run={latest} />}
             <ul className="rounded-[20px] bg-card px-4 py-2">
               {(data?.items ?? []).map((it) => (
                 <li key={it.sku} className="flex items-center justify-between border-b border-line py-2 text-[13px] last:border-0">
@@ -483,6 +550,37 @@ function RosaPhone({ shopId, since, runs }: { shopId: string; since: string; run
         </div>
       </div>
     </aside>
+  );
+}
+
+/** Seller-private: why Rosa's agent was willing to go as low as it did, from what Rosa taught it. */
+function WhyPanel({ run }: { run: Run }) {
+  const li = run.session!.line_items[0];
+  const [v, setV] = useState<{ walkAwayCents: number; why: { factor: string; effect: number }[] | null; pressure: number | null } | null>(null);
+  useEffect(() => {
+    api<{ walkAwayCents: number; why: { factor: string; effect: number }[] | null; pressure: number | null }>(`/api/seller/negotiation-view?productId=${li.product_id}&qty=${li.item.quantity}`)
+      .then(setV)
+      .catch(() => setV(null));
+  }, [li.product_id, li.item.quantity, run.outcome]);
+  if (!v?.why) return null;
+  return (
+    <div className="rounded-[20px] bg-card p-4 text-[12px]">
+      <div className="flex items-center gap-1.5 font-semibold text-label">
+        <IconLock size={12} /> Why my agent priced {li.item.title.toLowerCase()} this way
+      </div>
+      <div className="mt-1 text-label-2">
+        Willing to go to <b className="tnum text-label">{usd(v.walkAwayCents)}</b> ({Math.round((v.pressure ?? 0) * 100)}% of the way to my lowest)
+      </div>
+      <ul className="mt-1.5 space-y-0.5">
+        {v.why.map((w) => (
+          <li key={w.factor} className="flex justify-between gap-2">
+            <span className="text-label-2">{w.factor}</span>
+            <span className={`tnum shrink-0 font-semibold ${w.effect > 0 ? "text-brand" : w.effect < 0 ? "text-green" : "text-label-3"}`}>{w.effect > 0 ? `+${Math.round(w.effect * 100)}` : w.effect < 0 ? `−${Math.round(-w.effect * 100)}` : "·"}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-1.5 text-label-3">Only Rosa sees this. + means more flexible, − means firmer.</div>
+    </div>
   );
 }
 
