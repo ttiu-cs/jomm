@@ -63,8 +63,11 @@ export default function Demo() {
   const active = runs[runs.length - 1] ?? null;
   const busy = active?.outcome === "running";
 
+  // Set up (restock) Rosa's stall once per page load, even though dev mode runs effects twice.
+  const setupOnce = useRef<Promise<SetupData> | null>(null);
   useEffect(() => {
-    api<SetupData>("/api/demo/rosa", {})
+    setupOnce.current ??= api<SetupData>("/api/demo/rosa", {});
+    setupOnce.current
       .then(setSetup)
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
   }, []);
