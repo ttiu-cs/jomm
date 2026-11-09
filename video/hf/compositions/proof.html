@@ -1,0 +1,24 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; pointer-events: none; }
+    .pf-cap { position: absolute; left: 120px; bottom: 90px; max-width: 1100px; padding: 22px 32px; border-radius: 22px; background: rgba(31,24,19,0.88); color: #fff; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
+    .pf-cap small { display: block; font-size: 30px; font-weight: 400; color: rgba(255,255,255,0.7); margin-top: 6px; }
+    #pf-tag { position: absolute; left: 120px; top: 70px; padding: 12px 22px; border-radius: 999px; background: #0b2a5c; color: #fff; font-size: 26px; font-weight: 700; }
+  </style>
+  <div id="root" data-composition-id="proof" data-width="1920" data-height="1080">
+    <p id="pf-c1" class="pf-cap clip" data-start="0.4" data-duration="3.2">Two AI agents negotiate<small>shopper’s OpenAI agent ↔ Rosa’s selling agent</small></p>
+    <p id="pf-c2" class="pf-cap clip" data-start="3.6" data-duration="4.0">🔒 Rosa’s lowest price never leaves her side<small>amounts are set by the server, never by an agent</small></p>
+    <p id="pf-c3" class="pf-cap clip" data-start="7.6" data-duration="3.0">The shopper approves in PayPal<small>agents can’t pay on their own</small></p>
+    <p id="pf-c4" class="pf-cap clip" data-start="10.6" data-duration="4.4">Captured · verified with PayPal Agent Toolkit<small>Rosa’s phone: “You received $16.35”</small></p>
+    <p id="pf-tag" class="clip" data-start="7.6" data-duration="7.4">PayPal Sandbox · test money</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    ["#pf-c1", "#pf-c2", "#pf-c3", "#pf-c4"].forEach((id, i) => {
+      const s = [0.4, 3.6, 7.6, 10.6][i];
+      tl.fromTo(id, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, s);
+    });
+    tl.fromTo("#pf-tag", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.6);
+    window.__timelines["proof"] = tl;
+  </script>
+</template>

@@ -1,0 +1,39 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #1f1813; overflow: hidden; font-family: Inter, sans-serif; }
+    #wave-dots { position: absolute; inset: 0; }
+    .wd { position: absolute; padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 24px; font-weight: 400; white-space: nowrap; }
+    #wave-store { position: absolute; left: 1290px; top: 300px; width: 420px; height: 480px; border-radius: 36px; background: #2c231d; border: 2px solid rgba(255,255,255,0.12); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+    #wave-store b { font-size: 44px; font-weight: 700; }
+    #wave-store span { font-size: 30px; color: rgba(255,255,255,0.55); }
+    .wave-t { position: absolute; left: 160px; color: #fff; font-weight: 700; letter-spacing: -0.03em; }
+    #wave-t1 { top: 380px; font-size: 84px; width: 1050px; line-height: 1.05; }
+    #wave-t2 { top: 600px; font-size: 44px; font-weight: 400; color: rgba(255,255,255,0.65); }
+    .w { display: inline-block; }
+  </style>
+  <div id="root" data-composition-id="wave" data-width="1920" data-height="1080">
+    <div id="wave-dots" data-layout-ignore>
+      <div class="wd" id="wd1" style="left:-300px;top:140px">🤖 “3 boxes of strawberries”</div>
+      <div class="wd" id="wd2" style="left:-300px;top:860px">🤖 “running shoes, size 9”</div>
+      <div class="wd" id="wd3" style="left:-300px;top:220px">🤖 “cheapest peaches”</div>
+      <div class="wd" id="wd4" style="left:-300px;top:930px">🤖 “a wool coat under $120”</div>
+      <div class="wd" id="wd5" style="left:-300px;top:60px">🤖 “gift for mom”</div>
+    </div>
+    <div id="wave-store" class="clip" data-start="0" data-duration="5.6"><b>Big Store</b><span>API · catalog · checkout</span></div>
+    <h1 id="wave-t1" class="wave-t clip" data-start="0" data-duration="5.6"><span class="w">Shopping</span> <span class="w">is</span> <span class="w">moving</span> <span class="w">to</span> <span class="w" style="color:#ff8a5c">AI&nbsp;agents.</span></h1>
+    <p id="wave-t2" class="wave-t clip" data-start="0" data-duration="5.6">Big stores will plug in fast.</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#wave-t1 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, stagger: 0.12, ease: "power4.out" }, 0.3);
+    tl.fromTo("#wave-store", { opacity: 1, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.8, ease: "expo.out" }, 0);
+    ["#wd1","#wd2","#wd3","#wd4","#wd5"].forEach((id, i) => {
+      tl.fromTo(id, { x: 0, y: 0, opacity: 0 }, { x: 1700, y: (i % 2 ? -380 : 300) + i * 20, opacity: 1, duration: 2.6, ease: "power2.in" }, 0.9 + i * 0.35);
+      tl.to(id, { opacity: 0, duration: 0.2 }, 3.55 + i * 0.35);
+    });
+    tl.fromTo("#wave-t2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.9);
+    tl.to("#wave-store", { boxShadow: "0 0 80px rgba(255,138,92,0.45)", duration: 0.5 }, 3.2);
+    tl.to(["#wave-t1", "#wave-t2", "#wave-store"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 5.3);
+    window.__timelines["wave"] = tl;
+  </script>
+</template>
