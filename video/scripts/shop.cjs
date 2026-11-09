@@ -3,11 +3,13 @@
 const { chromium } = require('playwright');
 const { startRec } = require('./rec.cjs');
 const out = process.argv[2] || 'raw/shop1';
+const INTENT = process.argv[3] || 'Strawberries for a party tonight. 3 boxes, keep it under $17.';
+const NODEAL = process.argv[4] === 'nodeal';
 const W = 1440, H = 810, DSF = 4 / 3;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 (async () => {
-  const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DSF });
+  const b = await chromium.launch({ args: ['--force-device-scale-factor=1.3333333'] });
+  const ctx = await b.newContext({ viewport: { width: W, height: H }, locale: 'en-US' });
   const p = await ctx.newPage();
   await p.goto('https://jomm.onrender.com/demo', { waitUntil: 'networkidle' });
   // finish Act 1 quickly (not recorded here)
@@ -23,11 +25,17 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   await p.waitForTimeout(1500);
   const box = p.getByLabel('What should the shopper’s agent buy?');
   await box.click();
-  await box.pressSequentially('Strawberries for a party tonight. 3 boxes, keep it under $17.', { delay: 45 });
+  await box.pressSequentially(INTENT, { delay: 45 });
   mark('typed');
   await p.waitForTimeout(800);
   await p.getByText('Send the shopper’s agent').click();
   mark('sent');
+  if (NODEAL) {
+    await p.getByText(/Nothing was charged|No deal/).first().waitFor({ timeout: 240000 });
+    mark('no deal'); await p.waitForTimeout(8000);
+    await p.screenshot({ path: `${out}/after.png` });
+    log('frames', await rec.stop()); await b.close(); return;
+  }
   // wait for PayPal buttons
   const ppFrame = p.frameLocator('iframe[title*="PayPal"]').first();
   const ppBtn = ppFrame.locator('[data-funding-source="paypal"]').first();
@@ -63,6 +71,8 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   mark('paid');
   await p.waitForTimeout(12000);
   mark('end');
+  const row = p.getByText('Checkout session · create', { exact: false }).first();
+  if (await row.isVisible().catch(() => false)) { await row.scrollIntoViewIfNeeded(); await row.click(); mark('expanded'); await p.waitForTimeout(7000); }
   await p.screenshot({ path: `${out}/after.png` });
   await p.screenshot({ path: `${out}/after-full.png`, fullPage: true });
   log('frames', await rec.stop());

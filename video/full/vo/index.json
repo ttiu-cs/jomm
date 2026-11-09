@@ -1,0 +1,158 @@
+{
+ "v1/hook": {
+  "file": "9b30dbb644.mp3",
+  "dur": 5.52
+ },
+ "v1/big": {
+  "file": "43da1c11d2.mp3",
+  "dur": 6.504
+ },
+ "v1/small": {
+  "file": "7262b9e0d9.mp3",
+  "dur": 7.704
+ },
+ "v1/mission": {
+  "file": "15a00d2402.mp3",
+  "dur": 7.92
+ },
+ "v1/promise": {
+  "file": "0d5ae4d840.mp3",
+  "dur": 6.0
+ },
+ "v1/rosa": {
+  "file": "51c6e619e1.mp3",
+  "dur": 12.864
+ },
+ "v1/mina": {
+  "file": "15beb15be5.mp3",
+  "dur": 8.352
+ },
+ "v1/intent": {
+  "file": "8a677a4bba.mp3",
+  "dur": 8.16
+ },
+ "v1/haggle": {
+  "file": "92024c33dd.mp3",
+  "dur": 15.264
+ },
+ "v1/approve": {
+  "file": "94884c6ce9.mp3",
+  "dur": 13.008
+ },
+ "v1/paid": {
+  "file": "85a90e6770.mp3",
+  "dur": 10.008
+ },
+ "v1/rex": {
+  "file": "2f2620bb88.mp3",
+  "dur": 5.664
+ },
+ "v1/stack": {
+  "file": "22a16a3147.mp3",
+  "dur": 9.456
+ },
+ "v1/end": {
+  "file": "12ca85f7d7.mp3",
+  "dur": 4.752
+ },
+ "v2/dawn": {
+  "file": "9c89f138e8.mp3",
+  "dur": 8.712
+ },
+ "v2/shift": {
+  "file": "85a130672a.mp3",
+  "dur": 8.76
+ },
+ "v2/mission": {
+  "file": "ec119cc745.mp3",
+  "dur": 12.912
+ },
+ "v2/teach": {
+  "file": "90f6f5f6d3.mp3",
+  "dur": 13.368
+ },
+ "v2/intent": {
+  "file": "692d5537b0.mp3",
+  "dur": 8.52
+ },
+ "v2/haggle": {
+  "file": "f7eb28284e.mp3",
+  "dur": 16.104
+ },
+ "v2/approve": {
+  "file": "4159d65f52.mp3",
+  "dur": 8.112
+ },
+ "v2/paid": {
+  "file": "f23b9b3ad3.mp3",
+  "dur": 8.664
+ },
+ "v2/rex": {
+  "file": "d9027dee38.mp3",
+  "dur": 7.92
+ },
+ "v2/mina": {
+  "file": "6737042279.mp3",
+  "dur": 7.92
+ },
+ "v2/stack": {
+  "file": "4cb1850ebc.mp3",
+  "dur": 9.504
+ },
+ "v2/end": {
+  "file": "68b4cd8e4e.mp3",
+  "dur": 5.616
+ },
+ "v3/question": {
+  "file": "9f191a720b.mp3",
+  "dur": 4.416
+ },
+ "v3/today": {
+  "file": "9341ec5354.mp3",
+  "dur": 7.56
+ },
+ "v3/mission": {
+  "file": "991b22f3ce.mp3",
+  "dur": 12.768
+ },
+ "v3/steps": {
+  "file": "208a9ca935.mp3",
+  "dur": 4.656
+ },
+ "v3/mina": {
+  "file": "3bdb85937c.mp3",
+  "dur": 9.408
+ },
+ "v3/rosa": {
+  "file": "eb8ad14d67.mp3",
+  "dur": 9.552
+ },
+ "v3/feed": {
+  "file": "0e55513260.mp3",
+  "dur": 10.848
+ },
+ "v3/checkout": {
+  "file": "8bd2867bb7.mp3",
+  "dur": 13.8
+ },
+ "v3/guard": {
+  "file": "2c868d3336.mp3",
+  "dur": 9.048
+ },
+ "v3/pay": {
+  "file": "6f0ebbfcb3.mp3",
+  "dur": 11.064
+ },
+ "v3/toolkit": {
+  "file": "c0ff6a4f89.mp3",
+  "dur": 6.648
+ },
+ "v3/stack": {
+  "file": "38dba752ea.mp3",
+  "dur": 9.36
+ },
+ "v3/end": {
+  "file": "12ca85f7d7.mp3",
+  "dur": 4.752
+ }
+}

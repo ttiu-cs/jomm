@@ -8,3 +8,5 @@ styles/*/assets/
 styles/check_*.json
 styles/*.log
 styles/__pycache__/
+full/*/assets/
+full/*/.hyperframes/

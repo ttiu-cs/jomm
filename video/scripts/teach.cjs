@@ -3,8 +3,8 @@ const { chromium } = require('playwright');
 const { startRec } = require('./rec.cjs');
 const out = process.argv[2] || 'raw/teach1';
 (async () => {
-  const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 4 / 3, locale: 'en-US' });
+  const b = await chromium.launch({ args: ['--force-device-scale-factor=1.3333333'] });
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 810 }, locale: 'en-US' });
   const p = await ctx.newPage();
   await p.goto('https://jomm.onrender.com/demo', { waitUntil: 'networkidle' });
   await p.locator('section[aria-label="Rosa teaches"]').scrollIntoViewIfNeeded();
