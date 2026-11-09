@@ -97,13 +97,13 @@ export default function SellerEntry({ shops }: { shops: { id: string; name: stri
           <section className="mt-8">
             <h2 className="px-4 text-[13px] uppercase tracking-wide text-label-2">Just looking</h2>
             <div className="mt-1.5 overflow-hidden rounded-[14px] bg-card">
-              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "fruit" }), true)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[17px] hover:bg-fill/50">
+              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "fruit" }), false)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[17px] hover:bg-fill/50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/photos/apples-box.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
                 <span className="flex-1">Sample fruit stand</span>
                 <span className="text-label-3">›</span>
               </button>
-              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "closet" }), true)} className="flex w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[17px] hover:bg-fill/50">
+              <button type="button" disabled={busy} onClick={() => open(() => api<SessionLite>("/api/teach/example", { script: "closet" }), false)} className="flex w-full items-center gap-3 border-t border-line px-4 py-3 text-left text-[17px] hover:bg-fill/50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/photos/denim-jacket.jpg" alt="" className="h-10 w-10 rounded-[9px] object-cover" />
                 <span className="flex-1">Sample closet</span>

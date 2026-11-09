@@ -191,6 +191,8 @@ function Teach({
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [caption, setCaption] = useState<string | null>(null);
+  /** Items that existed before the sample started: their Channel3 cards were shown earlier, not now. */
+  const [before, setBefore] = useState<Set<string>>(() => new Set());
   const [agentLine, setAgentLine] = useState<string | null>(null);
   const [speechOk] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -375,7 +377,7 @@ function Teach({
       let lastReply: string | null =
         [...session.messages].reverse().find((m) => m.role === "agent")?.text ??
         null;
-      if (i === 0 && ownerSaid === 0) {
+      if (i === 0) {
         setAgentLine(v.hello);
         prefetch(v.voice, lines[0].line);
         await speakLine("agent", v.hello, { muted: mutedRef.current });
@@ -492,7 +494,7 @@ function Teach({
           )}
           {source.kind === "video" && source.scene === "closet" && (
             <div className="absolute inset-x-4 top-16 z-20 flex justify-center">
-              {focusItem?.rules?.lookup ? (
+              {focusItem?.rules?.lookup && !before.has(focusItem.id) ? (
                 <div
                   key={focusItem.id}
                   className="relative flex w-full justify-center"
@@ -555,7 +557,7 @@ function Teach({
                     )}
                   </span>
                 </div>
-              ) : sending && session.channel3 ? (
+              ) : sending && session.channel3 && /^(this is|these are|next (is|are)|and (this|these))\b/i.test(caption ?? "") ? (
                 <div className="c3-scan relative w-full max-w-[340px] overflow-hidden rounded-[22px] bg-white/95 p-3.5 text-label shadow-2xl">
                   <div className="flex items-center gap-2 text-[15px] font-semibold">
                     <span className="rounded-md bg-label px-2 py-0.5 text-[12px] font-bold text-white">
@@ -651,6 +653,7 @@ function Teach({
                         key={o.scene}
                         type="button"
                         onClick={() => {
+                          setBefore(new Set(session.items.map((i) => i.id)));
                           setSource({ kind: "video", scene: o.scene });
                           setPlaying(true);
                         }}
