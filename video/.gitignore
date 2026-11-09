@@ -10,3 +10,6 @@ styles/*.log
 styles/__pycache__/
 full/*/assets/
 full/*/.hyperframes/
+full/*.log
+full/check_*.json
+full/__pycache__/
