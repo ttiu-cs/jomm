@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the three full-length style C versions: python3 build_full.py [v1 v2 v3]"""
-import os, sys, json, shutil
+import os, sys, json, shutil, subprocess
 from lib import *
 from scripts_data import VERSIONS
 HERE = os.path.dirname(os.path.abspath(__file__)); V = os.path.dirname(HERE); REPO = os.path.dirname(V)
@@ -150,9 +150,10 @@ def build(vid):
     gen = os.path.join(HERE, "gen")
     if os.path.isdir(gen):
         for f in os.listdir(gen): shutil.copy(os.path.join(gen, f), os.path.join(d, "assets", "img"))
-    for src, dst in (("shopEN/main.mp4", "deal.mp4"), ("shopEN/popup.mp4", "popup.mp4"), ("rex/main.mp4", "rex.mp4"), ("teach1/main.mp4", "teach.mp4"), ("closet1/main.mp4", "closet.mp4"), ("fruitphone/main.mp4", "fruitphone.mp4")):
+    for src, dst in (("shopEN/smooth.mp4", "deal.mp4"), ("shopEN/popup.mp4", "popup.mp4"), ("rex/smooth.mp4", "rex.mp4"), ("teach1/smooth.mp4", "teach.mp4"), ("closet1/smooth.mp4", "closet.mp4"), ("fruitphone/smooth.mp4", "fruitphone.mp4")):
         t = os.path.join(d, "assets", "rec", dst)
-        if not os.path.exists(t): os.link(os.path.join(V, "raw", src), t)
+        if os.path.exists(t): os.remove(t)
+        os.link(os.path.join(V, "raw", src), t)
     hosts, auds, t = [], [], 0.0
     for i, (b, _) in enumerate(beats):
         v = VO[f"{vid}/{b}"]
@@ -165,6 +166,11 @@ def build(vid):
         auds.append(f'      <audio id="vo-{b}" class="clip" src="assets/vo/{i:02d}-{b}.mp3" data-start="{round(t + 0.25, 2)}" data-duration="{v["dur"]}" data-volume="1" data-track-index="{5 + i % 2}"></audio>')
         t += dur
     total = round(t, 2)
+    ro = os.path.join(V, "shared", "music", "reaching_out.ogg")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", ro, "-i", ro, "-i", ro, "-filter_complex",
+        f"[0][1]acrossfade=d=3:c1=tri:c2=tri[a];[a][2]acrossfade=d=3:c1=tri:c2=tri,atrim=0:{total},afade=t=in:d=1.5,afade=t=out:st={total-4.5}:d=4.5,loudnorm=I=-27:TP=-2:LRA=11",
+        "-ar", "48000", "-ac", "2", "-b:a", "192k", os.path.join(d, "assets", "bgm.mp3")], check=True)
+    auds.append(f'      <audio id="bgm" class="clip" src="assets/bgm.mp3" data-start="0" data-duration="{total}" data-volume="1" data-track-index="8"></audio>')
     open(os.path.join(d, "index.html"), "w").write(f"""<!doctype html>
 <html lang="en">
   <head>

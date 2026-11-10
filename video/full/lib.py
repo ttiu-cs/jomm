@@ -149,6 +149,15 @@ def k_screen(s, segs, cams=(), caps=(), tag=False, chapter=None, ground="#f6f1ea
     for (t, d, txt) in caps:
         c = s.el("p", "cap", f"<span>{txt}</span>", t, d)
         s.tl(f'tl.fromTo("{c}", {{ opacity: 0, y: 20 }}, {{ opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }}, {t});')
+    # dip cuts: the frame darkens briefly around every cut so footage jumps read as intended cuts
+    cuts = sorted({round(st, 2) for (_, st, _, _, _) in segs if st > 0.05} | {round(t, 2) for (t, d, *_ ) in list(cams)[1:] if d == 0})
+    dip = s.uid("dip")
+    s.add(f'<div id="{dip}" class="clip" data-start="0" data-duration="{s.dur}" data-layout-ignore style="position:absolute;inset:0;background:#141010;opacity:0;pointer-events:none"></div>')
+    s.tl(f'tl.fromTo("#{dip}", {{ opacity: 0.5 }}, {{ opacity: 0, duration: 0.25, ease: "power2.out" }}, 0);')
+    for c in cuts:
+        s.tl(f'tl.to("#{dip}", {{ opacity: 0.45, duration: 0.1, ease: "power1.in" }}, {round(c - 0.1, 2)});')
+        s.tl(f'tl.to("#{dip}", {{ opacity: 0, duration: 0.18, ease: "power2.out" }}, {c});')
+    s.tl(f'tl.to("#{dip}", {{ opacity: 0.45, duration: 0.12, ease: "power1.in" }}, {round(s.dur - 0.14, 2)});')
     if tag:
         s.el("p", "tag", "PayPal Sandbox · test money")
     if chapter:
@@ -180,10 +189,12 @@ def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm"):
     .lg {{ position: absolute; left: 0; right: 0; top: 280px; text-align: center; font-size: 220px; color: #2b211a; }}
     .l1 {{ position: absolute; left: 0; right: 0; top: 570px; text-align: center; font-family: {SERIF}; font-size: 60px; color: #2b211a; }}
     .l2 {{ position: absolute; left: 0; right: 0; top: 670px; text-align: center; font-family: Caveat, cursive; font-size: 58px; color: #e0592a; }}
-    .l3 {{ position: absolute; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #8a7868; }}""")
+    .l3 {{ position: absolute; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #8a7868; }}
+    .l4 {{ position: absolute; left: 0; right: 0; top: 960px; text-align: center; font-size: 28px; color: #a8998b; }}""")
     lg = s.el("div", "lg", LOGO)
     s.tl(f'tl.fromTo("{lg}", {{ opacity: 0, filter: "blur(12px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out" }}, 0.1);')
     a = s.el("p", "l1", words(lines[0])); s.wordsin(a, 1.0, 0.16)
     if len(lines) > 1:
         b = s.el("p", "l2", lines[1]); s.blurin(b, 2.6, 0.3)
     c = s.el("p", "l3", url); s.blurin(c, 3.6)
+    m = s.el("p", "l4", "Music: “Reaching Out” by Kevin MacLeod (incompetech.com), CC BY 3.0"); s.blurin(m, 3.8)
