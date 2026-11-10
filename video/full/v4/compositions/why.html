@@ -1,0 +1,68 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    #v4-why-all { position: absolute; inset: 0; overflow: hidden; background: #f6f1ea; }
+
+.ph { position: absolute; inset: 0; overflow: hidden; }
+.ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(20,14,10,0.80) 0%, rgba(20,14,10,0.42) 52%, rgba(20,14,10,0.08) 100%); }
+.shadeb { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(20,14,10,0.78) 0%, rgba(20,14,10,0.15) 45%, rgba(20,14,10,0) 70%); }
+.kick { position: absolute; left: 140px; font-family: Caveat, cursive; font-size: 68px; color: #ffb38f; }
+.title { position: absolute; left: 140px; width: 1240px; font-family: 'Playfair Display', serif; font-size: 100px; line-height: 1.05; color: #fff; }
+.title i { color: #ffb38f; }
+.sub { position: absolute; left: 144px; width: 1120px; font-size: 38px; line-height: 1.4; color: rgba(255,255,255,0.85); }
+.note { position: absolute; font-family: Caveat, cursive; font-size: 92px; color: #fff; }
+.w { display: inline-block; }
+.cap { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; }
+.cap span { display: inline-block; max-width: 1500px; padding: 14px 30px; background: rgba(20,14,10,0.85); color: #fff; font-size: 40px; line-height: 1.3; border-radius: 12px; }
+.tag { position: absolute; right: 80px; top: 56px; padding: 12px 22px; border-radius: 999px; background: #0b2a5c; color: #fff; font-size: 28px; font-weight: 700; }
+.chap { position: absolute; left: 80px; top: 56px; padding: 10px 22px; border-radius: 999px; background: rgba(20,14,10,0.85); color: #fff; font-size: 28px; }
+.chap b { color: #ffb38f; font-family: Caveat, cursive; font-size: 40px; font-weight: 600; margin-right: 8px; }
+@font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }
+.jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
+.jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+    .wy-pan { position: absolute; top: 120px; width: 800px; height: 760px; border-radius: 32px; overflow: hidden; }
+    .wy-l { left: 120px; background: #1f1813; color: #fff; }
+    .wy-r { left: 1000px; }
+    .wy-r img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .wy-r .sh { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,14,10,0.55), rgba(20,14,10,0.15) 45%, rgba(20,14,10,0.6)); }
+    .wy-k { position: absolute; left: 56px; top: 44px; font-family: Caveat, cursive; font-size: 60px; color: #ffb38f; }
+    #wy-price { position: absolute; left: 56px; top: 250px; font-family: 'Playfair Display', serif; font-size: 190px; line-height: 1; }
+    #wy-price small { display: block; margin-top: 26px; font-family: Inter, sans-serif; font-size: 36px; color: rgba(255,255,255,0.65); }
+    .wy-b { position: absolute; left: 56px; padding: 18px 28px; border-radius: 26px; background: #e0592a; color: #fff; font-family: Caveat, cursive; font-size: 54px; }
+    .wy-card { position: absolute; left: 260px; top: 170px; width: 900px; padding: 44px 52px; border-radius: 28px; background: #1f1813; color: #f6f1ea; font-family: 'JetBrains Mono', monospace; font-size: 38px; line-height: 1.55; box-shadow: 0 30px 60px rgba(43,33,26,0.25); }
+    .wy-card .c { color: #8a7868; }
+    .wy-card .pp { color: #7fb2ff; }
+    .wy-note { position: absolute; left: 1230px; top: 260px; width: 560px; font-family: Caveat, cursive; font-size: 72px; line-height: 1.1; color: #6b4a2b; }
+    .wy-neg { position: absolute; left: 260px; top: 560px; width: 900px; padding: 34px 52px; border-radius: 28px; background: #e0592a; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 36px; line-height: 1.55; box-shadow: 0 30px 60px rgba(224,89,42,0.35); }
+    .wy-tag { position: absolute; left: 1230px; top: 650px; width: 600px; font-family: 'Playfair Display', serif; font-size: 64px; line-height: 1.1; color: #2b211a; }
+    .wy-tag .jomm { font-size: 72px; }
+  </style>
+  <div id="root" data-composition-id="v4-why" data-width="1920" data-height="1080">
+  <div id="v4-why-all">
+    <div id="v4-why-d1" class="wy-pan wy-l clip" data-start="0" data-duration="4.3" style="" ><p class="wy-k">big store</p><p id="wy-price">$5.49<small>one price, for everyone</small></p></div>
+    <div id="v4-why-d2" class="wy-pan wy-r clip" data-start="0" data-duration="4.3" style="" ><img src="assets/img/gen-dawn.jpg" alt="" style="object-position:40% 50%" /><div class="sh"></div><p class="wy-k">a stall</p><p class="wy-b" id="wy-b1" style="top:430px">3 boxes? $5.25 each</p><p class="wy-b" id="wy-b2" style="top:560px">closing at 6? $4.75</p></div>
+    <div id="v4-why-d3" class="wy-card clip" data-start="4.3" data-duration="6.4" style="" ><span class="c">// ACP checkout session</span><br/>line_items: 3 × strawberries<br/>total: $16.47<br/>payment_provider: <span class="pp">paypal</span></div>
+    <p id="v4-why-p4" class="wy-note clip" data-start="6.0" data-duration="4.7" style="" >a price,<br/>not a conversation.</p>
+    <div id="v4-why-d5" class="wy-neg clip" data-start="7.8" data-duration="2.9" style="" >+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}</div>
+    <p id="v4-why-p6" class="wy-tag clip" data-start="8.1" data-duration="2.6" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span><br/>adds the conversation.</p>
+  </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#v4-why-d1", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }, 0.15);
+    tl.fromTo("#v4-why-d2", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }, 2.9);
+    tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.2);
+    tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.6);
+    tl.to(["#v4-why-d1", "#v4-why-d2"], { opacity: 0, filter: "blur(8px)", duration: 0.25 }, 4.0);
+    tl.fromTo("#v4-why-d3", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 4.3);
+    tl.fromTo("#v4-why-p4", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 6.0);
+    tl.fromTo("#v4-why-d5", { opacity: 0, y: 60, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }, 7.8);
+    tl.to("#v4-why-p4", { opacity: 0.25, duration: 0.3 }, 7.8);
+    tl.fromTo("#v4-why-p6", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }, 8.1);
+    tl.to(["#v4-why-d3", "#v4-why-p4", "#v4-why-d5", "#v4-why-p6"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 10.45);
+
+    window.__timelines["v4-why"] = tl;
+  </script>
+</template>

@@ -163,6 +163,10 @@
   "file": "85a130672a.mp3",
   "dur": 8.76
  },
+ "v4/why": {
+  "file": "b46434fc6c.mp3",
+  "dur": 9.048
+ },
  "v4/mission": {
   "file": "ec119cc745.mp3",
   "dur": 12.912
@@ -184,8 +188,8 @@
   "dur": 8.352
  },
  "v4/checkout": {
-  "file": "6e3fe280a0.mp3",
-  "dur": 11.856
+  "file": "07bfb2bbee.mp3",
+  "dur": 15.552
  },
  "v4/guard": {
   "file": "c41cc0b0f8.mp3",

@@ -118,7 +118,49 @@ def v3(b, s):
     elif b == "stack": k_cards(s, "built with", "Try it live: jomm.onrender.com", STACK)
     elif b == "end": k_end(s, ["Every small seller, ready for the AI era.", "Teach your stall. It haggles with AI. PayPal pays."])
 
+def why_beat(s):
+    """Big store: one price. A stall: a deal. ACP checkout: a price, not a conversation. Jomm. adds negotiation."""
+    s.ground = "#f6f1ea"
+    MONO = "'JetBrains Mono', monospace"
+    s.css.append(f"""
+    .wy-pan {{ position: absolute; top: 120px; width: 800px; height: 760px; border-radius: 32px; overflow: hidden; }}
+    .wy-l {{ left: 120px; background: #1f1813; color: #fff; }}
+    .wy-r {{ left: 1000px; }}
+    .wy-r img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }}
+    .wy-r .sh {{ position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,14,10,0.55), rgba(20,14,10,0.15) 45%, rgba(20,14,10,0.6)); }}
+    .wy-k {{ position: absolute; left: 56px; top: 44px; font-family: Caveat, cursive; font-size: 60px; color: #ffb38f; }}
+    #wy-price {{ position: absolute; left: 56px; top: 250px; font-family: {SERIF}; font-size: 190px; line-height: 1; }}
+    #wy-price small {{ display: block; margin-top: 26px; font-family: Inter, sans-serif; font-size: 36px; color: rgba(255,255,255,0.65); }}
+    .wy-b {{ position: absolute; left: 56px; padding: 18px 28px; border-radius: 26px; background: #e0592a; color: #fff; font-family: Caveat, cursive; font-size: 54px; }}
+    .wy-card {{ position: absolute; left: 260px; top: 170px; width: 900px; padding: 44px 52px; border-radius: 28px; background: #1f1813; color: #f6f1ea; font-family: {MONO}; font-size: 38px; line-height: 1.55; box-shadow: 0 30px 60px rgba(43,33,26,0.25); }}
+    .wy-card .c {{ color: #8a7868; }}
+    .wy-card .pp {{ color: #7fb2ff; }}
+    .wy-note {{ position: absolute; left: 1230px; top: 260px; width: 560px; font-family: Caveat, cursive; font-size: 72px; line-height: 1.1; color: #6b4a2b; }}
+    .wy-neg {{ position: absolute; left: 260px; top: 560px; width: 900px; padding: 34px 52px; border-radius: 28px; background: #e0592a; color: #fff; font-family: {MONO}; font-size: 36px; line-height: 1.55; box-shadow: 0 30px 60px rgba(224,89,42,0.35); }}
+    .wy-tag {{ position: absolute; left: 1230px; top: 650px; width: 600px; font-family: {SERIF}; font-size: 64px; line-height: 1.1; color: #2b211a; }}
+    .wy-tag .jomm {{ font-size: 72px; }}""")
+    A_END = 4.3
+    L = s.el("div", "wy-pan wy-l", '<p class="wy-k">big store</p><p id="wy-price">$5.49<small>one price, for everyone</small></p>', 0, A_END)
+    R = s.el("div", "wy-pan wy-r", '<img src="assets/img/gen-dawn.jpg" alt="" style="object-position:40% 50%" /><div class="sh"></div><p class="wy-k">a stall</p>'
+             '<p class="wy-b" id="wy-b1" style="top:430px">3 boxes? $5.25 each</p><p class="wy-b" id="wy-b2" style="top:560px">closing at 6? $4.75</p>', 0, A_END)
+    s.tl(f'tl.fromTo("{L}", {{ opacity: 0, x: -40 }}, {{ opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }}, 0.15);')
+    s.tl(f'tl.fromTo("{R}", {{ opacity: 0, x: 40 }}, {{ opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }}, 2.9);')
+    s.tl('tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.2);')
+    s.tl('tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.6);')
+    s.tl(f'tl.to(["{L}", "{R}"], {{ opacity: 0, filter: "blur(8px)", duration: 0.25 }}, {A_END - 0.3});')
+    card = s.el("div", "wy-card", '<span class="c">// ACP checkout session</span><br/>line_items: 3 × strawberries<br/>total: $16.47<br/>payment_provider: <span class="pp">paypal</span>', A_END)
+    s.tl(f'tl.fromTo("{card}", {{ opacity: 0, y: 40 }}, {{ opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }}, {A_END});')
+    note = s.el("p", "wy-note", "a price,<br/>not a conversation.", A_END + 1.7)
+    s.tl(f'tl.fromTo("{note}", {{ opacity: 0, x: -20 }}, {{ opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }}, {A_END + 1.7});')
+    neg = s.el("div", "wy-neg", '+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}', 7.8)
+    s.tl(f'tl.fromTo("{neg}", {{ opacity: 0, y: 60, scale: 0.96 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }}, 7.8);')
+    s.tl(f'tl.to("{note}", {{ opacity: 0.25, duration: 0.3 }}, 7.8);')
+    tag = s.el("p", "wy-tag", f'{LOGO}<br/>adds the conversation.', 8.1)
+    s.tl(f'tl.fromTo("{tag}", {{ opacity: 0, filter: "blur(8px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }}, 8.1);')
+    s.fadeout([card, note, neg, tag])
+
 def v4(b, s):
+    if b == "why": return why_beat(s)
     if b == "mission":
         v2(b, s)
         s.css.append("""
@@ -144,7 +186,7 @@ def v4(b, s):
         segs, _ = seq((DEAL, 9.5, 14, 1.25), (DEAL, 56.3, 6.4, 1.0))
         d = s.dur; j = 11.2
         k_screen(s, segs, cams=[C(0, 0, 1040, 420, 1.6), C(5.2, 0.8, 440, 600, 1.5), C(j, 0, 1040, 640, 1.7)],
-                 caps=[(0.4, 4.6, "POST /agentic/checkout_sessions · payment_provider: paypal"), (5.4, j - 5.8, "The agents haggle: each counter carries a reason"), (j + 0.2, d - j - 0.5, "The session, as Jun’s agent sees it: totals set by the server")], chapter="<b>2:01 p.m.</b>negotiate")
+                 caps=[(0.4, 4.6, "POST /agentic/checkout_sessions · payment_provider: paypal"), (5.4, j - 5.8, "+ negotiation: Jomm.’s addition to ACP · every counter has a reason"), (j + 0.2, d - j - 0.5, "The session, as Jun’s agent sees it: totals set by the server")], chapter="<b>2:01 p.m.</b>negotiate")
     elif b == "guard":
         segs, _ = seq((DEAL, 8.5, 4, 1.0), (DEAL, 22, 8, 1.0))
         k_screen(s, segs, cams=[C(0, 0, 440, 560, 1.6), C(4.0, 0, 1550, 560, 1.6)], caps=[(0.3, 3.6, "Jun’s budget: a mandate the server enforces"), (4.2, s.dur - 4.5, "🔒 Only Rosa sees why her agent priced it this way")], chapter="<b>2:01 p.m.</b>guardrails")
@@ -152,7 +194,7 @@ def v4(b, s):
     elif b == "paid": b_paid(s, chapter="<b>2:02 p.m.</b>verified")
 
 FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
-PAD = {"end": 3.8, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
+PAD = {"end": 3.2, "why": 1.4, "intent": 0.8, "haggle": 1.0, "approve": 1.0, "paid": 0.8, "rex": 0.8, "feed": 0.8, "checkout": 0.6, "rosa": 1.0, "mina": 0.6, "teach": 0.6}
 MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0, "rex": 10.45}
 
 # the ending line: "...It haggles with AI." a beat of silence, then "And... PayPal pays!"
