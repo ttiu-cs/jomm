@@ -8,14 +8,14 @@ Jomm. — Teach your stall. It haggles with AI. PayPal pays. (PayPal AI Hackatho
 **Description**
 Shoppers are starting to send AI agents to buy for them. Big retailers will plug in fast. A three-crate fruit stall or a closet reseller has no catalog API, no checkout integration and no tech team.
 
-Jomm. gives the smallest sellers their own AI selling agent, set up in minutes just by talking. Rosa points her phone at her crates and talks; her agent learns her prices, her private lowest price and her reasons (closing time, supermarket prices, leftovers). Mina does the same with her closet, and Jomm. checks new-item prices on Channel3 to suggest a fair resale range.
+Jomm. gives the smallest sellers their own AI selling agent, set up in minutes just by talking. Rosa points her phone at her crates and talks; her agent learns her prices, her private lowest price and her reasons (closing time, supermarket prices, leftovers). Mina does the same with her closet, and for branded goods Jomm. looks up new prices on Channel3 to suggest a fair resale price.
 
 When a shopper's AI agent arrives, it reads the stall's product feed, opens a checkout session in the Agentic Commerce Protocol shape with PayPal as the payment provider, and haggles with the seller's agent. The seller's lowest price never leaves the server, and amounts are always set by the server, never by an agent. The shopper approves in PayPal, the server creates and captures a PayPal Orders v2 order and verifies it, and the buyer agent confirms it with the PayPal Agent Toolkit (get_order).
 
 Payments in this demo run in the PayPal Sandbox (test money).
 
 Built with: PayPal Orders v2 · PayPal Agent Toolkit · ACP-style checkout sessions · OpenAI (buyer agent, tool calling) · Channel3 · deployed on Render
-Live demo: https://jomm.onrender.com
+Live demo: https://jomm.onrender.com/demo
 Code: https://github.com/ttiu-cs/jomm
 
 Chapters
@@ -37,31 +37,61 @@ Some background images are AI-generated (Ludyte); others are from Pexels.
 
 ## Devpost
 
+**Tagline:** Teach your stall. It haggles with AI. PayPal pays.
+
+**Links**
+- Live demo: https://jomm.onrender.com/demo
+- Video (under 3 min): https://youtu.be/zrWFIY9mRTI
+- Code (MIT): https://github.com/ttiu-cs/jomm
+
 ### Inspiration
-PayPal has always worked to give everyone a place in the digital economy. Now shopping is moving to AI agents, and PayPal is building the rails for it: Agent Ready, Store Sync, the Agent Toolkit. Big merchants will plug in quickly. A fruit stand with three crates, or someone reselling their closet, has no catalog, no developer and no time. We wanted the smallest seller to be just as ready for the AI era as the biggest one, without writing a line of code.
+PayPal has always worked to give everyone a place in the digital economy. Now shopping is moving to AI agents, and PayPal is building the rails for it: Agent Ready, Store Sync, the Agent Toolkit. Big merchants will plug in quickly. A three-crate fruit stall, or someone reselling their closet, has no website, no catalog and no tech team. We wanted the smallest seller to be just as ready for the AI era as the biggest one, without writing a line of code.
 
 ### What it does
-Jomm. turns a short phone-camera conversation into a selling agent.
-- **Teach by talking.** The seller points their phone at the goods and talks. The agent keeps asking until it knows enough to haggle: price, lowest acceptable price (kept private), quantity, how soon it must sell, closing time, prices elsewhere, bulk deals, what happens to leftovers. For second-hand items it looks up new prices on Channel3 and suggests a resale range.
-- **Sell to any shopper's agent.** A shopper types an intent ("Strawberries for a party tonight. 3 boxes, keep it under $17."). An OpenAI buyer agent turns it into a budget mandate, reads the stall's product feed, asks questions, and negotiates with the seller's agent through a checkout session. Every counter-offer carries a reason grounded in what the seller taught.
-- **PayPal pays.** The agreed price becomes a server-side, price-locked PayPal Orders v2 order. The shopper approves it in PayPal; the server captures and verifies it; the buyer agent confirms it with the PayPal Agent Toolkit. The seller's phone shows the sale.
-
-### How we built it
-- Next.js app deployed on Render (auto-deploys from main).
-- Seller teaching: a parser turns the owner's words into items, prices, private floors and urgency; a checklist drives follow-up questions; Channel3 search for new-item prices; OpenAI TTS for the sample voices.
-- Agent interface: `GET /api/agentic/feed` (modeled on Store Sync), `POST /api/agentic/checkout_sessions` (+ update / complete / cancel) in the Agentic Commerce Protocol shape with `payment_provider: paypal`, plus our own `negotiation` extension (offer, counter, final offer).
-- Buyer agent: OpenAI tool calling with stall tools and the PayPal Agent Toolkit (`@paypal/agent-toolkit`, `get_order`), streamed to the UI with every call shown in a "PayPal agent interface" panel.
-- Payments: PayPal Orders v2 (Sandbox) with idempotency keys, quote locks, capture verification (amount, currency, custom_id) and webhook/reconcile handling.
+Jomm. turns a short camera conversation into the seller's own AI selling agent.
+- **Teach by talking.** The owner points a phone or laptop camera at the goods and talks. The agent keeps asking until it knows enough to haggle the way the owner would: price, the lowest price they'd take (kept private), quantity, how soon it must sell, closing time, what shoppers pay elsewhere, bulk deals, what happens to leftovers. For branded, manufactured goods (clothes, shoes, bags, electronics) it looks up new prices on **Channel3** and suggests a fair resale price for the item's condition. Fresh produce isn't looked up.
+- **Sell to any shopper's agent.** A shopper types any request in plain words ("Strawberries for a party tonight. 3 boxes, keep it under $17."). An OpenAI buyer agent turns it into a budget mandate, reads the stall's product feed, asks the seller's agent questions, and negotiates through a checkout session. Every counter-offer carries a reason grounded in what the owner taught ("The supermarket charges $4.99 a box…"), and the owner's lowest price never leaves the server.
+- **PayPal pays.** The agreed price becomes a server-side, 5-minute price-locked quote and a PayPal Orders v2 order. The shopper approves it in PayPal (agents can't pay on their own); the server captures and verifies it; the buyer agent confirms it with the PayPal Agent Toolkit; the owner's phone shows the sale.
 
 ### How we use PayPal
-- **Orders v2** creates and captures every payment. The amount comes from the server's locked agreement, never from an agent.
-- **Human approval in PayPal**: agents can't pay on their own; the shopper approves each order in PayPal.
-- **PayPal Agent Toolkit**: the buyer agent's tools include the toolkit's `get_order`, which it calls to confirm the captured payment.
-- **Agent Ready / ACP shape**: checkout sessions follow the Agentic Commerce Protocol shape that PayPal Agent Ready accepts, with PayPal as the payment provider. (This build isn't enrolled in Agent Ready; the negotiation extension is ours.)
-- **Store Sync idea**: the stall's product feed exposes items, prices and the owner's words to agents, but never the private floor.
+| Step | Endpoint | Modeled on |
+|---|---|---|
+| Discover | `GET /api/agentic/feed?shop=` | PayPal Store Sync (catalog + inventory for AI agents) |
+| Ask | `POST /api/shops/{shop}/items/{sku}/ask` (+ a `chat_with_seller` agent tool) | Answers only from the owner's own words, never prices |
+| Check out | `POST /api/agentic/checkout_sessions` (+ `/{id}`, `/{id}/complete`, `/{id}/cancel`) | Agentic Commerce Protocol checkout sessions (PayPal Agent Ready), `payment_provider: paypal` |
+| Negotiate | `negotiation` extension on create/update | Our addition: per-unit offer, counter with a reason, final offer, quantity change |
+| Pay | PayPal **Orders v2** create → shopper approval → capture → verify | PayPal Orders v2 (Sandbox) |
+| Confirm | `get_order` via **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | The buyer agent checks the order with PayPal itself |
 
-### Challenges
-Keeping the seller's floor private while still letting the agent negotiate convincingly; making sure no agent can ever set an amount; and making a teaching flow simple enough for someone who has never used a computer for business.
+Rules the code enforces: PayPal secrets stay server-side; amounts, SKUs and status come from the server, never from an agent; the shopper's budget mandate is enforced in tool code; agents can't pay on their own; a sale counts only after a verified capture. The checkout sessions follow the ACP shape that PayPal Agent Ready accepts; this build isn't enrolled in Agent Ready or Store Sync, and the negotiation extension is ours.
+
+### How we built it
+- **Teaching:** a deterministic parser turns the owner's words into items, prices, private floors and urgency, and a checklist drives the follow-up questions. The Teach screen uses the camera, or plays one of two sample videos (Rosa's fruit stall, Mina's closet) through the same pipeline. Rosa, Mina and the agent speak with OpenAI `gpt-4o-mini-tts` voices.
+- **Selling:** the seller's agent answers only from the owner's facts and never goes below the private floor. How far it may go comes from urgency, time left before closing, demand, waste risk and price versus elsewhere; the owner sees the private reasoning ("Why my agent priced it this way").
+- **Buying:** an OpenAI buyer agent (`gpt-5.4-mini`, tool calling) works only through tools: `read_product_feed`, `chat_with_seller`, `ask_seller`, `open_checkout_session`, `propose_price`, `accept_seller_counter`, `walk_away`, `complete_checkout`, plus the PayPal Agent Toolkit. Every call streams to a "PayPal agent interface" panel with its request and response.
+- **Paying:** PayPal Orders v2 (Sandbox) with idempotency keys, quote locks, capture verification (amount, currency, custom_id), signature-verified webhooks and exactly-once inventory.
+- **Stack:** Next.js 16, React 19, TypeScript, Tailwind, SQLite; deployed on Render with auto-deploy from GitHub.
+
+### Challenges we ran into
+Keeping the owner's floor private while still letting the agent negotiate convincingly; making sure no agent can ever set an amount or pay on its own; and keeping teaching simple enough for someone who has never used a computer for business.
+
+### Accomplishments that we're proud of
+A full loop that really runs: a camera conversation becomes listings with private limits, a shopper's OpenAI agent finds the stall through its feed, the two agents haggle with reasons, and a real PayPal Sandbox order is approved, captured, verified and confirmed with the Agent Toolkit.
+
+### What we learned
+Agent commerce needs guardrails in the server, not in prompts: budgets, floors and amounts are enforced in code, and the model only chooses between safe tools.
 
 ### What's next
-Live camera teaching in more languages, real Store Sync and Agent Ready enrollment, and payouts and receipts on the seller's phone.
+Live teaching in more languages, real Store Sync and Agent Ready enrollment, more sellers per market, and payouts and receipts on the owner's phone.
+
+### Try it (judges, about 3 minutes)
+1. Open https://jomm.onrender.com/demo.
+2. **Act 1:** press ▶ Play Rosa's video (then Skip › to jump to the end).
+3. **Act 2:** tap an example, or type any request in plain words (what, how much, what for, and your budget), and press **Send the shopper's agent**.
+4. **Act 3:** press the PayPal button and approve with the PayPal Sandbox buyer login below (test money).
+5. **Teach:** open https://jomm.onrender.com/seller, name a shop, and use your camera, or tap a sample: **Fruit stall, 3 crates** or **Closet, 5 items** (Channel3 price lookups).
+
+**Testing instructions (judges only):** PayPal Sandbox buyer login: [email] / [password]
+
+### Built with
+paypal-orders-v2 · paypal-agent-toolkit · agentic-commerce-protocol · openai · channel3 · render · next.js · react · typescript · tailwind · sqlite
