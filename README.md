@@ -8,6 +8,11 @@
 
 The smallest sellers (a three-crate fruit stall, a closet resale) have no website and no tech team, and they shouldn't fall behind when shopping moves to AI agents. With Jomm., the owner points a phone camera at their goods and *talks* with their own selling agent. The agent keeps asking until it knows enough to haggle the way the owner would. When a shopper's AI agent comes looking, the stall's agent answers, negotiates, and gets the owner paid with PayPal, while the owner's lowest prices never leave the server.
 
+## Why haggling
+Big retailers sell at one fixed price to everyone. A small stall doesn't: the owner reads the shopper, the hour and the crate, and makes a deal. A little off for three boxes, more off before closing, nothing off for the last perfect peaches. That flexibility is how small sellers sell out and waste less, and it is exactly what agent checkout leaves out today: an ACP checkout session carries a price, not a conversation.
+
+Jomm. adds a `negotiation` extension to the checkout session, so the owner's own way of dealing travels with their agent. A shopper's agent makes an offer; the stall's agent answers with a counter and a reason ("The supermarket charges $4.99 a box, but mine are worth it: picked this morning"), inside a floor only the owner knows. The deal is then locked by the server and paid with PayPal.
+
 ## Try it (judges: about 3 minutes)
 1. Open **https://jomm.onrender.com/demo**.
 2. **Act 1, Rosa teaches her agent:** press **▶ Play Rosa’s video** (then **Skip ›** to jump to the end). This is a replay of Rosa's camera conversation, run through the real teaching pipeline.
