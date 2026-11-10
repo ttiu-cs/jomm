@@ -27,7 +27,8 @@
     <p id="v4-checkout-p2" class="cap clip" data-start="0.4" data-duration="4.6" style="" ><span>POST /agentic/checkout_sessions · payment_provider: paypal</span></p>
     <p id="v4-checkout-p3" class="cap clip" data-start="5.4" data-duration="5.4" style="" ><span>The agents haggle: each counter carries a reason</span></p>
     <p id="v4-checkout-p4" class="cap clip" data-start="11.4" data-duration="5.3" style="" ><span>The session, as Jun’s agent sees it: totals set by the server</span></p>
-    <p id="v4-checkout-p5" class="chap clip" data-start="0.0" data-duration="17.0" style="" ><b>2:01 p.m.</b>negotiate</p>
+    <div id="v4-checkout-dip5" class="clip" data-start="0" data-duration="17.0" data-layout-ignore style="position:absolute;inset:0;background:#141010;opacity:0;pointer-events:none"></div>
+    <p id="v4-checkout-p6" class="chap clip" data-start="0.0" data-duration="17.0" style="" ><b>2:01 p.m.</b>negotiate</p>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -37,6 +38,10 @@
     tl.fromTo("#v4-checkout-p2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.4);
     tl.fromTo("#v4-checkout-p3", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 5.4);
     tl.fromTo("#v4-checkout-p4", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 11.399999999999999);
+    tl.fromTo("#v4-checkout-dip5", { opacity: 0.5 }, { opacity: 0, duration: 0.25, ease: "power2.out" }, 0);
+    tl.to("#v4-checkout-dip5", { opacity: 0.45, duration: 0.1, ease: "power1.in" }, 11.1);
+    tl.to("#v4-checkout-dip5", { opacity: 0, duration: 0.18, ease: "power2.out" }, 11.2);
+    tl.to("#v4-checkout-dip5", { opacity: 0.45, duration: 0.12, ease: "power1.in" }, 16.86);
     window.__timelines["v4-checkout"] = tl;
   </script>
 </template>

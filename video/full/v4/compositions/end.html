@@ -25,12 +25,14 @@
     .l1 { position: absolute; left: 0; right: 0; top: 570px; text-align: center; font-family: 'Playfair Display', serif; font-size: 60px; color: #2b211a; }
     .l2 { position: absolute; left: 0; right: 0; top: 670px; text-align: center; font-family: Caveat, cursive; font-size: 58px; color: #e0592a; }
     .l3 { position: absolute; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #8a7868; }
+    .l4 { position: absolute; left: 0; right: 0; top: 960px; text-align: center; font-size: 28px; color: #a8998b; }
   </style>
   <div id="root" data-composition-id="v4-end" data-width="1920" data-height="1080">
     <div id="v4-end-d1" class="lg clip" data-start="0.0" data-duration="8.47" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span></div>
     <p id="v4-end-p2" class="l1 clip" data-start="0.0" data-duration="8.47" style="" ><span class="w">Teach</span> <span class="w">your</span> <span class="w">stall.</span> <span class="w">It</span> <span class="w">haggles</span> <span class="w">with</span> <span class="w">AI.</span></p>
     <p id="v4-end-p3" class="l2 clip" data-start="0.0" data-duration="8.47" style="" >…and PayPal pays.</p>
     <p id="v4-end-p4" class="l3 clip" data-start="0.0" data-duration="8.47" style="" >jomm.onrender.com · github.com/ttiu-cs/jomm</p>
+    <p id="v4-end-p5" class="l4 clip" data-start="0.0" data-duration="8.47" style="" >Music: “Reaching Out” by Kevin MacLeod (incompetech.com), CC BY 3.0</p>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -38,6 +40,7 @@
     tl.fromTo("#v4-end-p2 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.16, ease: "power4.out" }, 1.0);
     tl.fromTo("#v4-end-p3", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power4.out" }, 2.6);
     tl.fromTo("#v4-end-p4", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.6);
+    tl.fromTo("#v4-end-p5", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.8);
     window.__timelines["v4-end"] = tl;
   </script>
 </template>

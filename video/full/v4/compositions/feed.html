@@ -25,12 +25,15 @@
   <div id="root" data-composition-id="v4-feed" data-width="1920" data-height="1080">
     <div id="v4-feed-cam1" style="position:absolute;inset:0"><video id="v4-feed-cam1v0" class="clip" src="assets/rec/deal.mp4" muted playsinline data-start="0.0" data-duration="14.0" data-media-start="5.8" data-playback-rate="1.0" style="position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:cover"></video></div>
     <p id="v4-feed-p2" class="cap clip" data-start="0.4" data-duration="9.0" style="" ><span>GET /agentic/feed · items, prices, Rosa’s words. No floors.</span></p>
-    <p id="v4-feed-p3" class="chap clip" data-start="0.0" data-duration="9.8" style="" ><b>2:00 p.m.</b>discover</p>
+    <div id="v4-feed-dip3" class="clip" data-start="0" data-duration="9.8" data-layout-ignore style="position:absolute;inset:0;background:#141010;opacity:0;pointer-events:none"></div>
+    <p id="v4-feed-p4" class="chap clip" data-start="0.0" data-duration="9.8" style="" ><b>2:00 p.m.</b>discover</p>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.set("#v4-feed-cam1", { scale: 1.7, x: -136, y: 357 }, 0);
     tl.fromTo("#v4-feed-p2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.4);
+    tl.fromTo("#v4-feed-dip3", { opacity: 0.5 }, { opacity: 0, duration: 0.25, ease: "power2.out" }, 0);
+    tl.to("#v4-feed-dip3", { opacity: 0.45, duration: 0.12, ease: "power1.in" }, 9.66);
     window.__timelines["v4-feed"] = tl;
   </script>
 </template>
