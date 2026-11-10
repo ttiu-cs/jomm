@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+.g{width:1920px;height:1280px;background:#f6f1ea;position:relative;font-family:Inter,sans-serif}
+.g img{position:absolute;left:0;top:200px;width:1920px;height:1080px}
+.g .n{position:absolute;left:70px;top:62px;font-family:Caveat,cursive;font-size:56px;color:#e0592a}
+.g h2{position:absolute;left:170px;top:52px;font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:58px;color:#2b211a;white-space:nowrap;max-width:1440px;overflow:hidden}
+.jomm{position:absolute;right:70px;top:66px;display:inline-flex;align-items:baseline;font-weight:700;letter-spacing:-.04em;line-height:1;font-size:64px;color:#2b211a}
+.jomm .ring{display:inline-block;width:.6em;height:.6em;border:.15em solid #e0592a;border-radius:50%;margin:0 .02em;position:relative;top:.02em}
+.jomm .dot{display:inline-block;width:.24em;height:.24em;border-radius:50%;background:#e0592a;margin-left:.05em}
+</style><style>@font-face{font-family:Caveat;src:url(caveat-600.woff2)}</style></head><body></body>
+<script>
+const items=[["ACP has a price. Jomm. adds the conversation."],["Teach by talking to the camera"],["Listings with a private lowest price"],["A shopper’s AI agent reads the stall’s feed"],["ACP checkout + Jomm.’s negotiation extension"],["Only the owner sees why her agent priced it"],["PayPal Orders v2 + Agent Toolkit get_order"],["Channel3: new price → a fair resale price"]];
+const L='<span class="jomm"><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span>';
+items.forEach((t,i)=>{document.body.insertAdjacentHTML('beforeend',`<div class="g" id="g${i+1}"><p class="n">${i+1}</p><h2>${t[0]}</h2>${L}<img src="f${i+1}.jpg"></div>`)});
+</script></html>
