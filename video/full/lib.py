@@ -1,6 +1,7 @@
 """Style C (documentary) scene builders for the full-length Jomm. videos."""
 import json, os, shutil
 SERIF = "'Playfair Display', serif"
+MUSIC_CREDIT = "Music: “Carefree” and “Bossa Antigua” by Kevin MacLeod (incompetech.com), CC BY 4.0"
 HAND_FACE = "@font-face { font-family: 'Caveat'; src: url('assets/fonts/caveat-600.woff2') format('woff2'); font-weight: 600; }"
 LOGO_CSS = """
 .jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
@@ -183,7 +184,7 @@ def k_cards(s, kicker, title, cards, ground="#f6f1ea", hi=None):
         s.tl(f'tl.fromTo("{c}", {{ opacity: 0, y: 50 }}, {{ opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }}, {when});'); sels.append(c)
     s.fadeout(sels)
 
-def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=False):
+def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=False, cues=None):
     s.ground = "#f6f1ea"
     s.css.append(f"""
     .lg {{ position: absolute; z-index: 1; left: 0; right: 0; top: 280px; text-align: center; font-size: 220px; color: #2b211a; }}
@@ -197,10 +198,12 @@ def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=F
         import random
         rnd = random.Random(7)
         seeds = []
-        for k in range(46):
+        for k in range(70):
             ang = rnd.uniform(0, 6.283); r = rnd.uniform(260, 1150)
             import math
             x = round(math.cos(ang) * r * 1.15); y = round(math.sin(ang) * r * 0.62)
+            ax, ay = 1215 + x, 455 + y  # where it lands in the frame (the full stop sits near 1215, 455)
+            if 420 < ax < 1500 and 520 < ay < 1010: continue  # keep the tagline, links and credit clear
             sc = round(rnd.uniform(0.25, 0.85), 2); op = round(rnd.uniform(0.25, 0.75), 2)
             seeds.append((x, y, sc, op, round(1.7 + k * 0.075 + rnd.uniform(0, 0.25), 2), round(rnd.uniform(2.6, 3.8), 2)))
         kids = "".join(f'<i class="sd" id="{s.sid}-sd{k}"></i>' for k in range(len(seeds)))
@@ -211,7 +214,12 @@ def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=F
     lg = s.el("div", "lg", logo, extra='data-layout-allow-overflow' if spread else "")
     s.tl(f'tl.fromTo("{lg}", {{ opacity: 0, filter: "blur(12px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out" }}, 0.1);')
     a = s.el("p", "l1", words(lines[0])); s.wordsin(a, 1.0, 0.16)
-    if len(lines) > 1:
+    if len(lines) > 1 and cues:
+        a_txt, p_txt = lines[1].split("|")
+        b = s.el("p", "l2", f'<span class="w" id="{s.sid}-and">{a_txt}</span> <span class="w" id="{s.sid}-pp" style="font-size:1.35em">{p_txt}</span>')
+        s.tl(f'tl.fromTo("#{s.sid}-and", {{ opacity: 0 }}, {{ opacity: 1, duration: 0.3 }}, {cues[0]});')
+        s.tl(f'tl.fromTo("#{s.sid}-pp", {{ opacity: 0, scale: 1.25, filter: "blur(8px)" }}, {{ opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "back.out(1.6)" }}, {cues[1]});')
+    elif len(lines) > 1:
         b = s.el("p", "l2", lines[1]); s.blurin(b, 2.6, 0.3)
-    c = s.el("p", "l3", url); s.blurin(c, 3.6)
-    m = s.el("p", "l4", "Music: “Reaching Out” by Kevin MacLeod (incompetech.com), CC BY 3.0"); s.blurin(m, 3.8)
+    c = s.el("p", "l3", url); s.blurin(c, cues[1] + 1.0 if cues else 3.6)
+    m = s.el("p", "l4", MUSIC_CREDIT); s.blurin(m, cues[1] + 1.2 if cues else 3.8)

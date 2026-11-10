@@ -1,4 +1,5 @@
-# Music
+# Music (Kevin MacLeod, incompetech.com)
 
-"Reaching Out" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 3.0. https://creativecommons.org/licenses/by/3.0/
-Source: https://commons.wikimedia.org/wiki/File:Kevin_MacLeod_-_Reaching_Out.ogg
+- "Carefree" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License. http://creativecommons.org/licenses/by/4.0/
+- "Bossa Antigua" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License. http://creativecommons.org/licenses/by/4.0/
+- (earlier cut) "Reaching Out" by Kevin MacLeod (incompetech.com), CC BY 3.0, via Wikimedia Commons.

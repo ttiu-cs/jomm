@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the three full-length style C versions: python3 build_full.py [v1 v2 v3]"""
-import os, sys, json, shutil, subprocess
+import os, sys, json, shutil, subprocess, re
 from lib import *
 from scripts_data import VERSIONS
 HERE = os.path.dirname(os.path.abspath(__file__)); V = os.path.dirname(HERE); REPO = os.path.dirname(V)
@@ -53,10 +53,13 @@ def b_rex(s, chapter=None):
     k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(s.dur * 0.55, 0.8, 1550, 420, 1.6)],
              caps=[(0.3, s.dur - 0.6, "A lowball agent: Rosa’s agent holds the line. No deal, nothing charged.")], chapter=chapter)
 
-STACK = [(0.6, '<img src="assets/img/paypal.svg" alt="PayPal" style="height:58px;display:block;margin:6px 0 4px" />', "Orders v2 · Agent Toolkit · ACP-style checkout sessions", "pays"),
-         (1.2, "OpenAI", "the shopper’s buyer agent, with tool calling", "shops"),
-         (1.8, "Channel3", "new-item prices for second-hand goods", "prices"),
-         (2.4, "Render", "deployed live at jomm.onrender.com", "runs")]
+def lg(f, h, text=""):
+    t = f'<strong style="font-family:Inter,sans-serif;font-weight:700;font-size:{int(h*0.9)}px;letter-spacing:-0.02em;color:#2b211a;margin-left:12px">{text}</strong>' if text else ""
+    return f'<div style="display:flex;align-items:center;height:64px;margin:6px 0 2px"><img src="assets/img/{f}" alt="{text or f}" style="height:{h}px;width:auto" />{t}</div>'
+STACK = [(0.6, lg("paypal.svg", 56), "Orders v2 · Agent Toolkit · ACP-style checkout sessions", "pays"),
+         (1.2, lg("openai.svg", 44), "the shopper’s buyer agent, with tool calling", "shops"),
+         (1.8, lg("channel3.png", 46, "Channel3"), "new-item prices for second-hand goods", "prices"),
+         (2.4, lg("render.svg", 40, "Render"), "deployed live at jomm.onrender.com", "runs")]
 
 # ---------------------------------------------------------------- versions
 def v1(b, s):
@@ -127,7 +130,7 @@ def v4(b, s):
         s.tl(f'tl.fromTo("{jm}", {{ opacity: 0, filter: "blur(10px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }}, 4.2);')
         s.fadeout([jm])
         return
-    if b == "end": return k_end(s, ["Teach your stall. It haggles with AI.", "…and PayPal pays."], spread=True)
+    if b == "end": return k_end(s, ["Teach your stall. It haggles with AI.", "and…|PayPal pays!"], spread=True, cues=(END_AND, END_PP))
     if b in ("dawn", "shift", "teach", "intent", "rex", "mina", "stack"): return v2(b, s)
     if b == "listing":
         segs, _ = seq((TEACH, 20, 40, 3.0))
@@ -150,6 +153,10 @@ FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
 PAD = {"end": 3.8, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
 MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0}
 
+# the ending line: "...It haggles with AI." a beat of silence, then "And... PayPal pays!"
+VO_OVERRIDE = {"v4/end": {"file": "end/combined.mp3", "dur": 6.7}}
+END_AND, END_PP = 0.25 + 4.40, 0.25 + 5.42   # on-screen cue times within the end beat
+
 def build(vid):
     name, beats = [(n, b) for v, n, b in VERSIONS if v == vid][0]
     d = os.path.join(HERE, vid)
@@ -161,7 +168,8 @@ def build(vid):
     shutil.copy(os.path.join(V, "shared", "caveat-600.woff2"), os.path.join(d, "assets", "fonts"))
     for f in os.listdir(os.path.join(REPO, "public", "photos")):
         if f.endswith(".jpg"): shutil.copy(os.path.join(REPO, "public", "photos", f), os.path.join(d, "assets", "img"))
-    shutil.copy(os.path.join(V, "shared", "logos", "paypal.svg"), os.path.join(d, "assets", "img", "paypal.svg"))
+    for f in ("paypal.svg", "openai.svg", "render.svg", "channel3.png"):
+        shutil.copy(os.path.join(V, "shared", "logos", f), os.path.join(d, "assets", "img", f))
     gen = os.path.join(HERE, "gen")
     if os.path.isdir(gen):
         for f in os.listdir(gen): shutil.copy(os.path.join(gen, f), os.path.join(d, "assets", "img"))
@@ -171,7 +179,7 @@ def build(vid):
         os.link(os.path.join(V, "raw", src), t)
     hosts, auds, t = [], [], 0.0
     for i, (b, _) in enumerate(beats):
-        v = VO[f"{vid}/{b}"]
+        v = VO_OVERRIDE.get(f"{vid}/{b}", VO[f"{vid}/{b}"])
         shutil.copy(os.path.join(HERE, "vo", v["file"]), os.path.join(d, "assets", "vo", f"{i:02d}-{b}.mp3"))
         dur = round(max(v["dur"] + PAD.get(b, 0.6) + 0.25, MINLEN.get(b, 0)), 2)
         sid = f"{vid}-{b}"
@@ -181,10 +189,21 @@ def build(vid):
         auds.append(f'      <audio id="vo-{b}" class="clip" src="assets/vo/{i:02d}-{b}.mp3" data-start="{round(t + 0.25, 2)}" data-duration="{v["dur"]}" data-volume="1" data-track-index="{5 + i % 2}"></audio>')
         t += dur
     total = round(t, 2)
-    ro = os.path.join(V, "shared", "music", "reaching_out.ogg")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", ro, "-i", ro, "-i", ro, "-filter_complex",
-        f"[0][1]acrossfade=d=3:c1=tri:c2=tri[a];[a][2]acrossfade=d=3:c1=tri:c2=tri,atrim=0:{total},afade=t=in:d=1.5,afade=t=out:st={total-4.5}:d=4.5,loudnorm=I=-27:TP=-2:LRA=11",
-        "-ar", "48000", "-ac", "2", "-b:a", "192k", os.path.join(d, "assets", "bgm.mp3")], check=True)
+    mu = os.path.join(V, "shared", "music")
+    starts = {}; tt = 0.0
+    for i, (bb, _) in enumerate(beats):
+        starts[bb] = tt; tt += float(re.search(r'data-start="([0-9.]+)" data-duration="([0-9.]+)"', hosts[i]).group(2))
+    if "mina" in starts:
+        # bright track for the story, then a change of mood when Mina's closet appears
+        sw = round(starts["mina"], 2); tail = round(total - sw + 0.75, 2)
+        fc = (f"[0]atrim=0:{sw + 0.75},asetpts=N/SR/TB,afade=t=in:d=1.0,loudnorm=I=-27:TP=-2:LRA=11[a];"
+              f"[1]atrim=0:{tail},asetpts=N/SR/TB,loudnorm=I=-27:TP=-2:LRA=11[b];"
+              f"[a][b]acrossfade=d=1.5:c1=tri:c2=tri,atrim=0:{total},afade=t=out:st={total - 4.5}:d=4.5")
+        srcs = ["-i", os.path.join(mu, "Carefree.mp3"), "-i", os.path.join(mu, "Bossa_Antigua.mp3")]
+    else:
+        fc = f"[0]atrim=0:{total},afade=t=in:d=1.0,afade=t=out:st={total - 4.5}:d=4.5,loudnorm=I=-27:TP=-2:LRA=11"
+        srcs = ["-i", os.path.join(mu, "Carefree.mp3")]
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *srcs, "-filter_complex", fc, "-ar", "48000", "-ac", "2", "-b:a", "192k", os.path.join(d, "assets", "bgm.mp3")], check=True)
     auds.append(f'      <audio id="bgm" class="clip" src="assets/bgm.mp3" data-start="0" data-duration="{total}" data-volume="1" data-track-index="8"></audio>')
     open(os.path.join(d, "index.html"), "w").write(f"""<!doctype html>
 <html lang="en">
