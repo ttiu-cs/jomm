@@ -154,5 +154,65 @@
  "v3/end": {
   "file": "12ca85f7d7.mp3",
   "dur": 4.752
+ },
+ "v4/dawn": {
+  "file": "9c89f138e8.mp3",
+  "dur": 8.712
+ },
+ "v4/shift": {
+  "file": "85a130672a.mp3",
+  "dur": 8.76
+ },
+ "v4/mission": {
+  "file": "ec119cc745.mp3",
+  "dur": 12.912
+ },
+ "v4/teach": {
+  "file": "90f6f5f6d3.mp3",
+  "dur": 13.368
+ },
+ "v4/listing": {
+  "file": "f4602b7513.mp3",
+  "dur": 8.016
+ },
+ "v4/intent": {
+  "file": "692d5537b0.mp3",
+  "dur": 8.52
+ },
+ "v4/feed": {
+  "file": "41ae5ea977.mp3",
+  "dur": 8.352
+ },
+ "v4/checkout": {
+  "file": "6e3fe280a0.mp3",
+  "dur": 11.856
+ },
+ "v4/guard": {
+  "file": "c41cc0b0f8.mp3",
+  "dur": 11.016
+ },
+ "v4/approve": {
+  "file": "1631dc49de.mp3",
+  "dur": 9.768
+ },
+ "v4/paid": {
+  "file": "a156c33514.mp3",
+  "dur": 11.664
+ },
+ "v4/rex": {
+  "file": "d9027dee38.mp3",
+  "dur": 7.92
+ },
+ "v4/mina": {
+  "file": "6737042279.mp3",
+  "dur": 7.92
+ },
+ "v4/stack": {
+  "file": "4cb1850ebc.mp3",
+  "dur": 9.504
+ },
+ "v4/end": {
+  "file": "68b4cd8e4e.mp3",
+  "dur": 5.616
  }
 }

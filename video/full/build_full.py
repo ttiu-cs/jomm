@@ -28,7 +28,7 @@ def seq(*parts):
 
 def b_intent(s, chapter=None, cap="A shopper types what they want. Their own AI agent takes it from here."):
     segs, _ = seq((DEAL, 0.3, 9.5, 1.0), (DEAL, 9.8, 30, 1.0))
-    k_screen(s, segs, cams=[C(0, 0, 950, 880, 1.55), C(5.6, 0.9, 735, 520, 1.3)], caps=[(1.0, 4.4, cap)], chapter=chapter)
+    k_screen(s, segs, cams=[C(0, 0, 950, 880, 1.55), C(5.6, 0.9, 440, 480, 1.45)], caps=[(1.0, 4.4, cap)], chapter=chapter)
 
 def b_haggle(s, chapter=None, caps=None):
     segs, _ = seq((DEAL, 9.5, 19, 1.25), (DEAL, 28.5, 10, 1.0))
@@ -39,7 +39,7 @@ def b_haggle(s, chapter=None, caps=None):
                            (d * 0.62 + 0.3, d * 0.38 - 0.6, "🔒 Rosa’s lowest price never leaves her side")], chapter=chapter)
 
 def b_approve(s, chapter=None):
-    segs, _ = seq((DEAL, 26.8, 3.2, 1.0), (POP, 3.8, 1.0, 1.0), (POP, 5.8, 1.3, 1.0), (DEAL, 42.6, 20, 1.0))
+    segs, _ = seq((DEAL, 24.2, 3.0, 1.0), (POP, 3.8, 1.0, 1.0), (POP, 5.8, 1.3, 1.0), (DEAL, 42.6, 20, 1.0))
     k_screen(s, segs, cams=[C(0, 0, 440, 860, 1.55), C(3.2, 0, 960, 330, 1.6), C(5.5, 0, 440, 860, 1.5), C(7.4, 0.9, 1040, 330, 1.6)],
              caps=[(0.3, 2.8, "Agents can’t pay on their own"), (3.3, 2.1, "The shopper approves in PayPal"), (5.7, s.dur - 7.6, "PayPal Orders v2: created server-side, amount from the locked deal")], tag=True, chapter=chapter)
 
@@ -113,9 +113,28 @@ def v3(b, s):
     elif b == "stack": k_cards(s, "built with", "Try it live: jomm.onrender.com", STACK)
     elif b == "end": k_end(s, ["Every small seller, ready for the AI era.", "Teach your stall. It haggles with AI. PayPal pays."])
 
-FNS = {"v1": v1, "v2": v2, "v3": v3}
+def v4(b, s):
+    if b in ("dawn", "shift", "mission", "teach", "intent", "rex", "mina", "stack", "end"): return v2(b, s)
+    if b == "listing":
+        segs, _ = seq((TEACH, 20, 40, 3.0))
+        k_screen(s, segs, cams=[C(0, 0, 960, 560, 1.12), C(s.dur * 0.4, 1.0, 1350, 420, 1.55)], caps=[(0.4, s.dur - 0.8, "Listings with a private lowest price 🔒 and her reasons")], chapter="<b>6:12 a.m.</b>her stall, taught")
+    elif b == "feed":
+        segs, _ = seq((DEAL, 5.8, 14, 1.0))
+        k_screen(s, segs, cams=[C(0, 0, 1040, 330, 1.7)], caps=[(0.4, s.dur - 0.8, "GET /agentic/feed · items, prices, Rosa’s words. No floors.")], chapter="<b>2:00 p.m.</b>discover")
+    elif b == "checkout":
+        segs, _ = seq((DEAL, 9.5, 14, 1.25), (DEAL, 56.3, 6.4, 1.0))
+        d = s.dur; j = 11.2
+        k_screen(s, segs, cams=[C(0, 0, 1040, 420, 1.6), C(5.2, 0.8, 440, 600, 1.5), C(j, 0, 1040, 640, 1.7)],
+                 caps=[(0.4, 4.6, "POST /agentic/checkout_sessions · payment_provider: paypal"), (5.4, j - 5.8, "The agents haggle: each counter carries a reason"), (j + 0.2, d - j - 0.5, "The session, as Jun’s agent sees it: totals set by the server")], chapter="<b>2:01 p.m.</b>negotiate")
+    elif b == "guard":
+        segs, _ = seq((DEAL, 8.5, 4, 1.0), (DEAL, 22, 8, 1.0))
+        k_screen(s, segs, cams=[C(0, 0, 440, 560, 1.6), C(4.0, 0, 1550, 560, 1.6)], caps=[(0.3, 3.6, "Jun’s budget: a mandate the server enforces"), (4.2, s.dur - 4.5, "🔒 Only Rosa sees why her agent priced it this way")], chapter="<b>2:01 p.m.</b>guardrails")
+    elif b == "approve": b_approve(s, chapter="<b>2:02 p.m.</b>pay with PayPal")
+    elif b == "paid": b_paid(s, chapter="<b>2:02 p.m.</b>verified")
+
+FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
 PAD = {"end": 2.6, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
-MINLEN = {"approve": 11.0, "checkout": 17.0}
+MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0}
 
 def build(vid):
     name, beats = [(n, b) for v, n, b in VERSIONS if v == vid][0]
@@ -172,4 +191,4 @@ def build(vid):
     print(vid, name, "total", total, "s")
 
 if __name__ == "__main__":
-    for v in (sys.argv[1:] or ["v1", "v2", "v3"]): build(v)
+    for v in (sys.argv[1:] or ["v1", "v2", "v3", "v4"]): build(v)

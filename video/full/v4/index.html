@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #141010; }
+      #root { position: relative; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="166.55" data-width="1920" data-height="1080">
+      <div id="v4-dawn" data-composition-id="v4-dawn" data-composition-src="compositions/dawn.html" data-start="0.0" data-duration="9.56" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-shift" data-composition-id="v4-shift" data-composition-src="compositions/shift.html" data-start="9.56" data-duration="9.61" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-mission" data-composition-id="v4-mission" data-composition-src="compositions/mission.html" data-start="19.17" data-duration="13.76" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-teach" data-composition-id="v4-teach" data-composition-src="compositions/teach.html" data-start="32.93" data-duration="14.62" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-listing" data-composition-id="v4-listing" data-composition-src="compositions/listing.html" data-start="47.55" data-duration="8.87" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-intent" data-composition-id="v4-intent" data-composition-src="compositions/intent.html" data-start="56.42" data-duration="9.97" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-feed" data-composition-id="v4-feed" data-composition-src="compositions/feed.html" data-start="66.39" data-duration="9.8" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-checkout" data-composition-id="v4-checkout" data-composition-src="compositions/checkout.html" data-start="76.19" data-duration="17.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-guard" data-composition-id="v4-guard" data-composition-src="compositions/guard.html" data-start="93.19" data-duration="11.87" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-approve" data-composition-id="v4-approve" data-composition-src="compositions/approve.html" data-start="105.06" data-duration="11.42" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-paid" data-composition-id="v4-paid" data-composition-src="compositions/paid.html" data-start="116.48" data-duration="13.11" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-rex" data-composition-id="v4-rex" data-composition-src="compositions/rex.html" data-start="129.59" data-duration="8.97" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-mina" data-composition-id="v4-mina" data-composition-src="compositions/mina.html" data-start="138.56" data-duration="9.17" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-stack" data-composition-id="v4-stack" data-composition-src="compositions/stack.html" data-start="147.73" data-duration="10.35" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="v4-end" data-composition-id="v4-end" data-composition-src="compositions/end.html" data-start="158.08" data-duration="8.47" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <audio id="vo-dawn" class="clip" src="assets/vo/00-dawn.mp3" data-start="0.25" data-duration="8.712" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-shift" class="clip" src="assets/vo/01-shift.mp3" data-start="9.81" data-duration="8.76" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-mission" class="clip" src="assets/vo/02-mission.mp3" data-start="19.42" data-duration="12.912" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-teach" class="clip" src="assets/vo/03-teach.mp3" data-start="33.18" data-duration="13.368" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-listing" class="clip" src="assets/vo/04-listing.mp3" data-start="47.8" data-duration="8.016" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-intent" class="clip" src="assets/vo/05-intent.mp3" data-start="56.67" data-duration="8.52" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-feed" class="clip" src="assets/vo/06-feed.mp3" data-start="66.64" data-duration="8.352" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-checkout" class="clip" src="assets/vo/07-checkout.mp3" data-start="76.44" data-duration="11.856" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-guard" class="clip" src="assets/vo/08-guard.mp3" data-start="93.44" data-duration="11.016" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-approve" class="clip" src="assets/vo/09-approve.mp3" data-start="105.31" data-duration="9.768" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-paid" class="clip" src="assets/vo/10-paid.mp3" data-start="116.73" data-duration="11.664" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-rex" class="clip" src="assets/vo/11-rex.mp3" data-start="129.84" data-duration="7.92" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-mina" class="clip" src="assets/vo/12-mina.mp3" data-start="138.81" data-duration="7.92" data-volume="1" data-track-index="5"></audio>
+      <audio id="vo-stack" class="clip" src="assets/vo/13-stack.mp3" data-start="147.98" data-duration="9.504" data-volume="1" data-track-index="6"></audio>
+      <audio id="vo-end" class="clip" src="assets/vo/14-end.mp3" data-start="158.33" data-duration="5.616" data-volume="1" data-track-index="5"></audio>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

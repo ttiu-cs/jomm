@@ -49,3 +49,22 @@ V3 = ("v3", "Three steps, under the hood", [
 ])
 
 VERSIONS = [V1, V2, V3]
+
+V4 = ("v4", "A day at Rosa's stall, with the tech underneath", [
+  ("dawn",    V2[2][0][1]),
+  ("shift",   V2[2][1][1]),
+  ("mission", V2[2][2][1]),
+  ("teach",   V2[2][3][1]),
+  ("listing", "Her words become listings: a price, a private lowest price, and her reasons, like closing time and what the supermarket charges."),
+  ("intent",  V2[2][4][1]),
+  ("feed",    "Jun's agent reads Rosa's product feed, modeled on PayPal Store Sync. Prices and her own words, never her floor."),
+  ("checkout","It opens a checkout session in the Agentic Commerce Protocol shape, with PayPal as the payment provider. The agents haggle. The strawberries must go tonight, so Rosa's agent gives a little, with a reason."),
+  ("guard",   "The server enforces the rules. Jun's budget is a mandate his agent can't exceed. Rosa's lowest price stays private, and only she sees why her agent priced it that way."),
+  ("approve", "They agree at sixteen thirty-five. Agents can't pay on their own, so completing the session creates a PayPal Orders v2 order, and Jun approves it in the PayPal Sandbox."),
+  ("paid",    "The server captures and verifies it, and Jun's agent confirms it with get order from the PayPal Agent Toolkit. Rosa's phone buzzes. She never looked up from her crates."),
+  ("rex",     V2[2][8][1]),
+  ("mina",    V2[2][9][1]),
+  ("stack",   V2[2][10][1]),
+  ("end",     V2[2][11][1]),
+])
+VERSIONS.append(V4)
