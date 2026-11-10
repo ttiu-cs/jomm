@@ -23,15 +23,14 @@ Chapters
 0:18 Why haggling: a price, not a conversation
 0:31 Our mission
 0:45 Teaching the stall by talking
-1:07 A shopper's AI agent arrives
-1:16 Product feed
+1:07 A shopper's AI agent arrives + product feed
 1:25 Checkout session + negotiation
 1:42 Guardrails
 1:53 PayPal Orders v2 + Sandbox approval
 2:04 Verified with the PayPal Agent Toolkit
 2:16 A lowball, held
 2:26 Mina's closet + Channel3
-2:35 Built with
+2:36 Built with
 
 Music: "Carefree" and "Bossa Antigua" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/
 Some background images are AI-generated (Ludyte); others are from Pexels.
