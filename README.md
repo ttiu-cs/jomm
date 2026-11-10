@@ -10,16 +10,16 @@ The smallest sellers (a three-crate fruit stall, a closet resale) have no websit
 
 ## Try it (judges: about 3 minutes)
 1. Open **https://jomm.onrender.com/demo**.
-2. **Act 1, Rosa teaches her agent:** press play, or **Skip ›**. This is a replay of Rosa's camera conversation, run through the real teaching pipeline.
+2. **Act 1, Rosa teaches her agent:** press **▶ Play Rosa’s video** (then **Skip ›** to jump to the end). This is a replay of Rosa's camera conversation, run through the real teaching pipeline.
 3. **Act 2, the shopper's agent:** tap an example (or type your own intent) and press **Send the shopper's agent**. An OpenAI buyer agent reads the stall's feed, chats with Rosa's agent, and haggles inside the shopper's budget. The middle panel shows every PayPal-style agent call with its data.
-4. **Act 3, PayPal:** press the PayPal button and approve with a **PayPal Sandbox personal (buyer) account** (test money). The server captures and verifies the order with PayPal, the PayPal Agent Toolkit confirms it, and Rosa's phone shows the sale.
+4. **Act 3, PayPal:** press the PayPal button and approve with a **PayPal Sandbox personal (buyer) account** (test money). Judges: a Sandbox buyer login is in the Devpost testing notes. The server captures and verifies the order with PayPal, the PayPal Agent Toolkit confirms it, and Rosa's phone shows the sale.
 5. **Teach by camera:** open **https://jomm.onrender.com/seller**, name a shop, and on the Teach screen pick **Closet, 5 items**. Mina shows her closet; for each item the agent looks up new prices on **Channel3** and suggests a fair resale range. You can also use your own camera (the site is https).
 
 | Example shopper | Intent | What happens |
 |---|---|---|
 | Maya | Fruit for smoothies, 3 lb, cheapest, $9 max | Picks the soft white peaches (Rosa said "perfect for smoothies"); Rosa's agent comes down fast because they must go today |
 | Leo | Sweetest apples for a lunchbox, quality first | Asks "Are they sweet?", pays the listed price |
-| Jun | Party strawberries, 3 boxes, under $17 | Several rounds; Rosa's agent cites the supermarket price and "anything left becomes jam", and they settle inside budget |
+| Jun | Party strawberries, 3 boxes, under $17 | Several rounds; Rosa's agent cites the supermarket price (and may mention that leftovers become jam), and they settle inside budget |
 | Rex | 2 boxes for $5, not a cent more | Rosa's agent holds the line above her private floor: no deal, nothing charged |
 
 ## How it uses PayPal
@@ -40,7 +40,7 @@ PayPal (Orders v2, ACP-shaped checkout sessions, Agent Toolkit, Sandbox) · Open
 ## How it works
 - **Teaching by talking:** a deterministic parser turns the owner's words into items, prices, private floors and urgency. After price, lowest price and deadline, the agent keeps asking until its checklist is complete: what shoppers pay elsewhere, closing time, bulk deals, what happens to leftovers, how fast it sells. "I don't know" skips a question; the owner can tap any card to correct it.
 - **Sample videos and voices:** the Teach screen plays Rosa's stall or Mina's closet (POV clips in `public/videos`) while every line goes through the real teaching pipeline. With `OPENAI_API_KEY`, Rosa, Mina and the agent speak with OpenAI `gpt-4o-mini-tts` voices.
-- **Channel3 (second-hand items only):** when an item sold one by one is named ("a Levi's trucker jacket, small stain"), the agent searches Channel3 for new prices, suggests a resale range by condition, and later haggles with "new ones are about $85 online". Produce is never looked up.
+- **Channel3 (second-hand items only):** when an item sold one by one is named ("a Levi's trucker jacket, small stain"), the agent searches Channel3 for new prices, suggests a resale range by condition, and later haggles with "new ones sell for about $85 online". Produce is never looked up.
 - **Selling:** Rosa's agent answers only from her facts and never goes below her private floor. How far it may go comes from urgency, time left before closing (in the stall's time zone), demand, waste risk and price versus elsewhere; an owner who must sell today comes down faster and accepts any offer at or above today's lowest. Every counter carries a reason, and the owner sees the private reasoning ("Why my agent priced it this way").
 - **Buying:** the OpenAI buyer agent works through tools only (`read_product_feed`, `chat_with_seller`, `ask_seller`, `open_checkout_session`, `propose_price`, `accept_seller_counter`, `walk_away`, `complete_checkout`, plus the PayPal Agent Toolkit). If it stops early, the server nudges it and can finish a deal that fits the mandate; it can't walk away while the stall is still moving. Without an OpenAI key, a labeled rule-based buyer agent runs instead.
 - **Paying:** the agreed price becomes a server-side, 5-minute price-locked quote, paid with PayPal Sandbox (or a clearly labeled practice payment without keys). Stock is decremented exactly once after a verified capture.
@@ -112,17 +112,23 @@ Details: [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md).
 - [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md): every number and approximation
 
 ## Environment variables
-See `.env.example`. Secrets (`PAYPAL_CLIENT_SECRET`, `OPENAI_API_KEY`, `CHANNEL3_API_KEY`) are read only on the server. For any public deployment also set `MERCHANT_BASIC_AUTH=user:password` to protect merchant pages and APIs, and set your own `AGENT_API_KEYS`.
+See `.env.example`. Secrets (`PAYPAL_CLIENT_SECRET`, `OPENAI_API_KEY`, `CHANNEL3_API_KEY`) are read only on the server. For any public deployment also set `MERCHANT_BASIC_AUTH=user:password` to protect merchant pages and APIs, and set your own `AGENT_API_KEYS`. (The live demo leaves the seller pages open so judges can try them.)
 
 ## Deploying (Render)
 The live demo runs on Render: `render.yaml` is a Blueprint (Node web service, auto-deploys from `main`; keys are entered in the Render dashboard). SQLite lives at `DATABASE_PATH`. The database defaults to `~/.retail-pricing-os/pricing-os.db`, outside the project folder so the dev server doesn't reload on every write. On an instance without a persistent disk, the database resets on restart and auto-seeds on first request. That is fine for a demo; use a persistent disk or PostgreSQL otherwise. Check current Render plan and credit terms yourself before relying on them.
 
 ## Project layout
 ```
+src/lib/agentic/    agent commerce: product feed, ACP-shaped checkout sessions, OpenAI buyer agent + PayPal Agent Toolkit
+src/lib/teach/      teaching by talking: parser, follow-up checklist, catalog
+src/lib/server/     services: negotiation, pricing, sim (store clock), commerce (quotes/orders/PayPal), read models
+src/lib/paypal/     server-side PayPal REST client (Orders v2)
 src/lib/pricing/    pure engine: demand, economics, optimizer, simulator, rng
-src/lib/server/     services: pricing, sim (store clock), commerce (quotes/orders/PayPal), read models
-src/lib/paypal/     server-side PayPal REST client
 src/lib/agent/      agent auth, policy-intent drafting, optional LLM adapter
+src/lib/demo/       sample stories: Rosa's stall, Mina's closet, example shoppers
+src/lib/market/     Channel3 new-price lookup
+src/lib/buyer/, db/, client/   shopper request parsing, SQLite, browser helpers
+src/proxy.ts        optional Basic auth for seller/merchant pages
 src/app/            pages (merchant, shop, lab, agent) and API routes
 tests/              vitest: optimizer, simulator, commerce/PayPal (fake API), services, agent
 ```
