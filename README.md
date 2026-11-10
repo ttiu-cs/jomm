@@ -11,7 +11,7 @@ The smallest sellers (a three-crate fruit stall, a closet resale) have no websit
 ## Try it (judges: about 3 minutes)
 1. Open **https://jomm.onrender.com/demo**.
 2. **Act 1, Rosa teaches her agent:** press **▶ Play Rosa’s video** (then **Skip ›** to jump to the end). This is a replay of Rosa's camera conversation, run through the real teaching pipeline.
-3. **Act 2, the shopper's agent:** tap an example (or type your own intent) and press **Send the shopper's agent**. An OpenAI buyer agent reads the stall's feed, chats with Rosa's agent, and haggles inside the shopper's budget. The middle panel shows every PayPal-style agent call with its data.
+3. **Act 2, the shopper's agent:** tap an example, or type any request in plain words, the way you'd say it to a friend (what, how much, what for, and your budget; e.g. "4 lb peaches for jam, under $10"), and press **Send the shopper's agent**. An OpenAI buyer agent reads the stall's feed, chats with Rosa's agent, and haggles inside the shopper's budget. The middle panel shows every PayPal-style agent call with its data.
 4. **Act 3, PayPal:** press the PayPal button and approve with a **PayPal Sandbox personal (buyer) account** (test money). Judges: a Sandbox buyer login is in the Devpost testing notes. The server captures and verifies the order with PayPal, the PayPal Agent Toolkit confirms it, and Rosa's phone shows the sale.
 5. **Teach by camera:** open **https://jomm.onrender.com/seller**, name a shop, and on the Teach screen pick **Closet, 5 items**. Mina shows her closet; for each item the agent looks up new prices on **Channel3** and suggests a fair resale range. You can also use your own camera (the site is https).
 
