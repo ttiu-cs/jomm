@@ -41,7 +41,7 @@ Some background images are AI-generated (Ludyte); others are from Pexels.
 
 **Links**
 - Live demo: https://jomm.onrender.com/demo
-- Video (under 3 min): https://youtu.be/zrWFIY9mRTI
+- Video (under 3 min): https://youtu.be/1kt_EwZNImc
 - Code (MIT): https://github.com/ttiu-cs/jomm
 
 ### Inspiration
