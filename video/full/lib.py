@@ -134,7 +134,7 @@ def k_phone(s, video, mstart=0, rate=1, title="", sub="", notes=(), left=True, g
         s.tl(f'tl.fromTo("{n}", {{ opacity: 0, x: -30 }}, {{ opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }}, {t0});'); sels.append(n)
     s.fadeout(sels)
 
-def k_screen(s, segs, cams=(), caps=(), tag=False, chapter=None, ground="#f6f1ea"):
+def k_screen(s, segs, cams=(), caps=(), tag=False, chapter=None, ground="#f6f1ea", nodip=False):
     """segs: (src, start, dur, mstart, rate). cams: (t, dur, scale, x, y, ease). caps: (t, dur, text)."""
     s.ground = ground
     cam = s.uid("cam")
@@ -151,7 +151,7 @@ def k_screen(s, segs, cams=(), caps=(), tag=False, chapter=None, ground="#f6f1ea
         c = s.el("p", "cap", f"<span>{txt}</span>", t, d)
         s.tl(f'tl.fromTo("{c}", {{ opacity: 0, y: 20 }}, {{ opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }}, {t});')
     # dip cuts: the frame darkens briefly around every cut so footage jumps read as intended cuts
-    cuts = sorted({round(st, 2) for (_, st, _, _, _) in segs if st > 0.05} | {round(t, 2) for (t, d, *_ ) in list(cams)[1:] if d == 0})
+    cuts = [] if nodip else sorted({round(st, 2) for (_, st, _, _, _) in segs if st > 0.05} | {round(t, 2) for (t, d, *_ ) in list(cams)[1:] if d == 0})
     dip = s.uid("dip")
     s.add(f'<div id="{dip}" class="clip" data-start="0" data-duration="{s.dur}" data-layout-ignore style="position:absolute;inset:0;background:#141010;opacity:0;pointer-events:none"></div>')
     s.tl(f'tl.fromTo("#{dip}", {{ opacity: 0.5 }}, {{ opacity: 0, duration: 0.25, ease: "power2.out" }}, 0);')

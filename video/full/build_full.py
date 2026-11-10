@@ -49,9 +49,11 @@ def b_paid(s, chapter=None):
              caps=[(0.3, s.dur * 0.45 - 0.4, "Captured · verified · checked with the PayPal Agent Toolkit (get_order)"), (s.dur * 0.45 + 0.4, s.dur * 0.55 - 0.7, "Rosa’s phone: “You received $16.35”")], tag=True, chapter=chapter)
 
 def b_rex(s, chapter=None):
-    segs, t1 = seq((REX, 21.0, 7.8, 1.3), (REX, 30.6, 2.35, 0.85))
-    k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(round(7.8 / 1.3, 2), 0, 1550, 420, 1.6)],
-             caps=[(0.3, s.dur - 0.6, "A lowball agent: Rosa’s agent holds the line. No deal, nothing charged.")], chapter=chapter)
+    # chat plays out, then (while the chat is still) the camera glides over to Rosa's phone for her reaction
+    segs, _ = seq((REX, 20.5, 8.4, 1.4), (REX, 28.9, 1.7, 1.0), (REX, 30.6, 2.4, 0.86))
+    p0 = round(8.4 / 1.4, 2)
+    k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(p0 + 0.05, 1.25, 1550, 420, 1.6, "sine.inOut")],
+             caps=[(0.3, s.dur - 0.6, "A lowball agent: Rosa’s agent holds the line. No deal, nothing charged.")], chapter=chapter, nodip=True)
 
 def lg(f, h, text=""):
     t = f'<strong style="font-family:Inter,sans-serif;font-weight:700;font-size:{int(h*0.9)}px;letter-spacing:-0.02em;color:#2b211a;margin-left:12px">{text}</strong>' if text else ""
@@ -151,7 +153,7 @@ def v4(b, s):
 
 FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
 PAD = {"end": 3.8, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
-MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0}
+MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0, "rex": 10.45}
 
 # the ending line: "...It haggles with AI." a beat of silence, then "And... PayPal pays!"
 VO_OVERRIDE = {"v4/end": {"file": "end/combined.mp3", "dur": 6.7}}
