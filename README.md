@@ -3,7 +3,7 @@
 **Teach your stall. It haggles with AI. PayPal pays.**
 
 - **Live demo:** https://jomm.onrender.com/demo
-- **Video (under 3 min):** https://youtu.be/zrWFIY9mRTI
+- **Video (under 3 min):** https://youtu.be/1kt_EwZNImc
 - **Code:** https://github.com/ttiu-cs/jomm (MIT)
 
 The smallest sellers (a three-crate fruit stall, a closet resale) have no website and no tech team, and they shouldn't fall behind when shopping moves to AI agents. With Jomm., the owner points a phone camera at their goods and *talks* with their own selling agent. The agent keeps asking until it knows enough to haggle the way the owner would. When a shopper's AI agent comes looking, the stall's agent answers, negotiates, and gets the owner paid with PayPal, while the owner's lowest prices never leave the server.
