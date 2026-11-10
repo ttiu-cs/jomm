@@ -1,8 +1,8 @@
-# Jomm. demo video: three narrative versions (style C)
+# Jomm. demo video: narrative versions (style C)
 
 ## V1: Mission first, then the walkthrough
 
-미션 먼저 → 제품 순서대로 설명 (심사위원에게 가장 무난한 구성)
+미션 먼저 → 제품 순서대로 설명
 
 Narration ≈ 121 s.
 
@@ -25,7 +25,7 @@ Narration ≈ 121 s.
 
 ## V2: A day at Rosa's stall
 
-Rosa의 하루 이야기 (새벽 6시 개점 → 가르치기 → 오후 흥정·결제 → 저녁 정산)
+Rosa의 하루 이야기
 
 Narration ≈ 116 s.
 
@@ -46,7 +46,7 @@ Narration ≈ 116 s.
 
 ## V3: Three steps, under the hood
 
-3단계와 기술 구조 (가르치기 · 흥정 · 결제, PayPal 연동을 자세히)
+3단계와 기술 구조
 
 Narration ≈ 114 s.
 
@@ -65,3 +65,27 @@ Narration ≈ 114 s.
 | toolkit | Then the buyer agent calls get order through the PayPal Agent Toolkit to confirm. Rosa's phone shows the sale. |
 | stack | OpenAI, Channel3, PayPal Orders v2 and the Agent Toolkit, deployed on Render. Try it live at jomm dot onrender dot com. |
 | end | Jomm. Every small seller, ready for the AI era. |
+
+## V4: A day at Rosa's stall, with the tech underneath
+
+Rosa의 하루 + 단계별 실제 기술 화면 (V2 중심, V3 기술 화면 결합)
+
+Narration ≈ 144 s.
+
+| Beat | Narration |
+|---|---|
+| dawn | Six A.M. Rosa sets out three crates. Strawberries, peaches, apples. No website. No app. No tech team. |
+| shift | But more and more of her customers won't walk by. They'll send an AI agent to shop for them. And those agents only talk to stores that speak their language. |
+| mission | PayPal believes everyone deserves a place in the digital economy. We built Jomm so that includes Rosa, in the AI era. Any small seller can create their own selling agent in minutes, just by talking. |
+| teach | Six ten. Rosa points her phone at each crate and talks, like she's training a new helper. Her agent asks what it needs to haggle like her: the price, the lowest price, when it has to go, and what the supermarket charges. |
+| listing | Her words become listings: a price, a private lowest price, and her reasons, like closing time and what the supermarket charges. |
+| intent | Two P.M. Across town, Jun is planning a party. He tells his AI agent: three boxes of strawberries, under seventeen dollars. |
+| feed | Jun's agent reads Rosa's product feed, modeled on PayPal Store Sync. Prices and her own words, never her floor. |
+| checkout | It opens a checkout session in the Agentic Commerce Protocol shape, with PayPal as the payment provider. The agents haggle. The strawberries must go tonight, so Rosa's agent gives a little, with a reason. |
+| guard | The server enforces the rules. Jun's budget is a mandate his agent can't exceed. Rosa's lowest price stays private, and only she sees why her agent priced it that way. |
+| approve | They agree at sixteen thirty-five. Agents can't pay on their own, so completing the session creates a PayPal Orders v2 order, and Jun approves it in the PayPal Sandbox. |
+| paid | The server captures and verifies it, and Jun's agent confirms it with get order from the PayPal Agent Toolkit. Rosa's phone buzzes. She never looked up from her crates. |
+| rex | Four P.M. Another agent offers five dollars for two boxes. Rosa's agent holds the line. No deal, nothing charged. |
+| mina | Across town, Mina does the same with her closet. Her agent checks new prices on Channel3 and suggests a fair resale range. |
+| stack | Six P.M. Built on PayPal Orders v2, the Agent Toolkit and ACP-style checkout, with OpenAI and Channel3, running on Render. |
+| end | Jomm. Teach your stall. It haggles with AI. PayPal pays. |
