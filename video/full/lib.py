@@ -222,4 +222,3 @@ def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=F
     elif len(lines) > 1:
         b = s.el("p", "l2", lines[1]); s.blurin(b, 2.6, 0.3)
     c = s.el("p", "l3", url); s.blurin(c, cues[1] + 1.0 if cues else 3.6)
-    m = s.el("p", "l4", MUSIC_CREDIT); s.blurin(m, cues[1] + 1.2 if cues else 3.8)

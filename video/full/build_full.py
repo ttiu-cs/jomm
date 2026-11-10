@@ -49,8 +49,8 @@ def b_paid(s, chapter=None):
              caps=[(0.3, s.dur * 0.45 - 0.4, "Captured · verified · checked with the PayPal Agent Toolkit (get_order)"), (s.dur * 0.45 + 0.4, s.dur * 0.55 - 0.7, "Rosa’s phone: “You received $16.35”")], tag=True, chapter=chapter)
 
 def b_rex(s, chapter=None):
-    segs, _ = seq((REX, 21.0, 12, 1.3))
-    k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(s.dur * 0.55, 0.8, 1550, 420, 1.6)],
+    segs, t1 = seq((REX, 21.0, 7.8, 1.3), (REX, 30.6, 2.35, 0.85))
+    k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(round(7.8 / 1.3, 2), 0, 1550, 420, 1.6)],
              caps=[(0.3, s.dur - 0.6, "A lowball agent: Rosa’s agent holds the line. No deal, nothing charged.")], chapter=chapter)
 
 def lg(f, h, text=""):

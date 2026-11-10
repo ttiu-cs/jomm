@@ -32,7 +32,7 @@ Chapters
 2:18 Mina's closet + Channel3
 2:27 Built with
 
-Music: "Reaching Out" by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 3.0 — https://creativecommons.org/licenses/by/3.0/
+Music: "Carefree" and "Bossa Antigua" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/
 Some background images are AI-generated (Ludyte); others are from Pexels.
 
 ## Devpost
