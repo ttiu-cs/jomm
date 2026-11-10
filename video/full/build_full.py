@@ -53,7 +53,7 @@ def b_rex(s, chapter=None):
     k_screen(s, segs, cams=[C(0, 0, 440, 760, 1.5), C(s.dur * 0.55, 0.8, 1550, 420, 1.6)],
              caps=[(0.3, s.dur - 0.6, "A lowball agent: Rosa’s agent holds the line. No deal, nothing charged.")], chapter=chapter)
 
-STACK = [(0.6, "PayPal", "Orders v2 · Agent Toolkit · ACP-style checkout sessions", "pays"),
+STACK = [(0.6, '<img src="assets/img/paypal.svg" alt="PayPal" style="height:58px;display:block;margin:6px 0 4px" />', "Orders v2 · Agent Toolkit · ACP-style checkout sessions", "pays"),
          (1.2, "OpenAI", "the shopper’s buyer agent, with tool calling", "shops"),
          (1.8, "Channel3", "new-item prices for second-hand goods", "prices"),
          (2.4, "Render", "deployed live at jomm.onrender.com", "runs")]
@@ -114,7 +114,21 @@ def v3(b, s):
     elif b == "end": k_end(s, ["Every small seller, ready for the AI era.", "Teach your stall. It haggles with AI. PayPal pays."])
 
 def v4(b, s):
-    if b in ("dawn", "shift", "mission", "teach", "intent", "rex", "mina", "stack", "end"): return v2(b, s)
+    if b == "mission":
+        v2(b, s)
+        s.css.append("""
+    .pp-pill { position: absolute; left: 140px; top: 590px; padding: 14px 26px; border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .pp-pill img { display: block; height: 52px; }
+    .jm-logo { position: absolute; left: 136px; top: 120px; font-size: 120px; color: #fff; }""")
+        pp = s.el("div", "pp-pill", '<img src="assets/img/paypal.svg" alt="PayPal" />', 0.0, 4.0)
+        s.tl(f'tl.fromTo("{pp}", {{ opacity: 0, y: 16 }}, {{ opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }}, 0.25);')
+        s.tl(f'tl.to("{pp}", {{ opacity: 0, duration: 0.25 }}, 3.7);')
+        jm = s.el("div", "jm-logo", LOGO, 4.2)
+        s.tl(f'tl.fromTo("{jm}", {{ opacity: 0, filter: "blur(10px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }}, 4.2);')
+        s.fadeout([jm])
+        return
+    if b == "end": return k_end(s, ["Teach your stall. It haggles with AI.", "…and PayPal pays."], spread=True)
+    if b in ("dawn", "shift", "teach", "intent", "rex", "mina", "stack"): return v2(b, s)
     if b == "listing":
         segs, _ = seq((TEACH, 20, 40, 3.0))
         k_screen(s, segs, cams=[C(0, 0, 960, 560, 1.12), C(s.dur * 0.4, 1.0, 1350, 420, 1.55)], caps=[(0.4, s.dur - 0.8, "Listings with a private lowest price 🔒 and her reasons")], chapter="<b>6:12 a.m.</b>her stall, taught")
@@ -133,7 +147,7 @@ def v4(b, s):
     elif b == "paid": b_paid(s, chapter="<b>2:02 p.m.</b>verified")
 
 FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
-PAD = {"end": 2.6, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
+PAD = {"end": 3.8, "intent": 1.2, "haggle": 1.0, "approve": 1.4, "paid": 1.2, "rex": 0.8, "feed": 1.2, "checkout": 1.0, "rosa": 1.0, "mina": 1.0, "teach": 1.0}
 MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0}
 
 def build(vid):
@@ -147,6 +161,7 @@ def build(vid):
     shutil.copy(os.path.join(V, "shared", "caveat-600.woff2"), os.path.join(d, "assets", "fonts"))
     for f in os.listdir(os.path.join(REPO, "public", "photos")):
         if f.endswith(".jpg"): shutil.copy(os.path.join(REPO, "public", "photos", f), os.path.join(d, "assets", "img"))
+    shutil.copy(os.path.join(V, "shared", "logos", "paypal.svg"), os.path.join(d, "assets", "img", "paypal.svg"))
     gen = os.path.join(HERE, "gen")
     if os.path.isdir(gen):
         for f in os.listdir(gen): shutil.copy(os.path.join(gen, f), os.path.join(d, "assets", "img"))

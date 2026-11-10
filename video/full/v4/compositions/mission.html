@@ -21,6 +21,9 @@
 .jomm { display: inline-flex; align-items: baseline; font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
 .jomm .ring { display: inline-block; width: 0.6em; height: 0.6em; border: 0.15em solid #e0592a; border-radius: 50%; margin: 0 0.02em; position: relative; top: 0.02em; box-sizing: border-box; }
 .jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
+    .pp-pill { position: absolute; left: 140px; top: 590px; padding: 14px 26px; border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .pp-pill img { display: block; height: 52px; }
+    .jm-logo { position: absolute; left: 136px; top: 120px; font-size: 120px; color: #fff; }
   </style>
   <div id="root" data-composition-id="v4-mission" data-width="1920" data-height="1080">
     <div id="v4-mission-d1" class="ph clip" data-start="0" data-duration="2.0" style="" ><img src="assets/img/hero-vendor.jpg" alt="" style="object-position:50% 30%" /></div>
@@ -36,6 +39,8 @@
     <p id="v4-mission-p11" class="kick clip" data-start="0.0" data-duration="13.76" style="top:240px" >our mission</p>
     <h2 id="v4-mission-h12" class="title clip" data-start="0.0" data-duration="13.76" style="top:330px;font-size:100px" ><span class="w">A</span> <span class="w">place</span> <span class="w">in</span> <span class="w">the</span> <span class="w">AI</span> <span class="w">economy,</span> <i class="w">for</i> <i class="w">every</i> <i class="w">small</i> <i class="w">seller.</i></h2>
     <p id="v4-mission-p13" class="sub clip" data-start="0.0" data-duration="13.76" style="top:700px" >PayPal believes everyone deserves a place in the digital economy. With Jomm, any small seller creates their own selling agent in minutes, just by talking.</p>
+    <div id="v4-mission-d14" class="pp-pill clip" data-start="0.0" data-duration="4.0" style="" ><img src="assets/img/paypal.svg" alt="PayPal" /></div>
+    <div id="v4-mission-d15" class="jm-logo clip" data-start="4.2" data-duration="9.56" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -48,6 +53,10 @@
     tl.fromTo("#v4-mission-h12 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 3.8);
     tl.fromTo("#v4-mission-p13", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.3);
     tl.to(["#v4-mission-p11", "#v4-mission-h12", "#v4-mission-p13"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 13.51);
+    tl.fromTo("#v4-mission-d14", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 0.25);
+    tl.to("#v4-mission-d14", { opacity: 0, duration: 0.25 }, 3.7);
+    tl.fromTo("#v4-mission-d15", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }, 4.2);
+    tl.to(["#v4-mission-d15"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 13.51);
     window.__timelines["v4-mission"] = tl;
   </script>
 </template>

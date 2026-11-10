@@ -183,15 +183,32 @@ def k_cards(s, kicker, title, cards, ground="#f6f1ea", hi=None):
         s.tl(f'tl.fromTo("{c}", {{ opacity: 0, y: 50 }}, {{ opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }}, {when});'); sels.append(c)
     s.fadeout(sels)
 
-def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm"):
+def k_end(s, lines, url="jomm.onrender.com · github.com/ttiu-cs/jomm", spread=False):
     s.ground = "#f6f1ea"
     s.css.append(f"""
-    .lg {{ position: absolute; left: 0; right: 0; top: 280px; text-align: center; font-size: 220px; color: #2b211a; }}
-    .l1 {{ position: absolute; left: 0; right: 0; top: 570px; text-align: center; font-family: {SERIF}; font-size: 60px; color: #2b211a; }}
-    .l2 {{ position: absolute; left: 0; right: 0; top: 670px; text-align: center; font-family: Caveat, cursive; font-size: 58px; color: #e0592a; }}
-    .l3 {{ position: absolute; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #8a7868; }}
-    .l4 {{ position: absolute; left: 0; right: 0; top: 960px; text-align: center; font-size: 28px; color: #a8998b; }}""")
-    lg = s.el("div", "lg", LOGO)
+    .lg {{ position: absolute; z-index: 1; left: 0; right: 0; top: 280px; text-align: center; font-size: 220px; color: #2b211a; }}
+    .l1 {{ position: absolute; z-index: 3; left: 0; right: 0; top: 570px; text-align: center; font-family: {SERIF}; font-size: 60px; color: #2b211a; }}
+    .l2 {{ position: absolute; z-index: 3; left: 0; right: 0; top: 670px; text-align: center; font-family: Caveat, cursive; font-size: 58px; color: #e0592a; }}
+    .l3 {{ position: absolute; z-index: 3; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #8a7868; }}
+    .l4 {{ position: absolute; z-index: 3; left: 0; right: 0; top: 960px; text-align: center; font-size: 28px; color: #a8998b; }}""")
+    logo = LOGO
+    if spread:
+        # the full stop is one seller: it quietly multiplies into many sellers drifting across the frame
+        import random
+        rnd = random.Random(7)
+        seeds = []
+        for k in range(46):
+            ang = rnd.uniform(0, 6.283); r = rnd.uniform(260, 1150)
+            import math
+            x = round(math.cos(ang) * r * 1.15); y = round(math.sin(ang) * r * 0.62)
+            sc = round(rnd.uniform(0.25, 0.85), 2); op = round(rnd.uniform(0.25, 0.75), 2)
+            seeds.append((x, y, sc, op, round(1.7 + k * 0.075 + rnd.uniform(0, 0.25), 2), round(rnd.uniform(2.6, 3.8), 2)))
+        kids = "".join(f'<i class="sd" id="{s.sid}-sd{k}"></i>' for k in range(len(seeds)))
+        logo = LOGO.replace('<span class="dot"></span>', f'<span class="dot" style="position:relative">{kids}</span>')
+        s.css.append(".sd { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 50%; background: #e0592a; opacity: 0; }")
+        for k, (x, y, sc, op, t0, d) in enumerate(seeds):
+            s.tl(f'tl.fromTo("#{s.sid}-sd{k}", {{ x: 0, y: 0, scale: 1, opacity: 0 }}, {{ x: {x}, y: {y}, scale: {sc}, opacity: {op}, duration: {d}, ease: "power2.out" }}, {t0});')
+    lg = s.el("div", "lg", logo, extra='data-layout-allow-overflow' if spread else "")
     s.tl(f'tl.fromTo("{lg}", {{ opacity: 0, filter: "blur(12px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out" }}, 0.1);')
     a = s.el("p", "l1", words(lines[0])); s.wordsin(a, 1.0, 0.16)
     if len(lines) > 1:
