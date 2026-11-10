@@ -27,8 +27,8 @@ def seq(*parts):
     return segs, t
 
 def b_intent(s, chapter=None, cap="A shopper types what they want. Their own AI agent takes it from here."):
-    segs, _ = seq((DEAL, 0.3, 9.5, 1.0), (DEAL, 9.8, 30, 1.0))
-    k_screen(s, segs, cams=[C(0, 0, 950, 880, 1.55), C(5.6, 0.9, 440, 480, 1.45)], caps=[(1.0, 4.4, cap)], chapter=chapter)
+    segs, _ = seq((DEAL, 0.3, 4.9, 1.0), (DEAL, 7.2, 30, 1.0))
+    k_screen(s, segs, cams=[C(0, 0, 950, 880, 1.55), C(4.9, 0, 440, 480, 1.45)], caps=[(1.0, 4.4, cap)], chapter=chapter)
 
 def b_haggle(s, chapter=None, caps=None):
     segs, _ = seq((DEAL, 9.5, 19, 1.25), (DEAL, 28.5, 10, 1.0))
