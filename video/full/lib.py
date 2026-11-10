@@ -42,6 +42,8 @@ class Scene:
         self.sid, self.dur, self.css, self.body, self.js = sid, round(dur, 2), [BASE, HAND_FACE, LOGO_CSS], [], []
         self.ground = ground
         self.n = 0
+        self.xin = False   # this scene crossfades in over the previous one
+        self.xout = False  # the next scene crossfades in over this one
     def uid(self, p):
         self.n += 1
         return f"{self.sid}-{p}{self.n}"
@@ -72,18 +74,25 @@ class Scene:
         self.add(f'<div class="ph" id="{i}w"><video id="{i}" class="clip" src="assets/{src}" muted playsinline data-start="{round(start,2)}" data-duration="{round(d,2)}" data-media-start="{mstart}" data-playback-rate="{rate}"></video></div>')
         self.tl(f'tl.fromTo("#{i}w", {{ scale: {push[0]} }}, {{ scale: {push[1]}, duration: {round(self.dur,2)}, ease: "none" }}, 0);')
         if shade: self.el("div", shade, "", start, d, extra="data-layout-ignore")
+    XF = 0.45
+    def xfade_js(self):
+        return f'    tl.fromTo("#{self.sid}-all", {{ opacity: 0 }}, {{ opacity: 1, duration: {self.XF}, ease: "sine.inOut" }}, 0);' if self.xin else ""
     def html(self):
         return f"""<template>
   <style>
-    #root {{ position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: {self.ground}; }}
+    #root {{ position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }}
+    #{self.sid}-all {{ position: absolute; inset: 0; overflow: hidden; background: {self.ground}; }}
 {''.join(self.css)}
   </style>
   <div id="root" data-composition-id="{self.sid}" data-width="1920" data-height="1080">
+  <div id="{self.sid}-all">
 {chr(10).join(self.body)}
+  </div>
   </div>
   <script>
     const tl = gsap.timeline({{ paused: true }});
 {chr(10).join(self.js)}
+{self.xfade_js()}
     window.__timelines["{self.sid}"] = tl;
   </script>
 </template>
@@ -154,11 +163,11 @@ def k_screen(s, segs, cams=(), caps=(), tag=False, chapter=None, ground="#f6f1ea
     cuts = [] if nodip else sorted({round(st, 2) for (_, st, _, _, _) in segs if st > 0.05} | {round(t, 2) for (t, d, *_ ) in list(cams)[1:] if d == 0})
     dip = s.uid("dip")
     s.add(f'<div id="{dip}" class="clip" data-start="0" data-duration="{s.dur}" data-layout-ignore style="position:absolute;inset:0;background:#141010;opacity:0;pointer-events:none"></div>')
-    s.tl(f'tl.fromTo("#{dip}", {{ opacity: 0.5 }}, {{ opacity: 0, duration: 0.25, ease: "power2.out" }}, 0);')
+    if not s.xin: s.tl(f'tl.fromTo("#{dip}", {{ opacity: 0.5 }}, {{ opacity: 0, duration: 0.25, ease: "power2.out" }}, 0);')
     for c in cuts:
         s.tl(f'tl.to("#{dip}", {{ opacity: 0.45, duration: 0.1, ease: "power1.in" }}, {round(c - 0.1, 2)});')
         s.tl(f'tl.to("#{dip}", {{ opacity: 0, duration: 0.18, ease: "power2.out" }}, {c});')
-    s.tl(f'tl.to("#{dip}", {{ opacity: 0.45, duration: 0.12, ease: "power1.in" }}, {round(s.dur - 0.14, 2)});')
+    if not s.xout: s.tl(f'tl.to("#{dip}", {{ opacity: 0.45, duration: 0.12, ease: "power1.in" }}, {round(s.dur - 0.14, 2)});')
     if tag:
         s.el("p", "tag", "PayPal Sandbox · test money")
     if chapter:

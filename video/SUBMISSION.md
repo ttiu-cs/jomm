@@ -22,15 +22,15 @@ Chapters
 0:00 6 a.m. at Rosa's stall
 0:19 Our mission
 0:32 Teaching the stall by talking
-0:56 A shopper's AI agent arrives
-1:06 Product feed
-1:16 Checkout session + negotiation
-1:33 Guardrails
-1:45 PayPal Orders v2 + Sandbox approval
-1:56 Verified with the PayPal Agent Toolkit
-2:09 A lowball, held
-2:20 Mina's closet + Channel3
-2:29 Built with
+0:55 A shopper's AI agent arrives
+1:05 Product feed
+1:14 Checkout session + negotiation
+1:31 Guardrails
+1:42 PayPal Orders v2 + Sandbox approval
+1:53 Verified with the PayPal Agent Toolkit
+2:06 A lowball, held
+2:16 Mina's closet + Channel3
+2:25 Built with
 
 Music: "Carefree" and "Bossa Antigua" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/
 Some background images are AI-generated (Ludyte); others are from Pexels.

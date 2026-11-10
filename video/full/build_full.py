@@ -159,6 +159,9 @@ MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0, "rex": 10.45}
 VO_OVERRIDE = {"v4/end": {"file": "end/combined.mp3", "dur": 6.7}}
 END_AND, END_PP = 0.25 + 4.40, 0.25 + 5.42   # on-screen cue times within the end beat
 
+# beats shown as screen captures: their edges crossfade instead of dip-cutting
+XFADE_BEATS = {"v4": {"listing", "intent", "feed", "checkout", "guard", "approve", "paid", "rex"}}
+
 def build(vid):
     name, beats = [(n, b) for v, n, b in VERSIONS if v == vid][0]
     d = os.path.join(HERE, vid)
@@ -185,9 +188,16 @@ def build(vid):
         shutil.copy(os.path.join(HERE, "vo", v["file"]), os.path.join(d, "assets", "vo", f"{i:02d}-{b}.mp3"))
         dur = round(max(v["dur"] + PAD.get(b, 0.6) + 0.25, MINLEN.get(b, 0)), 2)
         sid = f"{vid}-{b}"
-        s = Scene(sid, dur); FNS[vid](b, s)
+        s = Scene(sid, dur)
+        SCREEN = XFADE_BEATS.get(vid, set())
+        nxt = beats[i + 1][0] if i + 1 < len(beats) else None
+        prv = beats[i - 1][0] if i > 0 else None
+        s.xin = prv is not None and (b in SCREEN or prv in SCREEN)
+        s.xout = nxt is not None and (b in SCREEN or nxt in SCREEN)
+        if s.xin: t = round(t - Scene.XF, 2)
+        FNS[vid](b, s)
         open(os.path.join(d, "compositions", f"{b}.html"), "w").write(s.html())
-        hosts.append(f'      <div id="{sid}" data-composition-id="{sid}" data-composition-src="compositions/{b}.html" data-start="{round(t,2)}" data-duration="{dur}" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>')
+        hosts.append(f'      <div id="{sid}" data-composition-id="{sid}" data-composition-src="compositions/{b}.html" data-start="{round(t,2)}" data-duration="{dur}" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:{i + 1}"></div>')
         auds.append(f'      <audio id="vo-{b}" class="clip" src="assets/vo/{i:02d}-{b}.mp3" data-start="{round(t + 0.25, 2)}" data-duration="{v["dur"]}" data-volume="1" data-track-index="{5 + i % 2}"></audio>')
         t += dur
     total = round(t, 2)

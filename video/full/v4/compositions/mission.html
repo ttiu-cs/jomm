@@ -1,6 +1,7 @@
 <template>
   <style>
-    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: #141010; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    #v4-mission-all { position: absolute; inset: 0; overflow: hidden; background: #141010; }
 
 .ph { position: absolute; inset: 0; overflow: hidden; }
 .ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -26,6 +27,7 @@
     .jm-logo { position: absolute; left: 136px; top: 120px; font-size: 120px; color: #fff; }
   </style>
   <div id="root" data-composition-id="v4-mission" data-width="1920" data-height="1080">
+  <div id="v4-mission-all">
     <div id="v4-mission-d1" class="ph clip" data-start="0" data-duration="2.0" style="" ><img src="assets/img/hero-vendor.jpg" alt="" style="object-position:50% 30%" /></div>
     <div id="v4-mission-d2" class="shade clip" data-start="0" data-duration="2.0" style="" data-layout-ignore></div>
     <div id="v4-mission-d3" class="ph clip" data-start="2.0" data-duration="1.8" style="" ><img src="assets/img/gen-flower.jpg" alt="" style="object-position:50% 50%" /></div>
@@ -42,6 +44,7 @@
     <div id="v4-mission-d14" class="pp-pill clip" data-start="0.0" data-duration="4.0" style="" ><img src="assets/img/paypal.svg" alt="PayPal" /></div>
     <div id="v4-mission-d15" class="jm-logo clip" data-start="4.2" data-duration="9.56" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span></div>
   </div>
+  </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.fromTo("#v4-mission-d1 img", { scale: 1.1 }, { scale: 1.0, duration: 2.0, ease: "none" }, 0);
@@ -57,6 +60,7 @@
     tl.to("#v4-mission-d14", { opacity: 0, duration: 0.25 }, 3.7);
     tl.fromTo("#v4-mission-d15", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }, 4.2);
     tl.to(["#v4-mission-d15"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 13.51);
+
     window.__timelines["v4-mission"] = tl;
   </script>
 </template>

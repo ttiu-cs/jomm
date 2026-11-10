@@ -1,6 +1,7 @@
 <template>
   <style>
-    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: #f6f1ea; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    #v4-end-all { position: absolute; inset: 0; overflow: hidden; background: #f6f1ea; }
 
 .ph { position: absolute; inset: 0; overflow: hidden; }
 .ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -28,10 +29,12 @@
     .l4 { position: absolute; z-index: 3; left: 0; right: 0; top: 960px; text-align: center; font-size: 28px; color: #a8998b; }.sd { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 50%; background: #e0592a; opacity: 0; }
   </style>
   <div id="root" data-composition-id="v4-end" data-width="1920" data-height="1080">
+  <div id="v4-end-all">
     <div id="v4-end-d1" class="lg clip" data-start="0.0" data-duration="10.75" style="" data-layout-allow-overflow><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot" style="position:relative"><i class="sd" id="v4-end-sd0"></i><i class="sd" id="v4-end-sd1"></i><i class="sd" id="v4-end-sd2"></i><i class="sd" id="v4-end-sd3"></i><i class="sd" id="v4-end-sd4"></i><i class="sd" id="v4-end-sd5"></i><i class="sd" id="v4-end-sd6"></i><i class="sd" id="v4-end-sd7"></i><i class="sd" id="v4-end-sd8"></i><i class="sd" id="v4-end-sd9"></i><i class="sd" id="v4-end-sd10"></i><i class="sd" id="v4-end-sd11"></i><i class="sd" id="v4-end-sd12"></i><i class="sd" id="v4-end-sd13"></i><i class="sd" id="v4-end-sd14"></i><i class="sd" id="v4-end-sd15"></i><i class="sd" id="v4-end-sd16"></i><i class="sd" id="v4-end-sd17"></i><i class="sd" id="v4-end-sd18"></i><i class="sd" id="v4-end-sd19"></i><i class="sd" id="v4-end-sd20"></i><i class="sd" id="v4-end-sd21"></i><i class="sd" id="v4-end-sd22"></i><i class="sd" id="v4-end-sd23"></i><i class="sd" id="v4-end-sd24"></i><i class="sd" id="v4-end-sd25"></i><i class="sd" id="v4-end-sd26"></i><i class="sd" id="v4-end-sd27"></i><i class="sd" id="v4-end-sd28"></i><i class="sd" id="v4-end-sd29"></i><i class="sd" id="v4-end-sd30"></i><i class="sd" id="v4-end-sd31"></i><i class="sd" id="v4-end-sd32"></i><i class="sd" id="v4-end-sd33"></i><i class="sd" id="v4-end-sd34"></i><i class="sd" id="v4-end-sd35"></i><i class="sd" id="v4-end-sd36"></i><i class="sd" id="v4-end-sd37"></i><i class="sd" id="v4-end-sd38"></i><i class="sd" id="v4-end-sd39"></i><i class="sd" id="v4-end-sd40"></i><i class="sd" id="v4-end-sd41"></i><i class="sd" id="v4-end-sd42"></i><i class="sd" id="v4-end-sd43"></i><i class="sd" id="v4-end-sd44"></i><i class="sd" id="v4-end-sd45"></i><i class="sd" id="v4-end-sd46"></i><i class="sd" id="v4-end-sd47"></i><i class="sd" id="v4-end-sd48"></i><i class="sd" id="v4-end-sd49"></i><i class="sd" id="v4-end-sd50"></i><i class="sd" id="v4-end-sd51"></i><i class="sd" id="v4-end-sd52"></i><i class="sd" id="v4-end-sd53"></i><i class="sd" id="v4-end-sd54"></i></span></span></div>
     <p id="v4-end-p2" class="l1 clip" data-start="0.0" data-duration="10.75" style="" ><span class="w">Teach</span> <span class="w">your</span> <span class="w">stall.</span> <span class="w">It</span> <span class="w">haggles</span> <span class="w">with</span> <span class="w">AI.</span></p>
     <p id="v4-end-p3" class="l2 clip" data-start="0.0" data-duration="10.75" style="" ><span class="w" id="v4-end-and">and…</span> <span class="w" id="v4-end-pp" style="font-size:1.35em">PayPal pays!</span></p>
     <p id="v4-end-p4" class="l3 clip" data-start="0.0" data-duration="10.75" style="" >jomm.onrender.com · github.com/ttiu-cs/jomm</p>
+  </div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -95,6 +98,7 @@
     tl.fromTo("#v4-end-and", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.65);
     tl.fromTo("#v4-end-pp", { opacity: 0, scale: 1.25, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "back.out(1.6)" }, 5.67);
     tl.fromTo("#v4-end-p4", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 6.67);
+
     window.__timelines["v4-end"] = tl;
   </script>
 </template>

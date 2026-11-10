@@ -1,6 +1,7 @@
 <template>
   <style>
-    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: #f6f1ea; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    #v4-stack-all { position: absolute; inset: 0; overflow: hidden; background: #f6f1ea; }
 
 .ph { position: absolute; inset: 0; overflow: hidden; }
 .ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -29,12 +30,14 @@
     .card em { display: block; font-family: Caveat, cursive; font-style: normal; font-size: 46px; color: #e0592a; }
   </style>
   <div id="root" data-composition-id="v4-stack" data-width="1920" data-height="1080">
+  <div id="v4-stack-all">
     <p id="v4-stack-p1" class="ck clip" data-start="0.0" data-duration="10.35" style="" >6:00 p.m.</p>
     <h2 id="v4-stack-h2" class="ct clip" data-start="0.0" data-duration="10.35" style="" ><span class="w">Built</span> <span class="w">on</span> <span class="w">PayPal’s</span> <span class="w">rails.</span></h2>
     <div id="v4-stack-d3" class="card clip" data-start="0.0" data-duration="10.35" style="left:140px;width:387px" ><em>pays</em><b><div style="display:flex;align-items:center;height:64px;margin:6px 0 2px"><img src="assets/img/paypal.svg" alt="paypal.svg" style="height:56px;width:auto" /></div></b><span>Orders v2 · Agent Toolkit · ACP-style checkout sessions</span></div>
     <div id="v4-stack-d4" class="card clip" data-start="0.0" data-duration="10.35" style="left:557px;width:387px" ><em>shops</em><b><div style="display:flex;align-items:center;height:64px;margin:6px 0 2px"><img src="assets/img/openai.svg" alt="openai.svg" style="height:44px;width:auto" /></div></b><span>the shopper’s buyer agent, with tool calling</span></div>
     <div id="v4-stack-d5" class="card clip" data-start="0.0" data-duration="10.35" style="left:974px;width:387px" ><em>prices</em><b><div style="display:flex;align-items:center;height:64px;margin:6px 0 2px"><img src="assets/img/channel3.png" alt="Channel3" style="height:46px;width:auto" /><strong style="font-family:Inter,sans-serif;font-weight:700;font-size:41px;letter-spacing:-0.02em;color:#2b211a;margin-left:12px">Channel3</strong></div></b><span>new-item prices for second-hand goods</span></div>
     <div id="v4-stack-d6" class="card clip" data-start="0.0" data-duration="10.35" style="left:1391px;width:387px" ><em>runs</em><b><div style="display:flex;align-items:center;height:64px;margin:6px 0 2px"><img src="assets/img/render.svg" alt="Render" style="height:40px;width:auto" /><strong style="font-family:Inter,sans-serif;font-weight:700;font-size:36px;letter-spacing:-0.02em;color:#2b211a;margin-left:12px">Render</strong></div></b><span>deployed live at jomm.onrender.com</span></div>
+  </div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -45,6 +48,7 @@
     tl.fromTo("#v4-stack-d5", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 1.8);
     tl.fromTo("#v4-stack-d6", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 2.4);
     tl.to(["#v4-stack-p1", "#v4-stack-h2", "#v4-stack-d3", "#v4-stack-d4", "#v4-stack-d5", "#v4-stack-d6"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 10.1);
+
     window.__timelines["v4-stack"] = tl;
   </script>
 </template>

@@ -1,6 +1,7 @@
 <template>
   <style>
-    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; background: #141010; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: Inter, sans-serif; }
+    #v4-shift-all { position: absolute; inset: 0; overflow: hidden; background: #141010; }
 
 .ph { position: absolute; inset: 0; overflow: hidden; }
 .ph img, .ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -23,10 +24,12 @@
 .jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
   </style>
   <div id="root" data-composition-id="v4-shift" data-width="1920" data-height="1080">
+  <div id="v4-shift-all">
     <div id="v4-shift-d1" class="ph clip" data-start="0" data-duration="9.61" style="" ><img src="assets/img/seller-setup.jpg" alt="" style="object-position:50% 50%" /></div>
     <div id="v4-shift-d2" class="shade clip" data-start="0" data-duration="9.61" style="" data-layout-ignore></div>
     <h2 id="v4-shift-h3" class="title clip" data-start="0.0" data-duration="9.61" style="top:380px;font-size:100px" ><span class="w">Her</span> <span class="w">next</span> <span class="w">customer</span> <span class="w">might</span> <span class="w">be</span> <span class="w">an</span> <i class="w">AI</i> <i class="w">agent.</i></h2>
     <p id="v4-shift-p4" class="sub clip" data-start="0.0" data-duration="9.61" style="top:640px" >And agents only talk to stores that speak their language.</p>
+  </div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
@@ -34,6 +37,7 @@
     tl.fromTo("#v4-shift-h3 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.0);
     tl.fromTo("#v4-shift-p4", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 5.0);
     tl.to(["#v4-shift-h3", "#v4-shift-p4"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 9.36);
+
     window.__timelines["v4-shift"] = tl;
   </script>
 </template>
