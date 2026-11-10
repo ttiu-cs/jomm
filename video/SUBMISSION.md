@@ -91,7 +91,7 @@ Live teaching in more languages, real Store Sync and Agent Ready enrollment, mor
 1. Open https://jomm.onrender.com/demo.
 2. **Act 1:** press ▶ Play Rosa's video (then Skip › to jump to the end).
 3. **Act 2:** tap an example, or type any request in plain words (what, how much, what for, and your budget), and press **Send the shopper's agent**.
-4. **Act 3:** press the PayPal button and approve with the PayPal Sandbox buyer login below (test money).
+4. **Act 3:** press the PayPal button and approve with the PayPal Sandbox buyer login from the testing instructions (test money).
 5. **Teach:** open https://jomm.onrender.com/seller, name a shop, and use your camera, or tap a sample: **Fruit stall, 3 crates** or **Closet, 5 items** (Channel3 price lookups).
 
 **Testing instructions (judges only):** PayPal Sandbox buyer login: [email] / [password]
