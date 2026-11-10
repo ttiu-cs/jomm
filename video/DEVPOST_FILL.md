@@ -36,7 +36,7 @@ Jomm. turns a short camera conversation into the seller's own AI selling agent.
 2. **Act 1:** press ▶ Play Rosa's video (then Skip › to jump to the end).
 3. **Act 2:** tap an example, or type any request in plain words (what, how much, what for, and your budget), and press **Send the shopper's agent**.
 4. **Act 3:** press the PayPal button and approve with the PayPal Sandbox buyer login from the testing instructions (test money).
-5. **Teach:** open https://jomm.onrender.com/seller, name a shop, and use your camera, or tap a sample: **Fruit stall, 3 crates** or **Closet, 5 items** (Channel3 price lookups).
+5. **Teach by camera:** open https://jomm.onrender.com/seller and name a shop. The Teach screen uses your phone or laptop camera: show your goods and talk, and the agent asks until it can haggle for you. For convenience, two sample videos are ready to tap instead: **Fruit stall, 3 crates** (Rosa) and **Closet, 5 items** (Mina, where the agent looks up new prices on **Channel3** for each item and suggests a fair resale price).
 
 ## How we built it
 **How it uses PayPal**
