@@ -60,11 +60,11 @@ STACK = [(0.6, "PayPal", "Orders v2 · Agent Toolkit · ACP-style checkout sessi
 
 # ---------------------------------------------------------------- versions
 def v1(b, s):
-    if b == "hook": k_photo(s, [("seller-setup.jpg", 0, "50% 50%")], title="Shopping is changing.", sub="Soon, people won’t browse. They’ll send an AI agent to shop for them.", top=360, sub_at=1.4)
+    if b == "hook": k_photo(s, [("gen-flower.jpg", 0, "50% 50%")], title="Shopping is changing.", sub="Soon, people won’t browse. They’ll send an AI agent to shop for them.", top=360, sub_at=1.4)
     elif b == "big": k_cards(s, "big retailers have", "They’ll plug into AI shopping fast.", [(1.2, "Catalog APIs", "products, stock and prices for agents", "1"), (1.8, "Checkout", "integrations with agent protocols", "2"), (2.4, "Tech teams", "engineers to build and run it", "3")])
-    elif b == "small": k_photo(s, [("stall-live.jpg", 0, "50% 50%"), ("closet-bedroom.jpg", 3.3, "50% 40%"), ("hero-vendor.jpg", 4.4, "50% 30%")], title="But most of the world’s sellers are small.", top=110, size=56,
+    elif b == "small": k_photo(s, [("gen-dawn.jpg", 0, "50% 50%"), ("gen-closet.jpg", 3.3, "50% 40%"), ("gen-ceramics.jpg", 4.4, "50% 40%")], title="But most of the world’s sellers are small.", top=110, size=56,
                               notes=[("a fruit stall.", 2.1, 1.2, 140, 820), ("a closet.", 3.3, 1.1, 140, 820), ("one person.", 4.4, None, 140, 820)], sub="No website. No tech team.", sub_at=6.0)
-    elif b == "mission": k_photo(s, [("peaches-hand.jpg", 0, "50% 50%")], kicker="our mission", title="Every small seller, ready for the *AI era.*", sub="PayPal has always believed everyone deserves a place in the digital economy. We’re carrying that into the age of AI agents.", top=330, sub_at=0.3, title_at=4.2)
+    elif b == "mission": k_photo(s, [("gen-foodcart.jpg", 0, "50% 50%")], kicker="our mission", title="Every small seller, ready for the *AI era.*", sub="PayPal has always believed everyone deserves a place in the digital economy. We’re carrying that into the age of AI agents.", top=330, sub_at=0.3, title_at=4.2)
     elif b == "promise": k_photo(s, [("apples-box.jpg", 0, "50% 60%")], title="Your own AI selling agent. *In minutes. Just by talking.*", sub="No code. No website. No forms.", top=340, sub_at=3.6)
     elif b == "rosa": k_phone(s, FRUIT, 8, 1.6, title="Rosa teaches her stall by talking.", sub="Her agent asks until it can haggle like her.", notes=NOTE_ROSA[:2] + [("supermarket: $3.49", 6.5, 140, 820), ("keeps two weeks", 9.0, 140, 910)])
     elif b == "mina": k_phone(s, CLOSET, 9, 1.25, title="Mina’s closet, priced with Channel3.", sub="New prices online → a fair resale range.", notes=NOTE_MINA, left=False)
@@ -77,9 +77,9 @@ def v1(b, s):
     elif b == "end": k_end(s, ["Every small seller, ready for the AI era.", "Teach your stall. It haggles with AI. PayPal pays."])
 
 def v2(b, s):
-    if b == "dawn": k_photo(s, [("strawberries-market.jpg", 0, "50% 50%"), ("peaches-hand.jpg", 2.6, "50% 50%"), ("apples-box.jpg", 3.6, "50% 60%")], kicker="6:00 a.m.", title="Rosa sets out three crates.", sub="No website. No app. No tech team.", top=400, sub_at=4.4)
+    if b == "dawn": k_photo(s, [("gen-dawn.jpg", 0, "60% 50%"), ("strawberries-market.jpg", 4.2, "50% 50%")], kicker="6:00 a.m.", title="Rosa sets out three crates.", sub="No website. No app. No tech team.", top=400, sub_at=4.4)
     elif b == "shift": k_photo(s, [("seller-setup.jpg", 0, "50% 50%")], title="Her next customer might be an *AI agent.*", sub="And agents only talk to stores that speak their language.", top=380, sub_at=5.0)
-    elif b == "mission": k_photo(s, [("hero-vendor.jpg", 0, "50% 30%")], kicker="our mission", title="A place in the AI economy, *for every small seller.*", sub="PayPal believes everyone deserves a place in the digital economy. With Jomm, any small seller creates their own selling agent in minutes, just by talking.", top=330, sub_at=0.3, title_at=3.8)
+    elif b == "mission": k_photo(s, [("hero-vendor.jpg", 0, "50% 30%"), ("gen-flower.jpg", 2.0, "50% 50%"), ("gen-ceramics.jpg", 3.8, "50% 40%"), ("gen-foodcart.jpg", 5.6, "50% 50%"), ("stall-live.jpg", 7.4, "50% 50%")], kicker="our mission", title="A place in the AI economy, *for every small seller.*", sub="PayPal believes everyone deserves a place in the digital economy. With Jomm, any small seller creates their own selling agent in minutes, just by talking.", top=330, sub_at=0.3, title_at=3.8)
     elif b == "teach": k_phone(s, FRUIT, 8, 1.7, title="She teaches her stall like a new helper.", notes=NOTE_ROSA, chapter="6:10 a.m.")
     elif b == "intent": b_intent(s, chapter="<b>2:00 p.m.</b>Jun’s agent", cap="Jun: “3 boxes of strawberries for a party tonight, under $17.”")
     elif b == "haggle": b_haggle(s, chapter="<b>2:01 p.m.</b>agents haggle", caps=[(0.5, s.dur * 0.33 - 0.6, "Jun’s agent finds Rosa’s stall through its product feed"), (s.dur * 0.33 + 0.3, s.dur * 0.29 - 0.5, "Strawberries must go tonight, so Rosa’s agent gives a little, with a reason"), (s.dur * 0.62 + 0.3, s.dur * 0.38 - 0.6, "🔒 Her lowest price stays private")])
@@ -91,9 +91,9 @@ def v2(b, s):
     elif b == "end": k_end(s, ["Teach your stall. It haggles with AI.", "…and PayPal pays."])
 
 def v3(b, s):
-    if b == "question": k_photo(s, [("coat-on-hook.jpg", 0, "50% 50%")], title="What would it take for a one-person shop to sell to an *AI agent?*", top=360)
+    if b == "question": k_photo(s, [("gen-ceramics.jpg", 0, "50% 40%")], title="What would it take for a one-person shop to sell to an *AI agent?*", top=360)
     elif b == "today": k_cards(s, "today, it takes", "The smallest sellers have none of this.", [(0.8, "Catalog API", "so agents can read your products", "1"), (1.6, "Checkout integration", "in an agent protocol", "2"), (2.4, "Payments team", "to take the money safely", "3")])
-    elif b == "mission": k_photo(s, [("closet-bedroom.jpg", 0, "50% 40%")], kicker="our mission", title="Put every small seller on PayPal’s agentic rails. *Just by talking.*", sub="PayPal believes everyone deserves a place in the digital economy. That should include the AI economy.", top=300, title_at=0.3, sub_at=5.6, size=92)
+    elif b == "mission": k_photo(s, [("gen-closet.jpg", 0, "50% 40%"), ("gen-foodcart.jpg", 4.0, "50% 50%")], kicker="our mission", title="Put every small seller on PayPal’s agentic rails. *Just by talking.*", sub="PayPal believes everyone deserves a place in the digital economy. That should include the AI economy.", top=300, title_at=0.3, sub_at=5.6, size=92)
     elif b == "steps": k_cards(s, "Jomm. in three steps", "Teach. Negotiate. Get paid.", [(1.0, "Teach", "camera + voice; Channel3 price check", "step 1"), (1.6, "Negotiate", "ACP-style checkout session + negotiation", "step 2"), (2.2, "Get paid", "PayPal Orders v2 · Agent Toolkit", "step 3")])
     elif b == "mina": k_phone(s, CLOSET, 9, 1.25, title="Mina points her phone at a Levi’s jacket.", notes=NOTE_MINA, left=False, chapter="step 1 · teach")
     elif b == "rosa":

@@ -23,19 +23,22 @@
 .jomm .dot { display: inline-block; width: 0.24em; height: 0.24em; border-radius: 50%; background: #e0592a; margin-left: 0.05em; }
   </style>
   <div id="root" data-composition-id="v3-mission" data-width="1920" data-height="1080">
-    <div id="v3-mission-d1" class="ph clip" data-start="0" data-duration="13.62" style="" ><img src="assets/img/closet-bedroom.jpg" alt="" style="object-position:50% 40%" /></div>
-    <div id="v3-mission-d2" class="shade clip" data-start="0" data-duration="13.62" style="" data-layout-ignore></div>
-    <p id="v3-mission-p3" class="kick clip" data-start="0.0" data-duration="13.62" style="top:210px" >our mission</p>
-    <h2 id="v3-mission-h4" class="title clip" data-start="0.0" data-duration="13.62" style="top:300px;font-size:92px" ><span class="w">Put</span> <span class="w">every</span> <span class="w">small</span> <span class="w">seller</span> <span class="w">on</span> <span class="w">PayPal’s</span> <span class="w">agentic</span> <span class="w">rails.</span> <i class="w">Just</i> <i class="w">by</i> <i class="w">talking.</i></h2>
-    <p id="v3-mission-p5" class="sub clip" data-start="0.0" data-duration="13.62" style="top:643px" >PayPal believes everyone deserves a place in the digital economy. That should include the AI economy.</p>
+    <div id="v3-mission-d1" class="ph clip" data-start="0" data-duration="4.0" style="" ><img src="assets/img/gen-closet.jpg" alt="" style="object-position:50% 40%" /></div>
+    <div id="v3-mission-d2" class="shade clip" data-start="0" data-duration="4.0" style="" data-layout-ignore></div>
+    <div id="v3-mission-d3" class="ph clip" data-start="4.0" data-duration="9.62" style="" ><img src="assets/img/gen-foodcart.jpg" alt="" style="object-position:50% 50%" /></div>
+    <div id="v3-mission-d4" class="shade clip" data-start="4.0" data-duration="9.62" style="" data-layout-ignore></div>
+    <p id="v3-mission-p5" class="kick clip" data-start="0.0" data-duration="13.62" style="top:210px" >our mission</p>
+    <h2 id="v3-mission-h6" class="title clip" data-start="0.0" data-duration="13.62" style="top:300px;font-size:92px" ><span class="w">Put</span> <span class="w">every</span> <span class="w">small</span> <span class="w">seller</span> <span class="w">on</span> <span class="w">PayPal’s</span> <span class="w">agentic</span> <span class="w">rails.</span> <i class="w">Just</i> <i class="w">by</i> <i class="w">talking.</i></h2>
+    <p id="v3-mission-p7" class="sub clip" data-start="0.0" data-duration="13.62" style="top:643px" >PayPal believes everyone deserves a place in the digital economy. That should include the AI economy.</p>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
-    tl.fromTo("#v3-mission-d1 img", { scale: 1.1 }, { scale: 1.0, duration: 13.62, ease: "none" }, 0);
-    tl.fromTo("#v3-mission-p3", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.05);
-    tl.fromTo("#v3-mission-h4 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.3);
-    tl.fromTo("#v3-mission-p5", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 5.6);
-    tl.to(["#v3-mission-p3", "#v3-mission-h4", "#v3-mission-p5"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 13.37);
+    tl.fromTo("#v3-mission-d1 img", { scale: 1.1 }, { scale: 1.0, duration: 4.0, ease: "none" }, 0);
+    tl.fromTo("#v3-mission-d3 img", { scale: 1.0 }, { scale: 1.08, duration: 9.62, ease: "none" }, 4.0);
+    tl.fromTo("#v3-mission-p5", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.05);
+    tl.fromTo("#v3-mission-h6 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.3);
+    tl.fromTo("#v3-mission-p7", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 5.6);
+    tl.to(["#v3-mission-p5", "#v3-mission-h6", "#v3-mission-p7"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 13.37);
     window.__timelines["v3-mission"] = tl;
   </script>
 </template>
