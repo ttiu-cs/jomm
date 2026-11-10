@@ -25,23 +25,23 @@
   </style>
   <div id="root" data-composition-id="v4-dawn" data-width="1920" data-height="1080">
   <div id="v4-dawn-all">
-    <div id="v4-dawn-d1" class="ph clip" data-start="0" data-duration="4.2" style="" ><img src="assets/img/gen-dawn.jpg" alt="" style="object-position:60% 50%" /></div>
-    <div id="v4-dawn-d2" class="shade clip" data-start="0" data-duration="4.2" style="" data-layout-ignore></div>
-    <div id="v4-dawn-d3" class="ph clip" data-start="4.2" data-duration="5.36" style="" ><img src="assets/img/strawberries-market.jpg" alt="" style="object-position:50% 50%" /></div>
-    <div id="v4-dawn-d4" class="shade clip" data-start="4.2" data-duration="5.36" style="" data-layout-ignore></div>
-    <p id="v4-dawn-p5" class="kick clip" data-start="0.0" data-duration="9.56" style="top:310px" >6:00 a.m.</p>
-    <h2 id="v4-dawn-h6" class="title clip" data-start="0.0" data-duration="9.56" style="top:400px;font-size:100px" ><span class="w">Rosa</span> <span class="w">sets</span> <span class="w">out</span> <span class="w">three</span> <span class="w">crates.</span></h2>
-    <p id="v4-dawn-p7" class="sub clip" data-start="0.0" data-duration="9.56" style="top:660px" >No website. No app. No tech team.</p>
+    <div id="v4-dawn-d1" class="ph clip" data-start="0" data-duration="4.9" style="" ><img src="assets/img/gen-dawn.jpg" alt="" style="object-position:60% 50%" /></div>
+    <div id="v4-dawn-d2" class="ph clip" data-start="4.2" data-duration="5.21" style="" ><img src="assets/img/strawberries-market.jpg" alt="" style="object-position:50% 50%" /></div>
+    <div id="v4-dawn-d3" class="shade clip" data-start="0" data-duration="9.41" style="" data-layout-ignore></div>
+    <p id="v4-dawn-p4" class="kick clip" data-start="0.0" data-duration="9.41" style="top:310px" >6:00 a.m.</p>
+    <h2 id="v4-dawn-h5" class="title clip" data-start="0.0" data-duration="9.41" style="top:400px;font-size:100px" ><span class="w">Rosa</span> <span class="w">sets</span> <span class="w">out</span> <span class="w">three</span> <span class="w">crates.</span></h2>
+    <p id="v4-dawn-p6" class="sub clip" data-start="0.0" data-duration="9.41" style="top:660px" >No website. No app. No tech team.</p>
   </div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
-    tl.fromTo("#v4-dawn-d1 img", { scale: 1.1 }, { scale: 1.0, duration: 4.2, ease: "none" }, 0);
-    tl.fromTo("#v4-dawn-d3 img", { scale: 1.0 }, { scale: 1.08, duration: 5.36, ease: "none" }, 4.2);
-    tl.fromTo("#v4-dawn-p5", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.05);
-    tl.fromTo("#v4-dawn-h6 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.0);
-    tl.fromTo("#v4-dawn-p7", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 4.4);
-    tl.to(["#v4-dawn-p5", "#v4-dawn-h6", "#v4-dawn-p7"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 9.31);
+    tl.fromTo("#v4-dawn-d1 img", { scale: 1.0 }, { scale: 1.0588, duration: 4.9, ease: "none" }, 0);
+    tl.fromTo("#v4-dawn-d2 img", { scale: 1.0 }, { scale: 1.06252, duration: 5.21, ease: "none" }, 4.2);
+    tl.fromTo("#v4-dawn-d2 img", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "sine.inOut" }, 4.2);
+    tl.fromTo("#v4-dawn-p4", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.05);
+    tl.fromTo("#v4-dawn-h5 .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.11, ease: "power4.out" }, 0.0);
+    tl.fromTo("#v4-dawn-p6", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 4.4);
+    tl.to(["#v4-dawn-p4", "#v4-dawn-h5", "#v4-dawn-p6"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 9.16);
 
     window.__timelines["v4-dawn"] = tl;
   </script>

@@ -101,9 +101,14 @@ class Scene:
 # ---------------- beat kinds -----------------
 def k_photo(s, imgs, title=None, kicker=None, sub=None, notes=(), top=380, title_at=0.0, sub_at=None, shade="shade", size=100):
     """imgs: list of (src, start, pos)."""
+    # one calm, continuous drift for every photo (no in/out alternation), crossfading between photos
+    XFP = 0.7
     for idx, (src, st, pos) in enumerate(imgs):
-        end = imgs[idx + 1][1] if idx + 1 < len(imgs) else s.dur
-        s.photo(src, st, end - st, pos=pos, shade=shade, push=(1.1, 1.0) if idx % 2 == 0 else (1.0, 1.08))
+        end = imgs[idx + 1][1] + XFP if idx + 1 < len(imgs) else s.dur
+        sel = s.photo(src, st, end - st, pos=pos, shade=None, push=(1.0, 1.0 + 0.012 * (end - st)))
+        if idx > 0:
+            s.tl(f'tl.fromTo("{sel} img", {{ opacity: 0 }}, {{ opacity: 1, duration: {XFP}, ease: "sine.inOut" }}, {round(st, 2)});')
+    if shade: s.el("div", shade, "", 0, s.dur, extra="data-layout-ignore")
     sels = []
     if kicker:
         k = s.el("p", "kick", kicker, style=f"top:{top-90}px"); s.blurin(k, max(title_at - 0.3, 0.05)); sels.append(k)

@@ -41,27 +41,27 @@
   </style>
   <div id="root" data-composition-id="v4-why" data-width="1920" data-height="1080">
   <div id="v4-why-all">
-    <div id="v4-why-d1" class="wy-pan wy-l clip" data-start="0" data-duration="4.3" style="" ><p class="wy-k">big store</p><p id="wy-price">$5.49<small>one price, for everyone</small></p></div>
-    <div id="v4-why-d2" class="wy-pan wy-r clip" data-start="0" data-duration="4.3" style="" ><img src="assets/img/gen-dawn.jpg" alt="" style="object-position:40% 50%" /><div class="sh"></div><p class="wy-k">a stall</p><p class="wy-b" id="wy-b1" style="top:430px">3 boxes? $5.25 each</p><p class="wy-b" id="wy-b2" style="top:560px">closing at 6? $4.75</p></div>
-    <div id="v4-why-d3" class="wy-card clip" data-start="4.3" data-duration="6.4" style="" ><span class="c">// ACP checkout session</span><br/>line_items: 3 × strawberries<br/>total: $16.47<br/>payment_provider: <span class="pp">paypal</span></div>
-    <p id="v4-why-p4" class="wy-note clip" data-start="6.0" data-duration="4.7" style="" >a price,<br/>not a conversation.</p>
-    <div id="v4-why-d5" class="wy-neg clip" data-start="7.8" data-duration="2.9" style="" >+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}</div>
-    <p id="v4-why-p6" class="wy-tag clip" data-start="8.1" data-duration="2.6" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span><br/>adds the conversation.</p>
+    <div id="v4-why-d1" class="wy-pan wy-l clip" data-start="0" data-duration="6.05" style="" ><p class="wy-k">big store</p><p id="wy-price">$5.49<small>one price, for everyone</small></p></div>
+    <div id="v4-why-d2" class="wy-pan wy-r clip" data-start="0" data-duration="6.05" style="" ><img src="assets/img/gen-dawn.jpg" alt="" style="object-position:40% 50%" /><div class="sh"></div><p class="wy-k">a stall</p><p class="wy-b" id="wy-b1" style="top:430px">3 boxes? $5.25 each</p><p class="wy-b" id="wy-b2" style="top:560px">closing at 6? $4.75</p></div>
+    <div id="v4-why-d3" class="wy-card clip" data-start="6.05" data-duration="7.06" style="" ><span class="c">// ACP checkout session</span><br/>line_items: 3 × strawberries<br/>total: $16.47<br/>payment_provider: <span class="pp">paypal</span></div>
+    <p id="v4-why-p4" class="wy-note clip" data-start="8.65" data-duration="4.46" style="" >a price,<br/>not a conversation.</p>
+    <div id="v4-why-d5" class="wy-neg clip" data-start="10.15" data-duration="2.96" style="" >+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}</div>
+    <p id="v4-why-p6" class="wy-tag clip" data-start="10.45" data-duration="2.66" style="" ><span class="jomm" aria-label="Jomm."><span>J</span><span class="ring"></span><span>mm</span><span class="dot"></span></span><br/>adds the conversation.</p>
   </div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.fromTo("#v4-why-d1", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }, 0.15);
     tl.fromTo("#v4-why-d2", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }, 2.9);
-    tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.2);
-    tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.6);
-    tl.to(["#v4-why-d1", "#v4-why-d2"], { opacity: 0, filter: "blur(8px)", duration: 0.25 }, 4.0);
-    tl.fromTo("#v4-why-d3", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 4.3);
-    tl.fromTo("#v4-why-p4", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 6.0);
-    tl.fromTo("#v4-why-d5", { opacity: 0, y: 60, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }, 7.8);
-    tl.to("#v4-why-p4", { opacity: 0.25, duration: 0.3 }, 7.8);
-    tl.fromTo("#v4-why-p6", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }, 8.1);
-    tl.to(["#v4-why-d3", "#v4-why-p4", "#v4-why-d5", "#v4-why-p6"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 10.45);
+    tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.5);
+    tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 4.4);
+    tl.to(["#v4-why-d1", "#v4-why-d2"], { opacity: 0, filter: "blur(8px)", duration: 0.25 }, 5.75);
+    tl.fromTo("#v4-why-d3", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 6.05);
+    tl.fromTo("#v4-why-p4", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 8.65);
+    tl.fromTo("#v4-why-d5", { opacity: 0, y: 60, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }, 10.149999999999999);
+    tl.to("#v4-why-p4", { opacity: 0.25, duration: 0.3 }, 10.149999999999999);
+    tl.fromTo("#v4-why-p6", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }, 10.45);
+    tl.to(["#v4-why-d3", "#v4-why-p4", "#v4-why-d5", "#v4-why-p6"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 12.86);
 
     window.__timelines["v4-why"] = tl;
   </script>

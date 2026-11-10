@@ -84,7 +84,7 @@ def v1(b, s):
 def v2(b, s):
     if b == "dawn": k_photo(s, [("gen-dawn.jpg", 0, "60% 50%"), ("strawberries-market.jpg", 4.2, "50% 50%")], kicker="6:00 a.m.", title="Rosa sets out three crates.", sub="No website. No app. No tech team.", top=400, sub_at=4.4)
     elif b == "shift": k_photo(s, [("seller-setup.jpg", 0, "50% 50%")], title="Her next customer might be an *AI agent.*", sub="And agents only talk to stores that speak their language.", top=380, sub_at=5.0)
-    elif b == "mission": k_photo(s, [("hero-vendor.jpg", 0, "50% 30%"), ("gen-flower.jpg", 2.0, "50% 50%"), ("gen-ceramics.jpg", 3.8, "50% 40%"), ("gen-foodcart.jpg", 5.6, "50% 50%"), ("stall-live.jpg", 7.4, "50% 50%")], kicker="our mission", title="A place in the AI economy, *for every small seller.*", sub="PayPal believes everyone deserves a place in the digital economy. With Jomm, any small seller creates their own selling agent in minutes, just by talking.", top=330, sub_at=0.3, title_at=3.8)
+    elif b == "mission": k_photo(s, [("hero-vendor.jpg", 0, "50% 30%"), ("gen-flower.jpg", 3.4, "50% 50%"), ("gen-ceramics.jpg", 6.8, "50% 40%"), ("gen-foodcart.jpg", 10.2, "50% 50%")], kicker="our mission", title="A place in the AI economy, *for every small seller.*", sub="PayPal believes everyone deserves a place in the digital economy. With Jomm, any small seller creates their own selling agent in minutes, just by talking.", top=330, sub_at=0.3, title_at=3.8)
     elif b == "teach": k_phone(s, FRUIT, 8, 1.7, title="She teaches her stall like a new helper.", notes=NOTE_ROSA, chapter="6:10 a.m.")
     elif b == "intent": b_intent(s, chapter="<b>2:00 p.m.</b>Jun’s agent", cap="Jun: “3 boxes of strawberries for a party tonight, under $17.”")
     elif b == "haggle": b_haggle(s, chapter="<b>2:01 p.m.</b>agents haggle", caps=[(0.5, s.dur * 0.33 - 0.6, "Jun’s agent finds Rosa’s stall through its product feed"), (s.dur * 0.33 + 0.3, s.dur * 0.29 - 0.5, "Strawberries must go tonight, so Rosa’s agent gives a little, with a reason"), (s.dur * 0.62 + 0.3, s.dur * 0.38 - 0.6, "🔒 Her lowest price stays private")])
@@ -139,24 +139,24 @@ def why_beat(s):
     .wy-neg {{ position: absolute; left: 260px; top: 560px; width: 900px; padding: 34px 52px; border-radius: 28px; background: #e0592a; color: #fff; font-family: {MONO}; font-size: 36px; line-height: 1.55; box-shadow: 0 30px 60px rgba(224,89,42,0.35); }}
     .wy-tag {{ position: absolute; left: 1230px; top: 650px; width: 600px; font-family: {SERIF}; font-size: 64px; line-height: 1.1; color: #2b211a; }}
     .wy-tag .jomm {{ font-size: 72px; }}""")
-    A_END = 4.3
+    A_END = 6.05
     L = s.el("div", "wy-pan wy-l", '<p class="wy-k">big store</p><p id="wy-price">$5.49<small>one price, for everyone</small></p>', 0, A_END)
     R = s.el("div", "wy-pan wy-r", '<img src="assets/img/gen-dawn.jpg" alt="" style="object-position:40% 50%" /><div class="sh"></div><p class="wy-k">a stall</p>'
              '<p class="wy-b" id="wy-b1" style="top:430px">3 boxes? $5.25 each</p><p class="wy-b" id="wy-b2" style="top:560px">closing at 6? $4.75</p>', 0, A_END)
     s.tl(f'tl.fromTo("{L}", {{ opacity: 0, x: -40 }}, {{ opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }}, 0.15);')
     s.tl(f'tl.fromTo("{R}", {{ opacity: 0, x: 40 }}, {{ opacity: 1, x: 0, duration: 0.6, ease: "expo.out" }}, 2.9);')
-    s.tl('tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.2);')
-    s.tl('tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.6);')
+    s.tl('tl.fromTo("#wy-b1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.5);')
+    s.tl('tl.fromTo("#wy-b2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 4.4);')
     s.tl(f'tl.to(["{L}", "{R}"], {{ opacity: 0, filter: "blur(8px)", duration: 0.25 }}, {A_END - 0.3});')
     card = s.el("div", "wy-card", '<span class="c">// ACP checkout session</span><br/>line_items: 3 × strawberries<br/>total: $16.47<br/>payment_provider: <span class="pp">paypal</span>', A_END)
     s.tl(f'tl.fromTo("{card}", {{ opacity: 0, y: 40 }}, {{ opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }}, {A_END});')
-    note = s.el("p", "wy-note", "a price,<br/>not a conversation.", A_END + 1.7)
-    s.tl(f'tl.fromTo("{note}", {{ opacity: 0, x: -20 }}, {{ opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }}, {A_END + 1.7});')
-    neg = s.el("div", "wy-neg", '+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}', 7.8)
-    s.tl(f'tl.fromTo("{neg}", {{ opacity: 0, y: 60, scale: 0.96 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }}, 7.8);')
-    s.tl(f'tl.to("{note}", {{ opacity: 0.25, duration: 0.3 }}, 7.8);')
-    tag = s.el("p", "wy-tag", f'{LOGO}<br/>adds the conversation.', 8.1)
-    s.tl(f'tl.fromTo("{tag}", {{ opacity: 0, filter: "blur(8px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }}, 8.1);')
+    note = s.el("p", "wy-note", "a price,<br/>not a conversation.", A_END + 2.6)
+    s.tl(f'tl.fromTo("{note}", {{ opacity: 0, x: -20 }}, {{ opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }}, {A_END + 2.6});')
+    neg = s.el("div", "wy-neg", '+ negotiation {<br/>&nbsp;&nbsp;offer: $5.20 / box<br/>&nbsp;&nbsp;counter: $5.45 / box<br/>&nbsp;&nbsp;reason: “picked this morning”<br/>&nbsp;&nbsp;agreed: $5.45 ✓<br/>}', A_END + 4.1)
+    s.tl(f'tl.fromTo("{neg}", {{ opacity: 0, y: 60, scale: 0.96 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" }}, {A_END + 4.1});')
+    s.tl(f'tl.to("{note}", {{ opacity: 0.25, duration: 0.3 }}, {A_END + 4.1});')
+    tag = s.el("p", "wy-tag", f'{LOGO}<br/>adds the conversation.', A_END + 4.4)
+    s.tl(f'tl.fromTo("{tag}", {{ opacity: 0, filter: "blur(8px)" }}, {{ opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }}, {A_END + 4.4});')
     s.fadeout([card, note, neg, tag])
 
 def v4(b, s):
@@ -194,11 +194,11 @@ def v4(b, s):
     elif b == "paid": b_paid(s, chapter="<b>2:02 p.m.</b>verified")
 
 FNS = {"v1": v1, "v2": v2, "v3": v3, "v4": v4}
-PAD = {"end": 3.2, "why": 1.4, "intent": 0.8, "haggle": 1.0, "approve": 1.0, "paid": 0.8, "rex": 0.8, "feed": 0.8, "checkout": 0.6, "rosa": 1.0, "mina": 0.6, "teach": 0.6}
+PAD = {"end": 2.9, "why": 1.0, "intent": 0.8, "haggle": 1.0, "approve": 1.0, "paid": 0.8, "rex": 0.8, "feed": 0.8, "checkout": 0.6, "rosa": 1.0, "mina": 0.6, "teach": 0.6}
 MINLEN = {"approve": 11.0, "checkout": 17.0, "guard": 10.0, "rex": 10.45}
 
 # the ending line: "...It haggles with AI." a beat of silence, then "And... PayPal pays!"
-VO_OVERRIDE = {"v4/end": {"file": "end/combined.mp3", "dur": 6.7}}
+VO_OVERRIDE = {"v4/end": {"file": "end/combined.mp3", "dur": 6.7}, "v4/why": {"file": "why/combined.mp3", "dur": 11.86}}
 END_AND, END_PP = 0.25 + 4.40, 0.25 + 5.42   # on-screen cue times within the end beat
 
 # beats shown as screen captures: their edges crossfade instead of dip-cutting
@@ -228,7 +228,7 @@ def build(vid):
     for i, (b, _) in enumerate(beats):
         v = VO_OVERRIDE.get(f"{vid}/{b}", VO[f"{vid}/{b}"])
         shutil.copy(os.path.join(HERE, "vo", v["file"]), os.path.join(d, "assets", "vo", f"{i:02d}-{b}.mp3"))
-        dur = round(max(v["dur"] + PAD.get(b, 0.6) + 0.25, MINLEN.get(b, 0)), 2)
+        dur = round(max(v["dur"] + PAD.get(b, 0.45) + 0.25, MINLEN.get(b, 0)), 2)
         sid = f"{vid}-{b}"
         s = Scene(sid, dur)
         SCREEN = XFADE_BEATS.get(vid, set())
